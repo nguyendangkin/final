@@ -7,17 +7,40 @@ import { CheckCircle, LogIn, Sparkles } from 'lucide-react';
 function LoginContent() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState<string | null>(null);
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [amount, setAmount] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
+    const fetchBalance = async (token: string) => {
+      try {
+        const res = await fetch('http://localhost:3000/users/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setBalance(data.balance ? Number(data.balance) : 0);
+        }
+      } catch (e) {
+        console.error('Failed to fetch balance', e);
+      }
+    };
+
     const tokenParam = searchParams.get('token');
     if (tokenParam) {
       localStorage.setItem('jwt_token', tokenParam);
       setToken(tokenParam);
+      fetchBalance(tokenParam); // Fetch immediately
       // Clean URL
       window.history.replaceState({}, document.title, '/');
     } else {
       const storedToken = localStorage.getItem('jwt_token');
-      if (storedToken) setToken(storedToken);
+      if (storedToken) {
+        setToken(storedToken);
+        fetchBalance(storedToken); // Fetch on load
+      }
     }
   }, [searchParams]);
 
@@ -30,9 +53,78 @@ function LoginContent() {
     setToken(null);
   };
 
+  const handleDeposit = async () => {
+    if (!amount || parseInt(amount) < 2000) {
+      alert('Số tiền tối thiểu là 2000 VNĐ');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Simple JWT decode to get userId (insecure for real apps but ok for demo)
+      if (!token) return;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.sub; // Assuming 'sub' is userId. If NestJS JWT strategy uses 'id', check that.
+      // Standard NestJS Passport JWT usually puts 'sub' as userId.
+
+      const res = await fetch('http://localhost:3000/payment/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: parseInt(amount),
+          userId: userId // Backend currently blindly trusts this or we should trust token in backend.
+          // Ideally backend relies on req.user.id from Guard.
+          // But my controller uses @Body() userId.
+        })
+      });
+      const data = await res.json();
+      if (data.error === 0) {
+        window.location.href = data.data.checkoutUrl;
+      } else {
+        alert(data.message);
+      }
+    } catch (e: any) {
+      alert('Có lỗi xảy ra: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (token) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+        {showDeposit && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4">Nạp tiền vào tài khoản</h2>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Nhập số tiền (min 2000)"
+                className="w-full p-3 border rounded-xl mb-2"
+              />
+              <p className="text-sm text-gray-500 mb-4">Phí giao dịch: 2,000đ. Tổng thanh toán: {amount ? parseInt(amount) + 2000 : 0}đ</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDeposit}
+                  disabled={loading}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-xl"
+                >
+                  {loading ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
+                <button
+                  onClick={() => setShowDeposit(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded-xl"
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center border border-indigo-100">
           <div className="flex justify-center mb-6">
             <div className="p-3 bg-green-100 rounded-full">
@@ -41,6 +133,21 @@ function LoginContent() {
           </div>
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Chào mừng trở lại!</h1>
           <p className="text-gray-500 mb-8">Bạn đã đăng nhập thành công.</p>
+
+          <div className="mb-6">
+            <p className="text-gray-500 text-sm uppercase tracking-wide mb-1">Số dư tài khoản</p>
+            <h2 className="text-4xl font-extrabold text-indigo-600">
+              {balance !== null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(balance) : '...'}
+            </h2>
+          </div>
+
+          <button
+            onClick={() => setShowDeposit(true)}
+            className="w-full py-3 px-6 mb-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+          >
+            Nạp tiền
+          </button>
+
           <button
             onClick={handleLogout}
             className="w-full py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"

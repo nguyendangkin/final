@@ -6,6 +6,8 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity';
+import { PaymentModule } from './payment/payment.module';
+import { Transaction } from './payment/transaction.entity';
 
 @Module({
   imports: [
@@ -21,13 +23,14 @@ import { User } from './users/user.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User],
+        entities: [User, Transaction],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],
     }),
     UsersModule,
     AuthModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -22,4 +22,7 @@ export class User {
 
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @Column({ type: 'bigint', default: 0 })
+    balance: string; // TypeORM maps bigint to string in JS because it can exceed Number.MAX_SAFE_INTEGER
 }
