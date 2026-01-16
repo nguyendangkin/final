@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 // import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Assuming JwtGuard exists, checking imports later
 
@@ -54,6 +54,16 @@ export class PaymentController {
                 message: error.message,
                 data: null
             };
+        }
+    }
+
+    @Get('banks')
+    async getBanks() {
+        try {
+            const result = await this.paymentService.getBanks();
+            return result;
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

@@ -115,7 +115,18 @@ export class PaymentService {
         await this.userRepository.save(user);
 
         try {
-            await this.payOSPayout.payouts.create(payoutData);
+            const payoutResult = await this.payOSPayout.payouts.create(payoutData);
+            this.logger.log(`Payout Result: ${JSON.stringify(payoutResult)}`);
+
+            // Check if any booking failed
+            if (!payoutResult || !payoutResult.transactions || payoutResult.transactions.length === 0) {
+                throw new Error('Payout creation failed: No transaction returned');
+            }
+
+            const transactionState = payoutResult.transactions[0].state;
+            if (transactionState === 'FAILED' || transactionState === 'REVERSED' || transactionState === 'CANCELLED') {
+                throw new Error(`Payout failed with state: ${transactionState}`);
+            }
 
             // Save transaction
             const transaction = this.transactionRepository.create({
@@ -123,17 +134,18 @@ export class PaymentService {
                 userId: userId,
                 amount: amount,
                 type: 'WITHDRAW',
-                status: 'SUCCESS', // Assuming instant success for now, or use webhook for Payouts too?
-                // PayOS Payouts are usually async, but for simplicity we mark as PENDING or SUCCESS.
-                // The type definition showed `PayoutTransactionState`.
-                // For now, let's treat as SUCCESS if no error thrown by `create`.
+                status: transactionState === 'SUCCEEDED' ? 'SUCCESS' : 'PENDING',
+                // Using API state. If PROCESSING, mark PENDING.
                 bankBin,
                 accountNumber,
                 accountName
             });
             await this.transactionRepository.save(transaction);
 
-            return { message: 'Withdrawal successful' };
+            return {
+                message: 'Withdrawal initiated',
+                data: payoutResult
+            };
         } catch (error) {
             // Refund on failure
             user.balance = String(Number(user.balance) + amount);
@@ -175,5 +187,15 @@ export class PaymentService {
         }
 
         return { success: true };
+    }
+    async getBanks() {
+        try {
+            const response = await fetch('https://api.vietqr.io/v2/banks');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to fetch banks', error);
+            throw error;
+        }
     }
 }

@@ -16,12 +16,27 @@ function LoginContent() {
   const [bankBin, setBankBin] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [accountName, setAccountName] = useState(''); // PayOS might need this or just number? PayoutRequest doesn't strict check name often but good to have
+  const [banks, setBanks] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(false);
 
   const [balance, setBalance] = useState<number | null>(null);
 
   useEffect(() => {
+    // Fetch banks
+    const fetchBanks = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/payment/banks');
+        const data = await res.json();
+        if (data?.data) {
+          setBanks(data.data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch banks', e);
+      }
+    };
+    fetchBanks();
+
     const fetchBalance = async (token: string) => {
       try {
         const res = await fetch('http://localhost:3000/users/me', {
@@ -190,13 +205,18 @@ function LoginContent() {
                 placeholder="Nhập số tiền (min 2000)"
                 className="w-full p-3 border rounded-xl mb-2"
               />
-              <input
-                type="text"
+              <select
                 value={bankBin}
                 onChange={(e) => setBankBin(e.target.value)}
-                placeholder="Mã ngân hàng (Bin)"
-                className="w-full p-3 border rounded-xl mb-2"
-              />
+                className="w-full p-3 border rounded-xl mb-2 bg-white"
+              >
+                <option value="">Chọn ngân hàng</option>
+                {banks.map((bank) => (
+                  <option key={bank.bin} value={bank.bin}>
+                    {bank.shortName} - {bank.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 value={accountNumber}
