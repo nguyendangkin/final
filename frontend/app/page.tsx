@@ -8,7 +8,15 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const [token, setToken] = useState<string | null>(null);
   const [showDeposit, setShowDeposit] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
   const [amount, setAmount] = useState('');
+
+  // Withdrawal State
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [bankBin, setBankBin] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountName, setAccountName] = useState(''); // PayOS might need this or just number? PayoutRequest doesn't strict check name often but good to have
+
   const [loading, setLoading] = useState(false);
 
   const [balance, setBalance] = useState<number | null>(null);
@@ -92,6 +100,51 @@ function LoginContent() {
     }
   };
 
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || parseInt(withdrawAmount) < 2000) {
+      alert('Số tiền rút tối thiểu là 2000 VNĐ');
+      return;
+    }
+    if (!bankBin || !accountNumber) {
+      alert('Vui lòng nhập đầy đủ thông tin ngân hàng');
+      return;
+    }
+    setLoading(true);
+    try {
+      if (!token) return;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.sub;
+
+      const res = await fetch('http://localhost:3000/payment/withdraw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: parseInt(withdrawAmount),
+          userId: userId,
+          bankBin,
+          accountNumber,
+          accountName: accountName || 'NO NAME'
+        })
+      });
+      const data = await res.json();
+      if (data.error === 0) {
+        alert('Yêu cầu rút tiền thành công!');
+        setShowWithdraw(false);
+        // Refresh balance
+        window.location.reload();
+      } else {
+        alert(data.message);
+      }
+    } catch (e: any) {
+      alert('Có lỗi xảy ra: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (token) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
@@ -125,6 +178,58 @@ function LoginContent() {
             </div>
           </div>
         )}
+
+        {showWithdraw && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4">Rút tiền về ngân hàng</h2>
+              <input
+                type="number"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="Nhập số tiền (min 2000)"
+                className="w-full p-3 border rounded-xl mb-2"
+              />
+              <input
+                type="text"
+                value={bankBin}
+                onChange={(e) => setBankBin(e.target.value)}
+                placeholder="Mã ngân hàng (Bin)"
+                className="w-full p-3 border rounded-xl mb-2"
+              />
+              <input
+                type="text"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                placeholder="Số tài khoản"
+                className="w-full p-3 border rounded-xl mb-2"
+              />
+              <input
+                type="text"
+                value={accountName}
+                onChange={(e) => setAccountName(e.target.value)}
+                placeholder="Tên chủ tài khoản (Optional)"
+                className="w-full p-3 border rounded-xl mb-2"
+              />
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={handleWithdraw}
+                  disabled={loading}
+                  className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
+                >
+                  {loading ? 'Đang xử lý...' : 'Rút tiền'}
+                </button>
+                <button
+                  onClick={() => setShowWithdraw(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 py-2 rounded-xl"
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center border border-indigo-100">
           <div className="flex justify-center mb-6">
             <div className="p-3 bg-green-100 rounded-full">
@@ -141,12 +246,20 @@ function LoginContent() {
             </h2>
           </div>
 
-          <button
-            onClick={() => setShowDeposit(true)}
-            className="w-full py-3 px-6 mb-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            Nạp tiền
-          </button>
+          <div className="flex gap-2 w-full">
+            <button
+              onClick={() => setShowDeposit(true)}
+              className="flex-1 py-3 px-6 mb-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              Nạp tiền
+            </button>
+            <button
+              onClick={() => setShowWithdraw(true)}
+              className="flex-1 py-3 px-6 mb-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              Rút tiền
+            </button>
+          </div>
 
           <button
             onClick={handleLogout}

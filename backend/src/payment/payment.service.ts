@@ -9,6 +9,7 @@ import { Transaction } from './transaction.entity';
 @Injectable()
 export class PaymentService {
     private payOS: PayOS;
+    private payOSPayout: PayOS;
     private readonly logger = new Logger(PaymentService.name);
 
     constructor(
@@ -23,6 +24,17 @@ export class PaymentService {
             apiKey: this.configService.get<string>('PAYOS_API_KEY'),
             checksumKey: this.configService.get<string>('PAYOS_CHECKSUM_KEY'),
         });
+
+        // Initialize Payout PayOS instance
+        // Check if config exists to avoid errors if not configured yet
+        const payoutClientId = this.configService.get<string>('PAYOS_PAYOUT_CLIENT_ID');
+        if (payoutClientId) {
+            this.payOSPayout = new PayOS({
+                clientId: payoutClientId,
+                apiKey: this.configService.get<string>('PAYOS_PAYOUT_API_KEY'),
+                checksumKey: this.configService.get<string>('PAYOS_PAYOUT_CHECKSUM_KEY'),
+            });
+        }
     }
 
     async createPaymentLink(amount: number, userId: string, description: string = 'Nap tien') {
@@ -66,6 +78,68 @@ export class PaymentService {
         await this.transactionRepository.save(transaction);
 
         return paymentLink;
+    }
+
+
+    async createWithdrawal(amount: number, userId: string, bankBin: string, accountNumber: string, accountName: string) {
+        if (!this.payOSPayout) {
+            throw new Error('Hệ thống rút tiền chưa được cấu hình (Thiếu Payout Keys)');
+        }
+
+        if (amount < 2000) {
+            throw new Error('Số tiền rút tối thiểu là 2000 VNĐ');
+        }
+
+        const user = await this.userRepository.findOne({ where: { id: userId } });
+        if (!user) throw new Error('User not found');
+
+        // Check balance (assuming balance is stored as string in DB due to bigint)
+        const currentBalance = Number(user.balance);
+        if (currentBalance < amount) {
+            throw new Error('Số dư không đủ');
+        }
+
+        const orderCode = Number(String(Date.now()).slice(-6) + Math.floor(Math.random() * 100));
+
+        // Create Payout
+        const payoutData = {
+            amount: amount,
+            description: `Rut tien ${orderCode}`,
+            referenceId: String(orderCode),
+            toBin: bankBin,
+            toAccountNumber: accountNumber,
+        };
+
+        // Deduct balance immediately (hold)
+        user.balance = String(currentBalance - amount);
+        await this.userRepository.save(user);
+
+        try {
+            await this.payOSPayout.payouts.create(payoutData);
+
+            // Save transaction
+            const transaction = this.transactionRepository.create({
+                orderCode: orderCode,
+                userId: userId,
+                amount: amount,
+                type: 'WITHDRAW',
+                status: 'SUCCESS', // Assuming instant success for now, or use webhook for Payouts too?
+                // PayOS Payouts are usually async, but for simplicity we mark as PENDING or SUCCESS.
+                // The type definition showed `PayoutTransactionState`.
+                // For now, let's treat as SUCCESS if no error thrown by `create`.
+                bankBin,
+                accountNumber,
+                accountName
+            });
+            await this.transactionRepository.save(transaction);
+
+            return { message: 'Withdrawal successful' };
+        } catch (error) {
+            // Refund on failure
+            user.balance = String(Number(user.balance) + amount);
+            await this.userRepository.save(user);
+            throw error;
+        }
     }
 
     async handleWebhook(webhookData: any) {

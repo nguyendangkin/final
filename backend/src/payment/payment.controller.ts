@@ -24,6 +24,20 @@ export class PaymentController {
         }
     }
 
+    @Post('withdraw')
+    async createWithdrawal(@Body() body: { amount: number; userId: string; bankBin: string; accountNumber: string; accountName: string }) {
+        try {
+            const result = await this.paymentService.createWithdrawal(body.amount, body.userId, body.bankBin, body.accountNumber, body.accountName);
+            return {
+                error: 0,
+                message: 'Success',
+                data: result
+            };
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @Post('webhook')
     async handleWebhook(@Body() body: any) {
         try {

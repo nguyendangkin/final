@@ -17,6 +17,18 @@ export class Transaction {
     @Column({ default: 'PENDING' })
     status: string;
 
+    @Column({ default: 'DEPOSIT' })
+    type: string; // DEPOSIT | WITHDRAW
+
+    @Column({ nullable: true })
+    bankBin: string;
+
+    @Column({ nullable: true })
+    accountNumber: string;
+
+    @Column({ nullable: true })
+    accountName: string;
+
     @CreateDateColumn()
     createdAt: Date;
 }
