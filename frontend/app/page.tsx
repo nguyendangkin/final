@@ -97,9 +97,6 @@ function LoginContent() {
         },
         body: JSON.stringify({
           amount: parseInt(amount),
-          userId: userId // Backend currently blindly trusts this or we should trust token in backend.
-          // Ideally backend relies on req.user.id from Guard.
-          // But my controller uses @Body() userId.
         })
       });
       const data = await res.json();
@@ -138,7 +135,6 @@ function LoginContent() {
         },
         body: JSON.stringify({
           amount: parseInt(withdrawAmount),
-          userId: userId,
           bankBin,
           accountNumber,
           accountName: accountName || 'NO NAME'

@@ -1,19 +1,19 @@
 import { Controller, Post, Get, Body, Req, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-// import { JwtAuthGuard } from '../auth/jwt-auth.guard'; // Assuming JwtGuard exists, checking imports later
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('payment')
 export class PaymentController {
     constructor(private readonly paymentService: PaymentService) { }
 
     @Post('create')
-    async createPaymentLink(@Body() body: { amount: number; userId: string }) {
-        console.log('Payment create body:', body);
-        // Note: userId should come from JWT token in production
-        // keeping it simple as per prompt instructions context handling
+    @UseGuards(AuthGuard('jwt'))
+    async createPaymentLink(@Body() body: { amount: number }, @Req() req) {
+        // userId from JWT
+        const userId = req.user.id || req.user.userId || req.user.sub;
 
         try {
-            const result = await this.paymentService.createPaymentLink(body.amount, body.userId);
+            const result = await this.paymentService.createPaymentLink(body.amount, userId);
             return {
                 error: 0,
                 message: 'Success',
@@ -25,9 +25,12 @@ export class PaymentController {
     }
 
     @Post('withdraw')
-    async createWithdrawal(@Body() body: { amount: number; userId: string; bankBin: string; accountNumber: string; accountName: string }) {
+    @UseGuards(AuthGuard('jwt'))
+    async createWithdrawal(@Body() body: { amount: number; bankBin: string; accountNumber: string; accountName: string }, @Req() req) {
+        const userId = req.user.id || req.user.userId || req.user.sub;
+
         try {
-            const result = await this.paymentService.createWithdrawal(body.amount, body.userId, body.bankBin, body.accountNumber, body.accountName);
+            const result = await this.paymentService.createWithdrawal(body.amount, userId, body.bankBin, body.accountNumber, body.accountName);
             return {
                 error: 0,
                 message: 'Success',

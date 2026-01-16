@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PayOS } from '@payos/node';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Transaction } from './transaction.entity';
 
 @Injectable()
@@ -18,6 +18,7 @@ export class PaymentService {
         private userRepository: Repository<User>,
         @InjectRepository(Transaction)
         private transactionRepository: Repository<Transaction>,
+        private dataSource: DataSource
     ) {
         this.payOS = new PayOS({
             clientId: this.configService.get<string>('PAYOS_CLIENT_ID'),
@@ -90,18 +91,39 @@ export class PaymentService {
             throw new Error('Số tiền rút tối thiểu là 2000 VNĐ');
         }
 
-        const user = await this.userRepository.findOne({ where: { id: userId } });
-        if (!user) throw new Error('User not found');
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
 
-        // Check balance (assuming balance is stored as string in DB due to bigint)
-        const currentBalance = Number(user.balance);
-        if (currentBalance < amount) {
-            throw new Error('Số dư không đủ');
+        try {
+            // Lock user row for update to prevent race conditions
+            const user = await queryRunner.manager.findOne(User, {
+                where: { id: userId },
+                lock: { mode: 'pessimistic_write' }
+            });
+
+            if (!user) throw new Error('User not found');
+
+            const currentBalance = Number(user.balance);
+            if (currentBalance < amount) {
+                throw new Error('Số dư không đủ');
+            }
+
+            // Deduct balance
+            user.balance = String(currentBalance - amount);
+            await queryRunner.manager.save(user);
+
+            await queryRunner.commitTransaction();
+        } catch (err) {
+            await queryRunner.rollbackTransaction();
+            throw err;
+        } finally {
+            await queryRunner.release();
         }
 
+        // Proceed with PayOS logic OUTSIDE the DB transaction to avoid holding locks
+        // If PayOS fails, we must refund
         const orderCode = Number(String(Date.now()).slice(-6) + Math.floor(Math.random() * 100));
-
-        // Create Payout
         const payoutData = {
             amount: amount,
             description: `Rut tien ${orderCode}`,
@@ -110,15 +132,10 @@ export class PaymentService {
             toAccountNumber: accountNumber,
         };
 
-        // Deduct balance immediately (hold)
-        user.balance = String(currentBalance - amount);
-        await this.userRepository.save(user);
-
         try {
             const payoutResult = await this.payOSPayout.payouts.create(payoutData);
             this.logger.log(`Payout Result: ${JSON.stringify(payoutResult)}`);
 
-            // Check if any booking failed
             if (!payoutResult || !payoutResult.transactions || payoutResult.transactions.length === 0) {
                 throw new Error('Payout creation failed: No transaction returned');
             }
@@ -128,14 +145,12 @@ export class PaymentService {
                 throw new Error(`Payout failed with state: ${transactionState}`);
             }
 
-            // Save transaction
             const transaction = this.transactionRepository.create({
                 orderCode: orderCode,
                 userId: userId,
                 amount: amount,
                 type: 'WITHDRAW',
                 status: transactionState === 'SUCCEEDED' ? 'SUCCESS' : 'PENDING',
-                // Using API state. If PROCESSING, mark PENDING.
                 bankBin,
                 accountNumber,
                 accountName
@@ -146,11 +161,31 @@ export class PaymentService {
                 message: 'Withdrawal initiated',
                 data: payoutResult
             };
+
         } catch (error) {
-            // Refund on failure
-            user.balance = String(Number(user.balance) + amount);
-            await this.userRepository.save(user);
-            throw error;
+            // Refund on failure (New Transaction)
+            this.logger.error('Payout failed, refunding user...', error);
+            const refundRunner = this.dataSource.createQueryRunner();
+            await refundRunner.connect();
+            await refundRunner.startTransaction();
+            try {
+                const user = await refundRunner.manager.findOne(User, {
+                    where: { id: userId },
+                    lock: { mode: 'pessimistic_write' }
+                });
+                if (user) {
+                    user.balance = String(Number(user.balance) + amount); // Refund
+                    await refundRunner.manager.save(user);
+                }
+                await refundRunner.commitTransaction();
+            } catch (refundError) {
+                this.logger.error('CRITICAL: Refund failed!', refundError);
+                await refundRunner.rollbackTransaction();
+                // In production, this should alert admin immediately
+            } finally {
+                await refundRunner.release();
+            }
+            throw new Error(error.message || 'Withdrawal failed and refunded');
         }
     }
 
