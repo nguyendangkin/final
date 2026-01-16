@@ -39,13 +39,13 @@ function LoginContent() {
               <CheckCircle className="w-12 h-12 text-green-500" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back!</h1>
-          <p className="text-gray-500 mb-8">You have successfully logged in.</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Chào mừng trở lại!</h1>
+          <p className="text-gray-500 mb-8">Bạn đã đăng nhập thành công.</p>
           <button
             onClick={handleLogout}
             className="w-full py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
           >
-            Sign Out
+            Đăng xuất
           </button>
         </div>
       </div>
@@ -67,10 +67,10 @@ function LoginContent() {
           </div>
 
           <h1 className="text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">
-            Get Started
+            Bắt đầu ngay
           </h1>
           <p className="text-gray-500 mb-8 text-lg">
-            Join our community today.
+            Tham gia cộng đồng của chúng tôi ngay hôm nay.
           </p>
 
           <button
@@ -95,11 +95,11 @@ function LoginContent() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span className="group-hover:text-indigo-600 transition-colors">Continue with Google</span>
+            <span className="group-hover:text-indigo-600 transition-colors">Tiếp tục với Google</span>
           </button>
 
           <p className="mt-8 text-xs text-gray-400">
-            By signing up, you agree to our Terms of Service and Privacy Policy.
+            Bằng cách đăng ký, bạn đồng ý với Điều khoản dịch vụ và Chính sách quyền riêng tư của chúng tôi.
           </p>
         </div>
       </div>
@@ -109,7 +109,7 @@ function LoginContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div>Đang tải...</div>}>
       <LoginContent />
     </Suspense>
   );
