@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import Header from "@/components/Header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "SukaSuka - Mạng xã hội",
-  description: "Dự án mạng xã hội hiện đại",
+  title: "FinaJDM - Chợ xe JDM Đỉnh Cao",
+  description: "Nơi mua bán xe JDM uy tín nhất Việt Nam",
 };
 
 export default function RootLayout({
@@ -25,8 +22,9 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} font-sans antialiased`}
       >
+        <Header />
         {children}
       </body>
     </html>

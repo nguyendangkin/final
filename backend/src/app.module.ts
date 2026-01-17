@@ -8,6 +8,11 @@ import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity';
 import { PaymentModule } from './payment/payment.module';
 import { Transaction } from './payment/transaction.entity';
+import { CarsModule } from './cars/cars.module';
+import { Car } from './cars/entities/car.entity';
+import { UploadModule } from './upload/upload.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -23,17 +28,22 @@ import { Transaction } from './payment/transaction.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction],
+        entities: [User, Transaction, Car],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     UsersModule,
     AuthModule,
     PaymentModule,
+    CarsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
-

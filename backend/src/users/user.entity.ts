@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Car } from '../cars/entities/car.entity';
 
 @Entity()
 export class User {
@@ -25,4 +26,7 @@ export class User {
 
     @Column({ type: 'bigint', default: 0 })
     balance: string; // TypeORM maps bigint to string in JS because it can exceed Number.MAX_SAFE_INTEGER
+
+    @OneToMany(() => Car, (car) => car.seller)
+    carsForSale: Car[];
 }

@@ -16,7 +16,14 @@ export class AuthService {
                 // Link google account to existing user if needed, or just update info
                 user.googleId = details.googleId;
                 user.avatar = details.picture;
+                if (!user.name) {
+                    user.name = `${details.firstName} ${details.lastName}`;
+                }
                 await this.usersService.create(user); // utilizing create for save/update simple logic
+            } else if (!user.name) {
+                // Even if linked, update name if missing
+                user.name = `${details.firstName} ${details.lastName}`;
+                await this.usersService.create(user);
             }
             return user;
         }
