@@ -26,13 +26,13 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
     const soldCarsCount = seller.carsForSale.filter((car: any) => car.status === 'SOLD').length;
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-12">
+        <div className="min-h-screen bg-white pt-20 pb-12 font-sans selection:bg-red-500/30">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Seller Header */}
-                <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mb-8">
+                <div className="bg-white rounded-none shadow-sm border border-gray-100 p-8 mb-8">
                     <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-white font-bold text-4xl shadow-lg border-4 border-white overflow-hidden">
+                        <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center text-white font-bold text-4xl shadow-lg border-4 border-white overflow-hidden ring-1 ring-gray-100">
                             {seller.avatar ? (
                                 <img src={seller.avatar} alt={displayName} className="w-full h-full object-cover" />
                             ) : (
@@ -40,7 +40,7 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                             )}
                         </div>
                         <div className="flex-1">
-                            <h1 className="text-3xl font-black text-gray-900">{displayName}</h1>
+                            <h1 className="text-3xl font-black text-black uppercase tracking-tight">{displayName}</h1>
                             <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
                                 <span className="flex items-center gap-1">
                                     <ShieldCheck className="w-4 h-4 text-emerald-500" /> Đã xác thực
@@ -62,7 +62,7 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
 
                 {/* Cars Listings */}
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Xe đang bán</h2>
+                    <h2 className="text-2xl font-black text-black mb-6 uppercase tracking-wide">Xe đang bán</h2>
 
                     {seller.carsForSale.length === 0 ? (
                         <div className="text-center py-20 bg-white rounded-xl shadow-sm border border-gray-200">
@@ -71,29 +71,28 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                             {seller.carsForSale.map((car: any) => (
-                                <Link key={car.id} href={`/cars/${car.id}`} className="group block bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 transform hover:-translate-y-1 border border-gray-200 hover:border-blue-500">
+                                <Link key={car.id} href={`/cars/${car.id}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-200 hover:border-[var(--jdm-red)]">
                                     <div className="relative h-64 overflow-hidden">
                                         {car.thumbnail || (car.images && car.images.length > 0) ? (
                                             <img src={car.thumbnail || car.images[0]} alt={car.model} className="w-full h-full object-cover transition duration-500 group-hover:scale-110" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
                                                 Không có hình ảnh
                                             </div>
                                         )}
-                                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm px-3 py-1 rounded-lg text-white font-bold border border-white/20">
+                                        <div className="absolute top-4 right-4 bg-[var(--jdm-red)] px-3 py-1 rounded-none text-white font-bold shadow-md">
                                             {formatMoney(Number(car.price))}
                                         </div>
                                         {car.status === 'SOLD' && (
-                                            <div className="absolute bottom-0 left-0">
-                                                <div className="relative">
-                                                    <div className="absolute bottom-0 left-0 w-0 h-0 border-b-[60px] border-r-[60px] border-b-red-600 border-r-transparent z-10"></div>
-                                                    <span className="absolute bottom-2 left-1 z-20 rotate-45 text-white font-bold text-xs select-none">ĐÃ BÁN</span>
+                                            <div className="absolute top-4 left-4 z-20">
+                                                <div className="bg-black/90 border-l-4 border-[var(--jdm-red)] px-3 py-1 shadow-md">
+                                                    <span className="text-white font-bold text-xs uppercase tracking-wider">ĐÃ BÁN</span>
                                                 </div>
                                             </div>
                                         )}
                                     </div>
                                     <div className="p-6">
-                                        <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">{car.year} {car.make} {car.model}</h2>
+                                        <h2 className="text-2xl font-bold text-black group-hover:text-[var(--jdm-red)] transition-colors">{car.year} {car.make} {car.model}</h2>
                                         <p className="text-gray-600 mt-3 text-sm line-clamp-2 h-10">{car.description}</p>
                                         <div className="mt-6 flex justify-between items-center text-sm text-gray-500 border-t border-gray-200 pt-4">
                                             <span className="flex items-center gap-1">

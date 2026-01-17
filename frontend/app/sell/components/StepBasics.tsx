@@ -70,13 +70,13 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
     }, [data.price]);
 
     const inputClass = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-xl p-4 focus:ring-2 focus:ring-violet-500 outline-none transition-all hover:bg-gray-50 hover:border-violet-300 placeholder:text-gray-400`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400`;
 
     const inputClassWithIcon = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-xl p-4 pl-12 focus:ring-2 focus:ring-violet-500 outline-none transition-all hover:bg-gray-50 hover:border-violet-300 placeholder:text-gray-400`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400`;
 
     const inputClassWithIconAndSuffix = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-xl p-4 pl-12 pr-16 focus:ring-2 focus:ring-violet-500 outline-none transition-all hover:bg-gray-50 hover:border-violet-300 placeholder:text-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 pr-16 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -156,7 +156,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                                 id="negotiable"
                                 checked={data.isNegotiable}
                                 onChange={(e) => updateData({ isNegotiable: e.target.checked })}
-                                className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                                className="w-4 h-4 rounded-none border-gray-300 text-black focus:ring-black"
                             />
                             <label htmlFor="negotiable" className="text-xs text-gray-500 cursor-pointer select-none">Thương lượng</label>
                         </div>

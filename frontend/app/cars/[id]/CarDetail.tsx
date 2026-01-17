@@ -139,7 +139,7 @@ export default function CarDetail({ car }: CarDetailProps) {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-12 font-sans selection:bg-violet-500/30">
+        <div className="min-h-screen bg-white pt-20 pb-12 font-sans selection:bg-red-500/30">
             <Lightbox
                 images={images}
                 initialIndex={lightboxIndex}
@@ -162,7 +162,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                     <div className="lg:col-span-8 space-y-8">
 
                         {/* Image Gallery */}
-                        <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
+                        <div className="bg-white rounded-none overflow-hidden shadow-sm border border-gray-100">
                             <div className="relative aspect-[16/9] group cursor-pointer" onClick={() => openLightbox(0)}>
                                 <img
                                     src={images[0]}
@@ -170,20 +170,19 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <button className="bg-white/90 text-gray-900 px-4 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg backdrop-blur transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                                    <button className="bg-white/90 text-black px-4 py-2 rounded-none font-bold flex items-center gap-2 shadow-lg backdrop-blur transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 uppercase tracking-widest text-xs">
                                         <Maximize2 className="w-5 h-5" /> Xem toàn màn hình
                                     </button>
                                 </div>
                                 <div className="absolute top-4 left-4">
-                                    <span className="bg-white/90 backdrop-blur text-gray-900 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm border border-white/50">
+                                    <span className="bg-[var(--jdm-red)] backdrop-blur text-white px-3 py-1 rounded-none text-xs font-bold uppercase tracking-wider shadow-sm">
                                         {conditionMap[car.condition] || car.condition || 'Đã qua sử dụng'}
                                     </span>
                                 </div>
                                 {car.status === 'SOLD' && (
-                                    <div className="absolute bottom-0 left-0">
-                                        <div className="relative">
-                                            <div className="absolute bottom-0 left-0 w-0 h-0 border-b-[80px] border-r-[80px] border-b-red-600 border-r-transparent z-10"></div>
-                                            <span className="absolute bottom-3 left-1 z-20 rotate-45 text-white font-bold text-sm select-none">ĐÃ BÁN</span>
+                                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                                        <div className="bg-black border-2 border-[var(--jdm-red)] px-8 py-3 shadow-2xl transform -rotate-12">
+                                            <span className="text-[var(--jdm-red)] font-black text-3xl uppercase tracking-[0.2em] border-2 border-white px-2 py-1 block">ĐÃ BÁN</span>
                                         </div>
                                     </div>
                                 )}
@@ -212,8 +211,8 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Title & Key Specs Mobile */}
                         <div className="lg:hidden bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h1 className="text-2xl font-black text-gray-900 mb-2 uppercase italic">{car.year} {car.make} {car.model} {car.trim}</h1>
-                            <p className="text-3xl font-black text-violet-600 mb-4">{formatMoney(Number(car.price))}
+                            <h1 className="text-2xl font-black text-black mb-2 uppercase italic">{car.year} {car.make} {car.model} {car.trim}</h1>
+                            <p className="text-3xl font-black text-[var(--jdm-red)] mb-4">{formatMoney(Number(car.price))}
                                 {car.isNegotiable && <span className="text-sm font-medium text-gray-500 ml-2">(Có thương lượng)</span>}
                             </p>
                         </div>
@@ -357,7 +356,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                         <div className="sticky top-24 space-y-6">
 
                             {/* Price Card */}
-                            <div className="bg-white p-6 rounded-3xl shadow-lg shadow-gray-200/50 border border-gray-100">
+                            <div className="bg-white p-6 rounded-none shadow-lg shadow-gray-200/50 border border-gray-100">
                                 <div className="border-b border-gray-100 pb-4 mb-4">
                                     <h1 className="text-2xl font-black text-gray-900 leading-tight uppercase italic mb-1">{car.year} {car.make} {car.model}</h1>
                                     <p className="text-gray-500 font-medium">{car.trim}</p>
@@ -365,7 +364,7 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                                 <div className="mb-6">
                                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Giá bán</p>
-                                    <p className="text-4xl font-black text-violet-600 tracking-tight">{formatMoney(Number(car.price))}</p>
+                                    <p className="text-4xl font-black text-[var(--jdm-red)] tracking-tight">{formatMoney(Number(car.price))}</p>
                                     {car.isNegotiable && (
                                         <div className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
                                             <CheckCircle2 className="w-4 h-4" /> Có thương lượng
@@ -378,7 +377,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     {car.status !== 'SOLD' ? (
                                         <>
                                             {car.phoneNumber ? (
-                                                <a href={`tel:${car.phoneNumber}`} className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2">
+                                                <a href={`tel:${car.phoneNumber}`} className="w-full bg-black text-white font-bold py-4 rounded-none hover:bg-[var(--jdm-red)] transition-all shadow-lg flex items-center justify-center gap-2 uppercase tracking-wide">
                                                     <Phone className="w-5 h-5" /> Liên hệ: {car.phoneNumber}
                                                 </a>
                                             ) : (
@@ -414,7 +413,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                         <div className="flex gap-2">
                                             <Link
                                                 href={`/cars/${car.id}/edit`}
-                                                className="flex-1 bg-violet-600 text-white font-bold py-4 rounded-xl hover:bg-violet-700 transition-all flex items-center justify-center gap-2"
+                                                className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
                                             >
                                                 <Pencil className="w-5 h-5" /> Chỉnh sửa
                                             </Link>
@@ -463,13 +462,13 @@ export default function CarDetail({ car }: CarDetailProps) {
                             </div>
 
                             {/* Seller Info */}
-                            <Link href={car.seller?.id ? `/seller/${car.seller.id}` : '#'} className="block bg-white p-6 rounded-3xl shadow-sm border border-gray-100 hover:border-violet-300 hover:shadow-md transition-all group cursor-pointer">
+                            <Link href={car.seller?.id ? `/seller/${car.seller.id}` : '#'} className="block bg-white p-6 rounded-none shadow-sm border border-gray-100 hover:border-[var(--jdm-red)] hover:shadow-md transition-all group cursor-pointer">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-white">
+                                    <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-white">
                                         {car.seller?.name?.[0] || car.seller?.email?.[0]?.toUpperCase() || <User className="w-6 h-6" />}
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-bold text-gray-900 text-lg group-hover:text-violet-600 transition-colors">{car.seller?.name || car.seller?.email || 'Người bán ẩn danh'}</h4>
+                                        <h4 className="font-bold text-black text-lg group-hover:text-[var(--jdm-red)] transition-colors">{car.seller?.name || car.seller?.email || 'Người bán ẩn danh'}</h4>
                                         <p className="text-gray-500 text-xs flex items-center gap-1">
                                             <ShieldCheck className="w-3 h-3 text-emerald-500" /> Xác thực
                                         </p>
@@ -486,7 +485,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                         <MapPin className="w-3 h-3 text-gray-400" /> {car.location || "Toàn quốc"}
                                     </span>
                                 </div>
-                                <div className="mt-3 text-center text-sm font-medium text-violet-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="mt-3 text-center text-sm font-medium text-[var(--jdm-red)] opacity-0 group-hover:opacity-100 transition-opacity">
                                     Xem hồ sơ người bán →
                                 </div>
                             </Link>

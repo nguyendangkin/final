@@ -228,7 +228,7 @@ export default function SellPage() {
     if (!isLoaded) return null; // Hydration fix
 
     return (
-        <div className="min-h-screen bg-gray-50 text-gray-900 p-6 pt-24 font-sans selection:bg-violet-500/30">
+        <div className="min-h-screen bg-white text-black p-6 pt-24 font-sans selection:bg-red-500/30">
             <div className="max-w-4xl mx-auto flex flex-col gap-8">
 
                 {/* Main Form Area */}
@@ -237,7 +237,7 @@ export default function SellPage() {
                     {/* Header */}
                     <div className="flex justify-between items-end border-b border-gray-200 pb-6">
                         <div>
-                            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
+                            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-black">
                                 Đăng Bán Xe
                             </h1>
                             <p className="text-gray-500 mt-2 font-medium">
@@ -253,7 +253,7 @@ export default function SellPage() {
                     </div>
 
                     {/* Stepper Content */}
-                    <div className="bg-white rounded-3xl p-1 md:p-4 shadow-xl shadow-gray-200/50 border border-gray-100">
+                    <div className="bg-white rounded-none p-1 md:p-4 shadow-xl shadow-gray-200/50 border border-gray-100">
                         <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide">
                             <div className="flex items-center min-w-max space-x-2">
                                 {STEPS.map((step, idx) => {
@@ -263,13 +263,13 @@ export default function SellPage() {
                                         <div key={step.id} className="flex items-center">
                                             <div
                                                 className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all border ${isActive
-                                                    ? 'bg-violet-50 border-violet-500 text-violet-700'
+                                                    ? 'bg-red-50 border-[var(--jdm-red)] text-[var(--jdm-red)]'
                                                     : isPast
                                                         ? 'bg-green-50 border-green-500/30 text-green-700'
                                                         : 'bg-gray-100 border-gray-200 text-gray-400'
                                                     }`}
                                             >
-                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-violet-600 text-white' : isPast ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-500'
+                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-[var(--jdm-red)] text-white' : isPast ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-500'
                                                     }`}>
                                                     {isPast ? <CheckCircle2 className="w-4 h-4" /> : step.id}
                                                 </span>
@@ -288,7 +288,7 @@ export default function SellPage() {
                         </div>
 
                         {/* Step Components */}
-                        <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-10 min-h-[500px]">
+                        <div className="bg-white border border-gray-100 rounded-none p-6 md:p-10 min-h-[500px]">
                             {currentStep === 1 && <StepBasics data={data} updateData={updateData} errors={errors} />}
                             {currentStep === 2 && <StepSoul data={data} updateData={updateData} errors={errors} />}
                             {currentStep === 3 && <StepLegal data={data} updateData={updateData} errors={errors} />}
@@ -310,7 +310,7 @@ export default function SellPage() {
                         {currentStep < STEPS.length ? (
                             <button
                                 onClick={handleNext}
-                                className="px-8 py-4 bg-gray-900 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-black transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-gray-900/20"
+                                className="px-8 py-4 bg-black text-white rounded-none font-bold flex items-center gap-2 hover:bg-[var(--jdm-red)] transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-gray-900/20"
                             >
                                 Tiếp tục <ChevronRight className="w-5 h-5" />
                             </button>
@@ -318,7 +318,7 @@ export default function SellPage() {
                             <button
                                 onClick={handleSubmit}
                                 disabled={loading}
-                                className="px-8 py-4 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl font-bold flex items-center gap-3 hover:from-violet-500 hover:to-indigo-500 transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-violet-600/20"
+                                className="px-8 py-4 bg-[var(--jdm-red)] text-white rounded-none font-bold flex items-center gap-3 hover:bg-red-700 transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-red-600/20"
                             >
                                 {loading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -336,32 +336,32 @@ export default function SellPage() {
 
                     <div>
                         <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider flex items-center gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-violet-600" />
+                            <CheckCircle2 className="w-5 h-5 text-[var(--jdm-red)]" />
                             Xem trước bài đăng
                         </h3>
                         <PreviewCard data={data} />
                     </div>
 
                     <div>
-                        <div className="bg-white p-6 rounded-2xl border border-gray-200 text-sm md:text-base shadow-lg shadow-gray-100 h-full">
+                        <div className="bg-white p-6 rounded-none border border-gray-200 text-sm md:text-base shadow-lg shadow-gray-100 h-full">
                             <h4 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-wider border-b border-gray-100 pb-2">
                                 Mẹo giúp bán nhanh
                             </h4>
                             <ul className="space-y-4 text-gray-600">
                                 <li className="flex gap-3">
-                                    <span className="text-violet-600 font-bold text-lg leading-none">•</span>
+                                    <span className="text-[var(--jdm-red)] font-bold text-lg leading-none">•</span>
                                     <span>
                                         <strong>Giá cả linh hoạt:</strong> Chọn "Thương lượng" để thu hút nhiều người quan tâm hơn, thay vì để giá cứng.
                                     </span>
                                 </li>
                                 <li className="flex gap-3">
-                                    <span className="text-violet-600 font-bold text-lg leading-none">•</span>
+                                    <span className="text-[var(--jdm-red)] font-bold text-lg leading-none">•</span>
                                     <span>
                                         <strong>Chi tiết Mods:</strong> Cộng đồng JDM rất soi đồ chơi. Hãy liệt kê chi tiết từng món hàng hiệu bạn đã lên.
                                     </span>
                                 </li>
                                 <li className="flex gap-3">
-                                    <span className="text-violet-600 font-bold text-lg leading-none">•</span>
+                                    <span className="text-[var(--jdm-red)] font-bold text-lg leading-none">•</span>
                                     <span>
                                         <strong>Video Sound Check:</strong> Tiếng pô là linh hồn của xe. Một video ngắn sẽ tăng độ uy tín lên gấp đôi.
                                     </span>

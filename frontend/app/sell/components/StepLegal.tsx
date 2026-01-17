@@ -10,11 +10,11 @@ interface StepLegalProps {
 export default function StepLegal({ data, updateData, errors = {} }: StepLegalProps) {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="p-6 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-4">
-                <FileText className="w-6 h-6 text-blue-500 mt-1 flex-shrink-0" />
+            <div className="p-6 bg-black border border-gray-800 rounded-none flex items-start gap-4">
+                <FileText className="w-6 h-6 text-white mt-1 flex-shrink-0" />
                 <div>
-                    <h3 className="text-blue-900 font-semibold mb-1">Pháp lý Việt Nam</h3>
-                    <p className="text-sm text-blue-700/80">
+                    <h3 className="text-white font-bold mb-1 uppercase tracking-wide">Pháp lý Việt Nam</h3>
+                    <p className="text-sm text-gray-400">
                         Vấn đề nhạy cảm nhất ở VN. Hãy điền trung thực để tăng độ uy tín cho bài đăng của bạn.
                         Người mua JDM đặc biệt quan tâm đến vấn đề này.
                     </p>
@@ -29,7 +29,7 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                         <select
                             value={data.paperwork}
                             onChange={(e) => updateData({ paperwork: e.target.value as any })}
-                            className={`w-full bg-white border ${errors.paperwork ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-xl p-4 pl-12 focus:ring-2 focus:ring-violet-500 outline-none appearance-none transition-all hover:bg-gray-50 hover:border-violet-300`}
+                            className={`w-full bg-white border ${errors.paperwork ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none appearance-none transition-all hover:bg-gray-50 hover:border-gray-400`}
                         >
                             <option value="">-- Chọn loại giấy tờ --</option>
                             <option value="Legal">SANG TÊN ĐƯỢC (Hợp pháp - Mua là an toàn)</option>
@@ -50,7 +50,7 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                                 type="date"
                                 value={data.registryExpiry || ''}
                                 onChange={(e) => updateData({ registryExpiry: e.target.value })}
-                                className="w-full bg-white border border-gray-300 text-gray-900 rounded-xl p-4 pl-12 focus:ring-2 focus:ring-violet-500 outline-none transition-all hover:bg-gray-50 hover:border-violet-300"
+                                className="w-full bg-white border border-gray-300 text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400"
                             />
                             <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         </div>

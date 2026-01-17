@@ -42,12 +42,12 @@ const ModSection = ({
     }
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4 hover:border-violet-500/50 hover:shadow-lg transition-all group">
+        <div className="bg-white border border-gray-200 rounded-none p-6 space-y-4 hover:border-[var(--jdm-red)] hover:shadow-lg transition-all group">
             <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-violet-50 rounded-lg group-hover:bg-violet-100 transition-colors">
-                    <Icon className="w-5 h-5 text-violet-600 group-hover:text-violet-700" />
+                <div className="p-2 bg-black rounded-none group-hover:bg-[var(--jdm-red)] transition-colors">
+                    <Icon className="w-5 h-5 text-white" />
                 </div>
-                <h4 className="font-semibold text-gray-900">{title}</h4>
+                <h4 className="font-bold text-black uppercase tracking-wide">{title}</h4>
             </div>
 
             <div className="flex gap-2">
@@ -56,12 +56,12 @@ const ModSection = ({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
-                    className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-4 py-3 text-sm focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-400"
+                    className="flex-1 bg-gray-50 border border-gray-200 text-black rounded-none px-4 py-3 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400"
                 />
                 <button
                     onClick={handleAdd}
                     type="button"
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-600 p-3 rounded-lg transition-colors"
+                    className="bg-black hover:bg-[var(--jdm-red)] text-white p-3 rounded-none transition-colors"
                 >
                     <Plus className="w-5 h-5" />
                 </button>
@@ -72,11 +72,11 @@ const ModSection = ({
                     <span className="text-xs text-gray-400 italic">Chưa có thông tin...</span>
                 )}
                 {items.map((item, idx) => (
-                    <span key={idx} className="bg-violet-50 text-violet-700 border border-violet-100 px-3 py-1 rounded-full text-sm flex items-center gap-2 animate-in zoom-in-50 duration-200 font-medium">
+                    <span key={idx} className="bg-gray-100 text-black border border-gray-200 px-3 py-1 rounded-none text-sm flex items-center gap-2 animate-in zoom-in-50 duration-200 font-bold">
                         {item}
                         <button
                             onClick={() => onRemove(idx)}
-                            className="hover:text-red-600 hover:bg-red-50 rounded-full p-0.5 transition-colors"
+                            className="hover:text-[var(--jdm-red)] hover:bg-red-50 rounded-full p-0.5 transition-colors"
                         >
                             <X className="w-3 h-3" />
                         </button>

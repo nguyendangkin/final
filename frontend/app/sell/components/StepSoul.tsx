@@ -24,7 +24,7 @@ const ENGINE_SUGGESTIONS = [
 
 export default function StepSoul({ data, updateData, errors = {} }: StepSoulProps) {
     const inputClassWithIcon = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-red-500' : 'border-gray-300'} text-gray-900 rounded-xl p-4 pl-12 focus:ring-2 focus:ring-violet-500 outline-none transition-all hover:bg-gray-50 hover:border-violet-300 placeholder:text-gray-400`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400`;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -68,15 +68,15 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                     <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Hộp số <span className="text-red-500">*</span>
                     </label>
-                    <div className={`flex bg-gray-100 p-1 rounded-xl border ${errors.transmission ? 'border-red-500' : 'border-gray-200'}`}>
+                    <div className={`flex bg-gray-100 p-1 rounded-none border ${errors.transmission ? 'border-[var(--jdm-red)]' : 'border-gray-200'}`}>
                         {['MT', 'AT', 'CVT'].map((type) => (
                             <button
                                 key={type}
                                 type="button"
                                 onClick={() => updateData({ transmission: type as any })}
-                                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${data.transmission === type
-                                    ? 'bg-white text-violet-600 shadow-md border border-gray-100'
-                                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
+                                className={`flex-1 py-3 rounded-none text-sm font-bold uppercase tracking-wide transition-all ${data.transmission === type
+                                    ? 'bg-black text-white shadow-md border border-black'
+                                    : 'text-gray-500 hover:text-black hover:bg-gray-200'
                                     }`}
                             >
                                 {type === 'MT' ? 'Số sàn (MT)' : type === 'AT' ? 'Tự động (AT)' : 'CVT'}
@@ -91,15 +91,15 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                     <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
                         <Zap className="w-4 h-4" /> Hệ dẫn động <span className="text-red-500">*</span>
                     </label>
-                    <div className={`flex bg-gray-100 p-1 rounded-xl border ${errors.drivetrain ? 'border-red-500' : 'border-gray-200'}`}>
+                    <div className={`flex bg-gray-100 p-1 rounded-none border ${errors.drivetrain ? 'border-[var(--jdm-red)]' : 'border-gray-200'}`}>
                         {['FWD', 'RWD', 'AWD'].map((type) => (
                             <button
                                 key={type}
                                 type="button"
                                 onClick={() => updateData({ drivetrain: type as any })}
-                                className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all ${data.drivetrain === type
-                                    ? 'bg-white text-blue-600 shadow-md border border-gray-100'
-                                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200'
+                                className={`flex-1 py-3 rounded-none text-sm font-bold uppercase tracking-wide transition-all ${data.drivetrain === type
+                                    ? 'bg-black text-white shadow-md border border-black'
+                                    : 'text-gray-500 hover:text-black hover:bg-gray-200'
                                     }`}
                             >
                                 {type}
@@ -115,7 +115,7 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                 <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
                     <PenTool className="w-4 h-4" /> Tình trạng <span className="text-red-500">*</span>
                 </label>
-                <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 ${errors.condition ? 'ring-2 ring-red-500 rounded-xl p-2' : ''}`}>
+                <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 ${errors.condition ? 'ring-2 ring-[var(--jdm-red)] rounded-none p-2' : ''}`}>
                     {[
                         { val: 'Zin', label: 'Zin' },
                         { val: 'Lightly Modded', label: 'Độ nhẹ' },
@@ -128,9 +128,9 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                             key={item.val}
                             type="button"
                             onClick={() => updateData({ condition: item.val as any })}
-                            className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all text-center ${data.condition === item.val
-                                ? 'bg-emerald-50 border-emerald-500 text-emerald-700 font-bold'
-                                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-800'
+                            className={`py-3 px-4 rounded-none border text-sm font-bold uppercase tracking-wide transition-all text-center ${data.condition === item.val
+                                ? 'bg-[var(--jdm-red)] border-[var(--jdm-red)] text-white'
+                                : 'bg-white border-gray-200 text-gray-500 hover:border-black hover:text-black'
                                 }`}
                         >
                             {item.label}

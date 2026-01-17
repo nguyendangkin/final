@@ -96,22 +96,22 @@ export default function WithdrawPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-white pt-20 pb-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-red-500/30">
             <div className="max-w-md mx-auto">
                 <div className="mb-6">
-                    <Link href="/" className="flex items-center text-gray-600 hover:text-gray-900 transition">
+                    <Link href="/" className="flex items-center text-black hover:text-[var(--jdm-red)] transition font-bold uppercase tracking-wide text-sm">
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         Quay lại
                     </Link>
                 </div>
 
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                    <div className="p-6 bg-gray-900 text-white text-center">
-                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                <div className="bg-white rounded-none shadow-xl border border-gray-200 overflow-hidden">
+                    <div className="p-6 bg-black text-white text-center border-b border-gray-800">
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/20">
                             <Wallet className="w-8 h-8 text-white" />
                         </div>
-                        <h1 className="text-2xl font-bold">Rút Tiền Về Ngân Hàng</h1>
-                        <p className="text-gray-400 mt-1">Xử lý trong vòng 24h làm việc</p>
+                        <h1 className="text-2xl font-black uppercase tracking-wide">Rút Tiền Về Ngân Hàng</h1>
+                        <p className="text-gray-400 mt-1 text-sm">Xử lý trong vòng 24h làm việc</p>
                     </div>
 
                     <div className="p-8 space-y-6">
@@ -125,7 +125,7 @@ export default function WithdrawPage() {
                                 <select
                                     value={selectedBank}
                                     onChange={(e) => setSelectedBank(e.target.value)}
-                                    className="focus:ring-gray-500 focus:border-gray-500 block w-full pl-10 py-3 border-gray-300 rounded-xl"
+                                    className="focus:ring-black focus:border-black block w-full pl-10 py-3 border-gray-300 rounded-none bg-white"
                                 >
                                     <option value="">Chọn ngân hàng</option>
                                     {banks.map((bank: any) => (
@@ -148,7 +148,7 @@ export default function WithdrawPage() {
                                     type="text"
                                     value={accountNumber}
                                     onChange={(e) => setAccountNumber(e.target.value)}
-                                    className="focus:ring-gray-500 focus:border-gray-500 block w-full pl-10 py-3 border-gray-300 rounded-xl"
+                                    className="focus:ring-black focus:border-black block w-full pl-10 py-3 border-gray-300 rounded-none"
                                     placeholder="Nhập số tài khoản"
                                 />
                             </div>
@@ -165,7 +165,7 @@ export default function WithdrawPage() {
                                     type="text"
                                     value={accountName}
                                     onChange={(e) => setAccountName(e.target.value.toUpperCase())}
-                                    className="focus:ring-gray-500 focus:border-gray-500 block w-full pl-10 py-3 border-gray-300 rounded-xl uppercase"
+                                    className="focus:ring-black focus:border-black block w-full pl-10 py-3 border-gray-300 rounded-none uppercase"
                                     placeholder="NGUYEN VAN A"
                                 />
                             </div>
@@ -179,7 +179,7 @@ export default function WithdrawPage() {
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(Number(e.target.value))}
-                                    className="focus:ring-gray-500 focus:border-gray-500 block w-full pl-4 pr-12 py-3 text-lg border-gray-300 rounded-xl font-bold"
+                                    className="focus:ring-black focus:border-black block w-full pl-4 pr-12 py-3 text-lg border-gray-300 rounded-none font-bold"
                                     placeholder="0"
                                 />
                                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -203,7 +203,7 @@ export default function WithdrawPage() {
                         <button
                             onClick={handleWithdraw}
                             disabled={loading || amount <= 0}
-                            className="w-full bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded-xl shadow-lg transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-[var(--jdm-red)] hover:bg-black text-white font-bold py-3.5 rounded-none shadow-lg transition transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wide"
                         >
                             {loading ? (
                                 <>

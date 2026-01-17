@@ -65,8 +65,9 @@ export default function Header() {
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <div className="flex-shrink-0 flex items-center">
-                        <Link href="/" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600">
-                            FinaJDM
+                        <Link href="/" className="text-2xl font-bold tracking-tighter hover:opacity-80 transition-opacity">
+                            <span className="text-black">4Gach</span>
+                            <span className="text-[var(--jdm-red)]"> - JDM</span>
                         </Link>
                     </div>
 
@@ -81,9 +82,9 @@ export default function Header() {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                    className="flex items-center justify-center p-1 rounded-full hover:bg-gray-100 transition focus:outline-none"
+                                    className="flex items-center justify-center p-1 hover:bg-gray-100 transition focus:outline-none rounded-none"
                                 >
-                                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-sm font-bold text-white shadow-md border-2 border-white">
+                                    <div className="w-9 h-9 rounded-none bg-black flex items-center justify-center text-sm font-bold text-white border border-gray-200">
                                         {user.name?.[0] || 'U'}
                                     </div>
                                 </button>
@@ -97,29 +98,29 @@ export default function Header() {
                                                 setIsUserMenuOpen(false);
                                             }}
                                         />
-                                        <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-40 transform origin-top-right transition-all">
+                                        <div className="absolute right-0 mt-3 w-64 bg-white rounded-none shadow-xl border border-gray-200 py-2 z-40 transform origin-top-right transition-all ring-1 ring-black/5">
                                             <Link
                                                 href={`/seller/${user.id}`}
                                                 className="block px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition group"
                                                 onClick={() => setIsUserMenuOpen(false)}
                                             >
-                                                <p className="text-sm font-bold text-gray-900 group-hover:text-violet-600 transition-colors">{user.name}</p>
+                                                <p className="text-sm font-bold text-black group-hover:text-[var(--jdm-red)] transition-colors uppercase tracking-tight">{user.name}</p>
                                                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                                <p className="text-xs text-violet-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Xem hồ sơ của tôi →</p>
+                                                <p className="text-xs text-[var(--jdm-red)] mt-1 opacity-0 group-hover:opacity-100 transition-opacity font-bold">XEM HỒ SƠ →</p>
                                             </Link>
 
                                             <div className="px-4 py-3">
                                                 <Link
                                                     href="/wallet"
-                                                    className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 p-2 rounded-xl transition group"
+                                                    className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 p-2 rounded-none transition group border border-transparent hover:border-gray-200"
                                                     onClick={() => setIsUserMenuOpen(false)}
                                                 >
-                                                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition">
-                                                        <Wallet className="w-4 h-4 text-green-600" />
+                                                    <div className="w-8 h-8 rounded-none bg-black flex items-center justify-center group-hover:bg-[var(--jdm-red)] transition">
+                                                        <Wallet className="w-4 h-4 text-white" />
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-gray-500">Ví của tôi</p>
-                                                        <p className="text-sm font-bold text-green-600">
+                                                        <p className="text-xs text-gray-500 uppercase font-bold">Ví của tôi</p>
+                                                        <p className="text-sm font-black text-black">
                                                             {balance !== null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(balance) : '...'}
                                                         </p>
                                                     </div>
@@ -129,7 +130,7 @@ export default function Header() {
                                             <div className="border-t border-gray-100 mt-1">
                                                 <button
                                                     onClick={handleLogout}
-                                                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 font-medium flex items-center gap-2 transition"
+                                                    className="w-full text-left px-4 py-3 text-sm text-black hover:text-[var(--jdm-red)] hover:bg-gray-50 font-bold flex items-center gap-2 transition uppercase tracking-wide"
                                                 >
                                                     <LogOut className="w-4 h-4" />
                                                     Đăng xuất
@@ -142,7 +143,7 @@ export default function Header() {
                         ) : (
                             <button
                                 onClick={handleLogin}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-bold transition shadow-lg shadow-blue-500/30"
+                                className="bg-black hover:bg-[var(--jdm-red)] text-white px-6 py-2 rounded-none text-sm font-bold uppercase tracking-wider transition-colors duration-300"
                             >
                                 Đăng nhập
                             </button>
@@ -169,12 +170,12 @@ export default function Header() {
                         {user ? (
                             <div className="border-t border-gray-200 mt-4 pt-4 px-3">
                                 <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold">
+                                    <div className="w-8 h-8 rounded-none bg-black flex items-center justify-center text-white font-bold border border-gray-200">
                                         {user.name?.[0] || 'U'}
                                     </div>
                                     <div>
-                                        <p className="text-gray-900 font-medium">{user.name}</p>
-                                        <p className="text-green-600 text-sm font-bold">
+                                        <p className="text-black font-bold uppercase">{user.name}</p>
+                                        <p className="text-[var(--jdm-red)] text-sm font-black">
                                             {balance !== null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(balance) : '...'}
                                         </p>
                                     </div>
@@ -189,7 +190,7 @@ export default function Header() {
                         ) : (
                             <button
                                 onClick={handleLogin}
-                                className="w-full text-left text-white bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-base font-bold mt-4"
+                                className="w-full text-left text-white bg-black hover:bg-[var(--jdm-red)] px-4 py-3 rounded-none text-base font-bold mt-4 uppercase tracking-wider transition-colors"
                             >
                                 Đăng nhập
                             </button>

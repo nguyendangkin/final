@@ -52,21 +52,21 @@ export default function Lightbox({ images, initialIndex, isOpen, onClose }: Ligh
             {/* Controls */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-50 backdrop-blur"
+                className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-[var(--jdm-red)] rounded-none text-white transition-all z-50 backdrop-blur"
             >
                 <X className="w-6 h-6" />
             </button>
 
             <button
                 onClick={handlePrev}
-                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-50 hidden md:block backdrop-blur hover:scale-110 active:scale-95"
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-[var(--jdm-red)] rounded-none text-white transition-all z-50 hidden md:block backdrop-blur hover:scale-105 active:scale-95"
             >
                 <ChevronLeft className="w-8 h-8" />
             </button>
 
             <button
                 onClick={handleNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-50 hidden md:block backdrop-blur hover:scale-110 active:scale-95"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-[var(--jdm-red)] rounded-none text-white transition-all z-50 hidden md:block backdrop-blur hover:scale-105 active:scale-95"
             >
                 <ChevronRight className="w-8 h-8" />
             </button>
@@ -78,7 +78,7 @@ export default function Lightbox({ images, initialIndex, isOpen, onClose }: Ligh
                     alt={`View ${currentIndex}`}
                     className="max-w-full max-h-full object-contain pointer-events-none select-none drop-shadow-2xl"
                 />
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/50 backdrop-blur rounded-full text-white text-sm font-medium">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/80 backdrop-blur rounded-none text-white text-sm font-bold tracking-widest border border-gray-800">
                     {currentIndex + 1} / {images.length}
                 </div>
             </div>
@@ -89,7 +89,7 @@ export default function Lightbox({ images, initialIndex, isOpen, onClose }: Ligh
                     <button
                         key={idx}
                         onClick={() => setCurrentIndex(idx)}
-                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${idx === currentIndex ? 'border-violet-500 scale-110 ring-2 ring-violet-500/50' : 'border-transparent opacity-50 hover:opacity-100 hover:scale-105'
+                        className={`flex-shrink-0 w-16 h-16 rounded-none overflow-hidden border-2 transition-all ${idx === currentIndex ? 'border-[var(--jdm-red)] scale-110 ring-2 ring-red-500/50' : 'border-transparent opacity-50 hover:opacity-100 hover:scale-105'
                             }`}
                     >
                         <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />

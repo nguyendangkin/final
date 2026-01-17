@@ -2,7 +2,11 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
+  --jdm-red: #DC2626;
+  /* Honda Type R / Rising Sun Red */
+  --jdm-accent: #f3f3f3;
+  /* Subtle gray for cards/sections */
 }
 
 @theme inline {

@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "FinaJDM - Chợ xe JDM Đỉnh Cao",
+  title: "4Gach - JDM - Chợ xe JDM Đỉnh Cao",
   description: "Nơi mua bán xe JDM uy tín nhất Việt Nam",
 };
 

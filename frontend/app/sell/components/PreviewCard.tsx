@@ -16,7 +16,7 @@ export default function PreviewCard({ data }: { data: CarSpecs }) {
       </h3>
       */}
 
-            <div className="bg-white rounded-2xl overflow-hidden shadow-2xl shadow-gray-200/50 transform transition-all hover:scale-[1.02] group border border-gray-100">
+            <div className="bg-white rounded-none overflow-hidden shadow-2xl shadow-gray-200/50 transform transition-all hover:scale-[1.02] group border border-gray-100">
                 <div className="relative aspect-[4/3] bg-gray-100">
                     {data.thumbnail ? (
                         <img src={data.thumbnail} alt="Preview" className="w-full h-full object-cover" />
@@ -44,7 +44,7 @@ export default function PreviewCard({ data }: { data: CarSpecs }) {
                             </h2>
                             <p className="text-gray-500 text-sm font-medium">{data.trim}</p>
                         </div>
-                        <p className="text-violet-600 font-black text-lg">
+                        <p className="text-[var(--jdm-red)] font-black text-lg">
                             {data.price ? formatMoney(data.price) : 'Liên hệ'}
                         </p>
                     </div>
@@ -74,12 +74,12 @@ export default function PreviewCard({ data }: { data: CarSpecs }) {
                             <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded">{data.drivetrain}</span>
                         )}
                         {hasMods && (
-                            <span className="px-2 py-1 bg-violet-100 text-violet-600 text-xs font-bold rounded">+ Modded</span>
+                            <span className="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold rounded">+ Modded</span>
                         )}
                     </div>
 
                     <div className="text-center">
-                        <button disabled className="w-full py-3 bg-gray-900 text-white font-bold rounded-xl opacity-50 cursor-not-allowed text-sm uppercase tracking-wide shadow-lg shadow-gray-200">
+                        <button disabled className="w-full py-3 bg-black text-white font-bold rounded-none opacity-50 cursor-not-allowed text-sm uppercase tracking-wide shadow-lg shadow-gray-200">
                             Xem Chi Tiết
                         </button>
                     </div>
