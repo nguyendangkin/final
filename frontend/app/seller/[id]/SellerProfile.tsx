@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { User, Calendar, ShieldCheck, Car } from 'lucide-react';
-import CarCard from '@/components/CarCard';
+import CarFeed from '@/components/CarFeed';
 
 interface SellerProfileProps {
     seller: {
@@ -62,18 +62,10 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                 {/* Cars Listings */}
                 <div className="mb-6">
                     <h2 className="text-2xl font-black text-black mb-6 uppercase tracking-wide">Xe đang bán</h2>
-
-                    {seller.carsForSale.length === 0 ? (
-                        <div className="text-center py-20 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <p className="text-gray-500 text-lg">Người bán chưa có xe nào đang bán.</p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {seller.carsForSale.map((car: any) => (
-                                <CarCard key={car.id} car={car} />
-                            ))}
-                        </div>
-                    )}
+                    <CarFeed
+                        initialCars={seller.carsForSale.slice(0, 12)}
+                        filter={{ sellerId: seller.id }}
+                    />
                 </div>
 
             </div>

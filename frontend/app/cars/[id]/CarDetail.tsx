@@ -80,7 +80,7 @@ export default function CarDetail({ car }: CarDetailProps) {
         const parsedMods = typeof mods === 'string' ? JSON.parse(mods) : mods;
 
         const categories = [
-            { key: 'engine', label: 'MÁY MÓC & HIỆU SUẤT', icon: Hammer, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
+            { key: 'engine', label: 'MÁY MÓC & HIỆU SUẤT', icon: Hammer, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
             { key: 'footwork', label: 'GẦM & BÁNH', icon: Disc, color: 'text-gray-800', bg: 'bg-gray-50', border: 'border-gray-200' },
             { key: 'exterior', label: 'NGOẠI THẤT', icon: Box, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
             { key: 'interior', label: 'NỘI THẤT', icon: Armchair, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },

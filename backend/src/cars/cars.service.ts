@@ -30,9 +30,20 @@ export class CarsService {
         if (query.maxPrice) {
             qb.andWhere('CAST(car.price AS BIGINT) <= :maxPrice', { maxPrice: query.maxPrice });
         }
+        if (query.sellerId) {
+            qb.andWhere('seller.id = :sellerId', { sellerId: query.sellerId });
+        }
 
         // Sắp xếp bài mới nhất lên trên
         qb.orderBy('car.createdAt', 'DESC');
+
+        // Pagination
+        const page = query.page ? parseInt(query.page) : 1;
+        const limit = query.limit ? parseInt(query.limit) : 12;
+        const skip = (page - 1) * limit;
+
+        qb.take(limit);
+        qb.skip(skip);
 
         return qb.getMany();
     }

@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import TokenHandler from '../components/TokenHandler';
-import CarCard from '@/components/CarCard';
+import CarFeed from '@/components/CarFeed';
 
 async function getCars() {
   try {
-    const res = await fetch('http://localhost:3000/cars', { cache: 'no-store' });
+    const res = await fetch('http://localhost:3000/cars?page=1&limit=12', { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
@@ -32,17 +32,7 @@ export default async function Home() {
           </Link>
         </div>
 
-        {cars.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-none shadow-lg border border-gray-200">
-            <p className="text-gray-500 text-lg">Chưa có xe nào được đăng bán. Hãy là người đầu tiên!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cars.map((car: any) => (
-              <CarCard key={car.id} car={car} />
-            ))}
-          </div>
-        )}
+        <CarFeed initialCars={cars} />
       </div>
     </div>
   );
