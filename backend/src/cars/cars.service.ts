@@ -24,6 +24,18 @@ export class CarsService {
         if (query.model) {
             qb.andWhere('car.model ILIKE :model', { model: `%${query.model}%` });
         }
+        if (query.transmission) {
+            qb.andWhere('car.transmission ILIKE :transmission', { transmission: `%${query.transmission}%` });
+        }
+        if (query.drivetrain) {
+            qb.andWhere('car.drivetrain ILIKE :drivetrain', { drivetrain: `%${query.drivetrain}%` });
+        }
+        if (query.condition) {
+            qb.andWhere('car.condition ILIKE :condition', { condition: `%${query.condition}%` });
+        }
+        if (query.paperwork) {
+            qb.andWhere('car.paperwork ILIKE :paperwork', { paperwork: `%${query.paperwork}%` });
+        }
         if (query.minPrice) {
             qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', { minPrice: query.minPrice });
         }
@@ -32,6 +44,18 @@ export class CarsService {
         }
         if (query.sellerId) {
             qb.andWhere('seller.id = :sellerId', { sellerId: query.sellerId });
+        }
+
+        // Full-text search across multiple fields
+        if (query.q) {
+            const searchTerm = `%${query.q}%`;
+            qb.andWhere(
+                `(car.make ILIKE :q OR car.model ILIKE :q OR car.trim ILIKE :q ` +
+                `OR car.description ILIKE :q OR car.chassisCode ILIKE :q ` +
+                `OR car.engineCode ILIKE :q OR car.condition ILIKE :q ` +
+                `OR CAST(car.mods AS TEXT) ILIKE :q)`,
+                { q: searchTerm }
+            );
         }
 
         // Sắp xếp bài mới nhất lên trên
@@ -128,5 +152,331 @@ export class CarsService {
             await manager.save(seller);
             return await manager.save(car);
         });
+    }
+
+    async getBrands(): Promise<string[]> {
+        const brands = await this.carsRepository
+            .createQueryBuilder('car')
+            .select('DISTINCT car.make', 'make')
+            .where('car.status = :status', { status: CarStatus.AVAILABLE })
+            .getRawMany();
+
+        return brands.map(b => b.make).filter(Boolean);
+    }
+
+    async getFiltersByBrand(make: string): Promise<any> {
+        const cars = await this.carsRepository
+            .createQueryBuilder('car')
+            .where('car.make ILIKE :make', { make: `%${make}%` })
+            .getMany();
+
+        // Extract unique values for each filterable field
+        const filters: Record<string, Set<string>> = {
+            model: new Set(),
+            chassisCode: new Set(),
+            engineCode: new Set(),
+            transmission: new Set(),
+            drivetrain: new Set(),
+            condition: new Set(),
+            paperwork: new Set(),
+            mods: new Set(),
+        };
+
+        for (const car of cars) {
+            if (car.model) filters.model.add(car.model.toUpperCase());
+            if (car.chassisCode) filters.chassisCode.add(car.chassisCode.toUpperCase());
+            if (car.engineCode) filters.engineCode.add(car.engineCode.toUpperCase());
+            if (car.transmission) filters.transmission.add(car.transmission.toUpperCase());
+            if (car.drivetrain) filters.drivetrain.add(car.drivetrain.toUpperCase());
+            if (car.condition) filters.condition.add(car.condition.toUpperCase());
+            if (car.paperwork) filters.paperwork.add(car.paperwork.toUpperCase());
+
+            // Handle mods
+            if (car.mods) {
+                if (Array.isArray(car.mods)) {
+                    car.mods.forEach((mod: any) => {
+                        if (typeof mod === 'string' && mod.trim()) {
+                            filters.mods.add(mod.trim().toUpperCase());
+                        } else if (mod && mod.name) {
+                            filters.mods.add(mod.name.trim().toUpperCase());
+                        }
+                    });
+                } else if (typeof car.mods === 'object') {
+                    Object.values(car.mods).forEach((values: any) => {
+                        if (Array.isArray(values)) {
+                            values.forEach((v: string) => {
+                                if (v && typeof v === 'string') {
+                                    filters.mods.add(v.trim().toUpperCase());
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        // Convert Sets to sorted arrays and return
+        return {
+            model: Array.from(filters.model).sort(),
+            chassisCode: Array.from(filters.chassisCode).sort(),
+            engineCode: Array.from(filters.engineCode).sort(),
+            transmission: Array.from(filters.transmission).sort(),
+            drivetrain: Array.from(filters.drivetrain).sort(),
+            condition: Array.from(filters.condition).sort(),
+            paperwork: Array.from(filters.paperwork).sort(),
+            mods: Array.from(filters.mods).sort(),
+        };
+    }
+
+    // Cascading filters: Level 1 - Get models by brand
+    async getModelsByBrand(make: string): Promise<string[]> {
+        const models = await this.carsRepository
+            .createQueryBuilder('car')
+            .select('DISTINCT car.model', 'model')
+            .where('car.make ILIKE :make', { make: `%${make}%` })
+            .getRawMany();
+
+        return models.map(m => m.model).filter(Boolean).sort();
+    }
+
+    // Cascading filters: Level 2 - Get trims by brand + model
+    async getTrimsByModel(make: string, model: string): Promise<string[]> {
+        const trims = await this.carsRepository
+            .createQueryBuilder('car')
+            .select('DISTINCT car.trim', 'trim')
+            .where('car.make ILIKE :make', { make: `%${make}%` })
+            .andWhere('car.model ILIKE :model', { model: `%${model}%` })
+            .getRawMany();
+
+        return trims.map(t => t.trim).filter(Boolean).sort();
+    }
+
+    // Cascading filters: Level 3 - Get all remaining filter options
+    async getFilterDetails(make: string, model?: string, trim?: string): Promise<any> {
+        const qb = this.carsRepository
+            .createQueryBuilder('car')
+            .where('car.make ILIKE :make', { make: `%${make}%` });
+
+        if (model) {
+            qb.andWhere('car.model ILIKE :model', { model: `%${model}%` });
+        }
+        if (trim) {
+            qb.andWhere('car.trim ILIKE :trim', { trim: `%${trim}%` });
+        }
+
+        const cars = await qb.getMany();
+
+        const filters: Record<string, Set<string>> = {
+            chassisCode: new Set(),
+            engineCode: new Set(),
+            transmission: new Set(),
+            drivetrain: new Set(),
+            condition: new Set(),
+            paperwork: new Set(),
+            mods: new Set(),
+        };
+
+        let minPrice = Infinity;
+        let maxPrice = 0;
+
+        for (const car of cars) {
+            if (car.chassisCode) filters.chassisCode.add(car.chassisCode.toUpperCase());
+            if (car.engineCode) filters.engineCode.add(car.engineCode.toUpperCase());
+            if (car.transmission) filters.transmission.add(car.transmission.toUpperCase());
+            if (car.drivetrain) filters.drivetrain.add(car.drivetrain.toUpperCase());
+            if (car.condition) filters.condition.add(car.condition.toUpperCase());
+            if (car.paperwork) filters.paperwork.add(car.paperwork.toUpperCase());
+
+            // Track price range
+            const price = parseInt(car.price);
+            if (!isNaN(price)) {
+                if (price < minPrice) minPrice = price;
+                if (price > maxPrice) maxPrice = price;
+            }
+
+            // Handle mods
+            if (car.mods) {
+                if (Array.isArray(car.mods)) {
+                    car.mods.forEach((mod: any) => {
+                        if (typeof mod === 'string' && mod.trim()) {
+                            filters.mods.add(mod.trim().toUpperCase());
+                        } else if (mod && mod.name) {
+                            filters.mods.add(mod.name.trim().toUpperCase());
+                        }
+                    });
+                } else if (typeof car.mods === 'object') {
+                    Object.values(car.mods).forEach((values: any) => {
+                        if (Array.isArray(values)) {
+                            values.forEach((v: string) => {
+                                if (v && typeof v === 'string') {
+                                    filters.mods.add(v.trim().toUpperCase());
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        return {
+            chassisCode: Array.from(filters.chassisCode).sort(),
+            engineCode: Array.from(filters.engineCode).sort(),
+            transmission: Array.from(filters.transmission).sort(),
+            drivetrain: Array.from(filters.drivetrain).sort(),
+            condition: Array.from(filters.condition).sort(),
+            paperwork: Array.from(filters.paperwork).sort(),
+            mods: Array.from(filters.mods).sort(),
+            priceRange: {
+                min: minPrice === Infinity ? 0 : minPrice,
+                max: maxPrice,
+            },
+            count: cars.length,
+        };
+    }
+
+    // Smart unified search filter - returns all available options based on current selections
+    async getSmartFilters(query: {
+        make?: string;
+        model?: string;
+        transmission?: string;
+        drivetrain?: string;
+        condition?: string;
+        paperwork?: string;
+        minPrice?: number;
+        maxPrice?: number;
+        minYear?: number;
+        maxYear?: number;
+    }): Promise<any> {
+        const qb = this.carsRepository.createQueryBuilder('car');
+
+        // Apply existing filters
+        if (query.make) {
+            qb.andWhere('car.make ILIKE :make', { make: `%${query.make}%` });
+        }
+        if (query.model) {
+            qb.andWhere('car.model ILIKE :model', { model: `%${query.model}%` });
+        }
+        if (query.transmission) {
+            qb.andWhere('car.transmission ILIKE :transmission', { transmission: `%${query.transmission}%` });
+        }
+        if (query.drivetrain) {
+            qb.andWhere('car.drivetrain ILIKE :drivetrain', { drivetrain: `%${query.drivetrain}%` });
+        }
+        if (query.condition) {
+            qb.andWhere('car.condition ILIKE :condition', { condition: `%${query.condition}%` });
+        }
+        if (query.paperwork) {
+            qb.andWhere('car.paperwork ILIKE :paperwork', { paperwork: `%${query.paperwork}%` });
+        }
+        if (query.minPrice) {
+            qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', { minPrice: query.minPrice });
+        }
+        if (query.maxPrice) {
+            qb.andWhere('CAST(car.price AS BIGINT) <= :maxPrice', { maxPrice: query.maxPrice });
+        }
+        if (query.minYear) {
+            qb.andWhere('car.year >= :minYear', { minYear: query.minYear });
+        }
+        if (query.maxYear) {
+            qb.andWhere('car.year <= :maxYear', { maxYear: query.maxYear });
+        }
+
+        const cars = await qb.getMany();
+
+        // Collect all unique values for each field
+        const options: Record<string, Set<string>> = {
+            make: new Set(),
+            model: new Set(),
+            chassisCode: new Set(),
+            engineCode: new Set(),
+            transmission: new Set(),
+            drivetrain: new Set(),
+            condition: new Set(),
+            paperwork: new Set(),
+            mods: new Set(),
+        };
+
+        let minPrice = Infinity;
+        let maxPrice = 0;
+        let minYear = Infinity;
+        let maxYear = 0;
+        let minMileage = Infinity;
+        let maxMileage = 0;
+
+        for (const car of cars) {
+            if (car.make) options.make.add(car.make.toUpperCase());
+            if (car.model) options.model.add(car.model.toUpperCase());
+            if (car.chassisCode) options.chassisCode.add(car.chassisCode.toUpperCase());
+            if (car.engineCode) options.engineCode.add(car.engineCode.toUpperCase());
+            if (car.transmission) options.transmission.add(car.transmission.toUpperCase());
+            if (car.drivetrain) options.drivetrain.add(car.drivetrain.toUpperCase());
+            if (car.condition) options.condition.add(car.condition.toUpperCase());
+            if (car.paperwork) options.paperwork.add(car.paperwork.toUpperCase());
+
+            // Track ranges
+            const price = parseInt(car.price);
+            if (!isNaN(price)) {
+                if (price < minPrice) minPrice = price;
+                if (price > maxPrice) maxPrice = price;
+            }
+            if (car.year) {
+                if (car.year < minYear) minYear = car.year;
+                if (car.year > maxYear) maxYear = car.year;
+            }
+            if (car.mileage) {
+                if (car.mileage < minMileage) minMileage = car.mileage;
+                if (car.mileage > maxMileage) maxMileage = car.mileage;
+            }
+
+            // Handle mods
+            if (car.mods) {
+                if (Array.isArray(car.mods)) {
+                    car.mods.forEach((mod: any) => {
+                        if (typeof mod === 'string' && mod.trim()) {
+                            options.mods.add(mod.trim().toUpperCase());
+                        } else if (mod && mod.name) {
+                            options.mods.add(mod.name.trim().toUpperCase());
+                        }
+                    });
+                } else if (typeof car.mods === 'object') {
+                    Object.values(car.mods).forEach((values: any) => {
+                        if (Array.isArray(values)) {
+                            values.forEach((v: string) => {
+                                if (v && typeof v === 'string') {
+                                    options.mods.add(v.trim().toUpperCase());
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        }
+
+        return {
+            // Available options based on current filters
+            options: {
+                make: Array.from(options.make).sort(),
+                model: Array.from(options.model).sort(),
+                chassisCode: Array.from(options.chassisCode).sort(),
+                engineCode: Array.from(options.engineCode).sort(),
+                transmission: Array.from(options.transmission).sort(),
+                drivetrain: Array.from(options.drivetrain).sort(),
+                condition: Array.from(options.condition).sort(),
+                paperwork: Array.from(options.paperwork).sort(),
+                mods: Array.from(options.mods).sort(),
+            },
+            // Ranges
+            ranges: {
+                price: { min: minPrice === Infinity ? 0 : minPrice, max: maxPrice },
+                year: { min: minYear === Infinity ? 0 : minYear, max: maxYear },
+                mileage: { min: minMileage === Infinity ? 0 : minMileage, max: maxMileage },
+            },
+            // Result count
+            count: cars.length,
+            // Current applied filters (echo back)
+            appliedFilters: Object.fromEntries(
+                Object.entries(query).filter(([, v]) => v !== undefined && v !== '')
+            ),
+        };
     }
 }

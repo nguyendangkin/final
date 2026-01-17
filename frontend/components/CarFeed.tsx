@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import CarCard from './CarCard';
 import { Loader2 } from 'lucide-react';
 
@@ -15,23 +16,31 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
+    const searchParams = useSearchParams();
 
-    // Initial fetch if no initial cars provided
+    // Get all filter params from URL
+    const urlFilters = {
+        make: searchParams.get('make'),
+        model: searchParams.get('model'),
+        transmission: searchParams.get('transmission'),
+        drivetrain: searchParams.get('drivetrain'),
+        condition: searchParams.get('condition'),
+        paperwork: searchParams.get('paperwork'),
+        q: searchParams.get('q'),
+    };
+
+    // Create a stable key for the filters
+    const filtersKey = JSON.stringify(urlFilters);
+
+    // Reset and refetch when URL params change
     useEffect(() => {
-        if (initialCars.length === 0) {
-            fetchCars(1);
-        } else {
-            // If initial cars provided, assume it's page 1.
-            // Check if we received less than limit (12), if so, no more.
-            if (initialCars.length < 12) {
-                setHasMore(false);
-            }
-            setPage(2); // Next fetch will be page 2
-        }
-    }, []);
+        setCars([]);
+        setPage(1);
+        setHasMore(true);
+        fetchCars(1);
+    }, [filtersKey]);
 
     const fetchCars = async (pageToFetch: number) => {
-        if (loading) return;
         setLoading(true);
         try {
             const queryParams = new URLSearchParams({
@@ -39,6 +48,12 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
                 limit: '12',
                 ...filter
             });
+
+            // Add all URL filters
+            Object.entries(urlFilters).forEach(([key, value]) => {
+                if (value) queryParams.set(key, value);
+            });
+
             const res = await fetch(`http://localhost:3000/cars?${queryParams.toString()}`);
             if (!res.ok) throw new Error('Failed to fetch');
             const newCars = await res.json();
@@ -49,15 +64,15 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
 
             if (pageToFetch === 1) {
                 setCars(newCars);
+                setPage(2);
             } else {
                 setCars(prev => {
-                    // Filter duplicates just in case
                     const existingIds = new Set(prev.map(c => c.id));
                     const uniqueNewCars = newCars.filter((c: any) => !existingIds.has(c.id));
                     return [...prev, ...uniqueNewCars];
                 });
+                setPage(prev => prev + 1);
             }
-            setPage(prev => prev + 1);
         } catch (error) {
             console.error(error);
         } finally {
@@ -74,7 +89,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
             }
         });
         if (node) observer.current.observe(node);
-    }, [loading, hasMore, page, filter]); // Added filter dependencies
+    }, [loading, hasMore, page, filtersKey]);
 
     return (
         <div>

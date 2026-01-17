@@ -2,9 +2,24 @@ import Link from 'next/link';
 import TokenHandler from '../components/TokenHandler';
 import CarFeed from '@/components/CarFeed';
 
-async function getCars() {
+async function getCars(searchParams: any) {
   try {
-    const res = await fetch('http://localhost:3000/cars?page=1&limit=12', { cache: 'no-store' });
+    const params = new URLSearchParams();
+    params.append('page', '1');
+    params.append('limit', '12');
+
+    // Safely append search params
+    if (searchParams) {
+      Object.entries(searchParams).forEach(([key, value]) => {
+        if (typeof value === 'string') {
+          params.append(key, value);
+        } else if (Array.isArray(value)) {
+          value.forEach(v => params.append(key, v));
+        }
+      });
+    }
+
+    const res = await fetch(`http://localhost:3000/cars?${params.toString()}`, { cache: 'no-store' });
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
@@ -13,8 +28,9 @@ async function getCars() {
   }
 }
 
-export default async function Home() {
-  const cars = await getCars();
+export default async function Home({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const resolvedSearchParams = await searchParams;
+  const cars = await getCars(resolvedSearchParams);
 
   return (
     <div className="min-h-screen bg-white text-black p-6 pt-20 selection:bg-red-500/30">

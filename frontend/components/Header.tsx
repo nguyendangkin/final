@@ -3,16 +3,109 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Menu, X, User, LogOut, Wallet } from 'lucide-react';
+import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
+
+const BRANDS = [
+    'Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi',
+    'Subaru', 'Suzuki', 'Daihatsu', 'Lexus', 'Acura', 'Infiniti'
+];
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isSearchOptionsOpen, setIsSearchOptionsOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    // Smart filter states
+    const [smartFilters, setSmartFilters] = useState<any>(null);
+    const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+    const [isLoading, setIsLoading] = useState(false);
+
     const [user, setUser] = useState<any>(null);
     const [balance, setBalance] = useState<number | null>(null);
     const router = useRouter();
     const searchParams = useSearchParams();
+    const currentMake = searchParams.get('make');
+
+    // Filter category labels in Vietnamese - ordered by importance
+    const filterOrder = ['make', 'model', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
+    const filterLabels: Record<string, string> = {
+        make: 'Hãng xe',
+        model: 'Dòng xe',
+        chassisCode: 'Mã gầm',
+        engineCode: 'Mã máy',
+        transmission: 'Hộp số',
+        drivetrain: 'Dẫn động',
+        condition: 'Tình trạng',
+        paperwork: 'Giấy tờ',
+        mods: 'Mods',
+    };
+
+    // Fetch smart filters based on current selections
+    const fetchSmartFilters = async (filters: Record<string, string>) => {
+        setIsLoading(true);
+        const params = new URLSearchParams();
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value) params.append(key, value);
+        });
+
+        try {
+            const res = await fetch(`http://localhost:3000/cars/filters/smart?${params.toString()}`);
+            const data = await res.json();
+            setSmartFilters(data);
+        } catch {
+            setSmartFilters(null);
+        }
+        setIsLoading(false);
+    };
+
+    // Initial load - get all available options
+    useEffect(() => {
+        if (isSearchOptionsOpen && !smartFilters) {
+            fetchSmartFilters({});
+        }
+    }, [isSearchOptionsOpen]);
+
+    // Re-fetch when filters change
+    useEffect(() => {
+        if (isSearchOptionsOpen) {
+            fetchSmartFilters(selectedFilters);
+        }
+    }, [selectedFilters]);
+
+    // Select a filter value
+    const selectFilter = (category: string, value: string) => {
+        setSelectedFilters(prev => {
+            const newFilters = { ...prev };
+            if (prev[category] === value) {
+                delete newFilters[category];
+            } else {
+                newFilters[category] = value;
+            }
+            return newFilters;
+        });
+    };
+
+    // Clear all filters
+    const clearFilters = () => {
+        setSelectedFilters({});
+    };
+
+    // Perform search - navigate with filter params
+    const performSearch = () => {
+        const params = new URLSearchParams();
+        Object.entries(selectedFilters).forEach(([key, value]) => {
+            if (value) params.append(key, value);
+        });
+        if (searchQuery) params.append('q', searchQuery);
+
+        setIsSearchOptionsOpen(false);
+        router.push(`/?${params.toString()}`);
+    };
+
+    // Format price
+    const formatPrice = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
 
     useEffect(() => {
         // Check for token in URL (from Google Auth callback)
@@ -74,8 +167,198 @@ export default function Header() {
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex space-x-8">
-
+                        <div className="relative group">
+                            <button className="flex items-center gap-1 text-sm font-bold uppercase tracking-wider hover:text-[var(--jdm-red)] transition-colors h-16 text-gray-700">
+                                Hãng xe
+                                <ChevronDown className="w-4 h-4 ml-1" />
+                            </button>
+                            <div className="absolute top-full left-0 w-48 bg-white border border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+                                <Link
+                                    href="/"
+                                    className={`block px-4 py-3 text-sm font-bold uppercase border-b border-gray-100 transition-colors ${!currentMake ? 'text-[var(--jdm-red)]' : 'text-gray-700 hover:text-[var(--jdm-red)]'}`}
+                                >
+                                    Tất cả
+                                </Link>
+                                {BRANDS.map(brand => (
+                                    <Link
+                                        key={brand}
+                                        href={`/?make=${brand.toLowerCase()}`}
+                                        className={`block px-4 py-3 text-sm font-bold uppercase border-b border-gray-100 last:border-0 transition-colors ${currentMake?.toLowerCase() === brand.toLowerCase() ? 'text-[var(--jdm-red)]' : 'text-gray-700 hover:text-[var(--jdm-red)]'}`}
+                                    >
+                                        {brand}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
                     </nav>
+
+                    {/* Search Bar */}
+                    <div className="hidden md:flex items-center flex-1 max-w-md mx-6 relative">
+                        <div className="relative w-full flex items-center">
+                            <Search className="absolute left-3 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        router.push(searchQuery ? `/?q=${encodeURIComponent(searchQuery)}` : '/');
+                                    }
+                                }}
+                                placeholder="Tìm kiếm xe, dòng xe, mã gầm..."
+                                className="w-full pl-10 pr-20 py-2 border border-gray-300 bg-white text-sm focus:outline-none focus:border-[var(--jdm-red)] transition-colors"
+                            />
+                            <div className="absolute right-1 flex items-center gap-1">
+                                <button
+                                    onClick={() => setIsSearchOptionsOpen(!isSearchOptionsOpen)}
+                                    className="p-1.5 hover:bg-gray-100 transition-colors"
+                                    title="Tùy chọn tìm kiếm nâng cao"
+                                >
+                                    <SlidersHorizontal className="w-4 h-4 text-gray-500 hover:text-[var(--jdm-red)]" />
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        router.push(searchQuery ? `/?q=${encodeURIComponent(searchQuery)}` : '/');
+                                    }}
+                                    className="bg-black hover:bg-[var(--jdm-red)] text-white p-1.5 transition-colors"
+                                    title="Tìm kiếm"
+                                >
+                                    <Search className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Search Options Dropdown */}
+                        {isSearchOptionsOpen && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-30"
+                                    onClick={() => setIsSearchOptionsOpen(false)}
+                                />
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 shadow-xl z-40 p-4 max-h-[70vh] overflow-y-auto">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-xs font-bold text-gray-500 uppercase">Bộ lọc thông minh</p>
+                                        {smartFilters && (
+                                            <span className="text-xs text-[var(--jdm-red)] font-bold">
+                                                {smartFilters.count} xe phù hợp
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {isLoading && !smartFilters ? (
+                                        <p className="text-xs text-gray-400 text-center py-4">Đang tải bộ lọc...</p>
+                                    ) : smartFilters?.options ? (
+                                        <div className="space-y-3">
+                                            {/* Price & Year Range Info */}
+                                            {smartFilters.ranges && (
+                                                <div className="bg-gray-50 p-2 text-xs grid grid-cols-2 gap-2">
+                                                    {smartFilters.ranges.price.max > 0 && (
+                                                        <div>
+                                                            <span className="font-bold">Giá: </span>
+                                                            <span className="text-[var(--jdm-red)]">
+                                                                {formatPrice(smartFilters.ranges.price.min)} - {formatPrice(smartFilters.ranges.price.max)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {smartFilters.ranges.year.max > 0 && (
+                                                        <div>
+                                                            <span className="font-bold">Năm: </span>
+                                                            <span className="text-[var(--jdm-red)]">
+                                                                {smartFilters.ranges.year.min} - {smartFilters.ranges.year.max}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* Dynamic filter sections - ordered by importance */}
+                                            {filterOrder.map(category => {
+                                                const options = smartFilters.options[category];
+                                                if (!options || options.length === 0) return null;
+
+                                                return (
+                                                    <div key={category} className="border-t border-gray-100 pt-2">
+                                                        <label className="text-xs font-bold text-[var(--jdm-red)] uppercase">
+                                                            {filterLabels[category]}
+                                                            {selectedFilters[category] && (
+                                                                <span className="ml-2 text-white bg-black px-1">
+                                                                    {selectedFilters[category]}
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                        <div className="mt-1.5 flex flex-wrap gap-1">
+                                                            {options.map((value: string) => (
+                                                                <button
+                                                                    key={value}
+                                                                    onClick={() => selectFilter(category, value)}
+                                                                    className={`px-2 py-1 text-xs font-bold uppercase transition-colors ${selectedFilters[category] === value
+                                                                        ? 'bg-[var(--jdm-red)] text-white'
+                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                                        }`}
+                                                                >
+                                                                    {value}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-gray-400 text-center py-4">Không thể tải bộ lọc</p>
+                                    )}
+
+                                    {/* Selected Filters Summary */}
+                                    {Object.keys(selectedFilters).length > 0 && (
+                                        <div className="border-t border-gray-200 mt-3 pt-3">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="text-xs font-bold text-gray-700 uppercase">
+                                                    Đã chọn ({Object.keys(selectedFilters).length})
+                                                </label>
+                                                <button
+                                                    onClick={clearFilters}
+                                                    className="text-xs text-gray-500 hover:text-[var(--jdm-red)]"
+                                                >
+                                                    Xóa tất cả
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                {Object.entries(selectedFilters).map(([category, value]) => (
+                                                    <span
+                                                        key={category}
+                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-[var(--jdm-red)] text-white"
+                                                    >
+                                                        <span className="opacity-70">{filterLabels[category]}:</span> {value}
+                                                        <button
+                                                            onClick={() => selectFilter(category, value)}
+                                                            className="hover:bg-white/20 rounded-full p-0.5"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Loading overlay */}
+                                    {isLoading && smartFilters && (
+                                        <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                                            <p className="text-xs text-gray-500">Đang cập nhật...</p>
+                                        </div>
+                                    )}
+
+                                    <button
+                                        onClick={performSearch}
+                                        className="w-full mt-3 bg-black hover:bg-[var(--jdm-red)] text-white py-2 text-sm font-bold uppercase tracking-wider transition-colors"
+                                    >
+                                        Tìm kiếm {smartFilters?.count ? `(${smartFilters.count} kết quả)` : ''}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
 
                     {/* User / Login */}
                     <div className="hidden md:flex items-center space-x-4">
@@ -167,6 +450,28 @@ export default function Header() {
             {isMenuOpen && (
                 <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-gray-200">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                        <div className="border-b border-gray-200 pb-2 mb-2">
+                            <p className="px-3 py-2 text-sm font-black text-[var(--jdm-red)] uppercase tracking-wider">Hãng xe</p>
+                            <div className="grid grid-cols-2 gap-1 px-3">
+                                <Link
+                                    href="/"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className={`block p-2 text-sm font-bold uppercase ${!currentMake ? 'text-[var(--jdm-red)]' : 'text-gray-800 hover:text-[var(--jdm-red)]'}`}
+                                >
+                                    Tất cả
+                                </Link>
+                                {BRANDS.map(brand => (
+                                    <Link
+                                        key={brand}
+                                        href={`/?make=${brand.toLowerCase()}`}
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className={`block p-2 text-sm font-bold uppercase ${currentMake?.toLowerCase() === brand.toLowerCase() ? 'text-[var(--jdm-red)]' : 'text-gray-800 hover:text-[var(--jdm-red)]'}`}
+                                    >
+                                        {brand}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
 
                         {user ? (
                             <div className="border-t border-gray-200 mt-4 pt-4 px-3">
