@@ -108,9 +108,9 @@ export default function CarDetail({ car }: CarDetailProps) {
 
         const categories = [
             { key: 'engine', label: 'Máy móc & Hiệu suất', icon: Hammer, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
-            { key: 'footwork', label: 'Gầm & Bánh', icon: Disc, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-100' },
-            { key: 'exterior', label: 'Ngoại thất', icon: Box, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-            { key: 'interior', label: 'Nội thất', icon: Armchair, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
+            { key: 'footwork', label: 'Gầm & Bánh', icon: Disc, color: 'text-gray-800', bg: 'bg-gray-50', border: 'border-gray-200' },
+            { key: 'exterior', label: 'Ngoại thất', icon: Box, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
+            { key: 'interior', label: 'Nội thất', icon: Armchair, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
         ];
 
         return (
@@ -119,7 +119,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                     const items = parsedMods[cat.key];
                     if (!items || items.length === 0) return null;
                     return (
-                        <div key={cat.key} className={`rounded-xl border ${cat.border} ${cat.bg} p-4`}>
+                        <div key={cat.key} className={`rounded-none border ${cat.border} ${cat.bg} p-4`}>
                             <h4 className={`font-bold flex items-center gap-2 mb-3 ${cat.color}`}>
                                 <cat.icon className="w-5 h-5" /> {cat.label}
                             </h4>
@@ -195,7 +195,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                         <div
                                             key={idx}
                                             onClick={() => openLightbox(idx)}
-                                            className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${idx === 0 ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-transparent hover:border-gray-300'}`}
+                                            className={`relative aspect-square rounded-none overflow-hidden cursor-pointer border-2 transition-all ${idx === 0 ? 'border-[var(--jdm-red)] ring-2 ring-red-500/20' : 'border-transparent hover:border-gray-300'}`}
                                         >
                                             <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
                                             {idx === 5 && images.length > 6 && (
@@ -210,7 +210,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                         </div>
 
                         {/* Title & Key Specs Mobile */}
-                        <div className="lg:hidden bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <div className="lg:hidden bg-white p-6 rounded-none shadow-sm border border-gray-100">
                             <h1 className="text-2xl font-black text-black mb-2 uppercase italic">{car.year} {car.make} {car.model} {car.trim}</h1>
                             <p className="text-3xl font-black text-[var(--jdm-red)] mb-4">{formatMoney(Number(car.price))}
                                 {car.isNegotiable && <span className="text-sm font-medium text-gray-500 ml-2">(Có thương lượng)</span>}
@@ -218,9 +218,9 @@ export default function CarDetail({ car }: CarDetailProps) {
                         </div>
 
                         {/* Thông số Kỹ thuật */}
-                        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                        <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
                             <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                <Gauge className="w-6 h-6 text-violet-600" /> Thông số Kỹ thuật
+                                <Gauge className="w-6 h-6 text-[var(--jdm-red)]" /> Thông số Kỹ thuật
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                 <div className="space-y-1">
@@ -252,18 +252,18 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Mod List */}
                         {car.mods && (
-                            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
                                 <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                    <Box className="w-6 h-6 text-violet-600" /> Danh sách Đồ chơi
+                                    <Box className="w-6 h-6 text-[var(--jdm-red)]" /> Danh sách Đồ chơi
                                 </h3>
                                 {renderMods(car.mods)}
                             </div>
                         )}
 
                         {/* Description */}
-                        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                        <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
                             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <FileText className="w-6 h-6 text-violet-600" /> Mô tả chi tiết
+                                <FileText className="w-6 h-6 text-[var(--jdm-red)]" /> Mô tả chi tiết
                             </h3>
                             <div className="prose prose-gray max-w-none text-gray-600 whitespace-pre-line leading-relaxed">
                                 {car.description}
@@ -278,8 +278,8 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Video Link */}
                         {car.videoLink && (
-                            <div className="bg-black text-white p-6 md:p-8 rounded-3xl shadow-lg shadow-gray-200 uppercase tracking-wider relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-indigo-600 opacity-20 group-hover:opacity-30 transition-opacity" />
+                            <div className="bg-black text-white p-6 md:p-8 rounded-none shadow-lg shadow-gray-200 uppercase tracking-wider relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black opacity-90 group-hover:opacity-100 transition-opacity" />
                                 <h3 className="text-xl font-bold flex items-center gap-2 mb-4 relative z-10">
                                     <Youtube className="w-6 h-6 text-red-500" /> Video xe
                                 </h3>
@@ -287,7 +287,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     href={car.videoLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-full font-bold hover:scale-105 transition-transform relative z-10"
+                                    className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-none font-bold hover:scale-105 transition-transform relative z-10"
                                 >
                                     <PlayCircle className="w-5 h-5" /> Xem Video Ngay
                                 </a>
@@ -295,32 +295,32 @@ export default function CarDetail({ car }: CarDetailProps) {
                         )}
 
                         {/* Legal Info */}
-                        <div className="bg-blue-50 p-6 md:p-8 rounded-3xl border border-blue-100">
-                            <h3 className="text-xl font-bold text-blue-900 mb-4 flex items-center gap-2">
-                                <ShieldCheck className="w-6 h-6 text-blue-600" /> Pháp lý & Giấy tờ
+                        <div className="bg-gray-50 p-6 md:p-8 rounded-none border border-gray-100">
+                            <h3 className="text-xl font-bold text-black mb-4 flex items-center gap-2">
+                                <ShieldCheck className="w-6 h-6 text-[var(--jdm-red)]" /> Pháp lý & Giấy tờ
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                                    <div className="w-10 h-10 rounded-none bg-white flex items-center justify-center text-black shadow-sm border border-gray-100">
                                         <FileText className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-blue-600 font-bold uppercase">Loại giấy tờ</p>
+                                        <p className="text-xs text-black font-bold uppercase">Loại giấy tờ</p>
                                         <p className="font-bold text-gray-900">{getPaperworkText(car.paperwork)}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                                    <div className="w-10 h-10 rounded-none bg-white flex items-center justify-center text-black shadow-sm border border-gray-100">
                                         <Calendar className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="text-xs text-blue-600 font-bold uppercase">Hạn đăng kiểm</p>
+                                        <p className="text-xs text-black font-bold uppercase">Hạn đăng kiểm</p>
                                         <p className="font-bold text-gray-900">{car.registryExpiry ? new Date(car.registryExpiry).toLocaleDateString('vi-VN') : '---'}</p>
                                     </div>
                                 </div>
                                 {car.plateNumber && car.plateNumber !== 'Hidden' && (
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                                        <div className="w-10 h-10 rounded-none bg-white flex items-center justify-center text-blue-600 shadow-sm">
                                             <Car className="w-5 h-5" />
                                         </div>
                                         <div>
@@ -334,14 +334,14 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Edit History - Public section */}
                         {car.editHistory && car.editHistory.length > 0 && (
-                            <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
+                            <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
                                 <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                    <History className="w-6 h-6 text-violet-600" /> Lịch sử chỉnh sửa
+                                    <History className="w-6 h-6 text-[var(--jdm-red)]" /> Lịch sử chỉnh sửa
                                 </h3>
                                 <div className="space-y-3">
                                     {[...car.editHistory].reverse().map((date: string, idx: number) => (
                                         <div key={idx} className="flex items-center gap-3 text-sm">
-                                            <span className="w-2 h-2 rounded-full bg-violet-400 flex-shrink-0" />
+                                            <span className="w-2 h-2 rounded-none bg-[var(--jdm-red)] flex-shrink-0" />
                                             <span className="text-gray-600">{formatDate(date)}</span>
                                         </div>
                                     ))}
@@ -366,7 +366,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Giá bán</p>
                                     <p className="text-4xl font-black text-[var(--jdm-red)] tracking-tight">{formatMoney(Number(car.price))}</p>
                                     {car.isNegotiable && (
-                                        <div className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                                        <div className="inline-flex items-center gap-1 mt-2 text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-none border border-emerald-100">
                                             <CheckCircle2 className="w-4 h-4" /> Có thương lượng
                                         </div>
                                     )}
@@ -381,29 +381,29 @@ export default function CarDetail({ car }: CarDetailProps) {
                                                     <Phone className="w-5 h-5" /> Liên hệ: {car.phoneNumber}
                                                 </a>
                                             ) : (
-                                                <button disabled className="w-full bg-gray-300 text-white font-bold py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
+                                                <button disabled className="w-full bg-gray-300 text-white font-bold py-4 rounded-none cursor-not-allowed flex items-center justify-center gap-2">
                                                     <Phone className="w-5 h-5" /> Không có SĐT
                                                 </button>
                                             )}
 
                                             {car.facebookLink ? (
-                                                <a href={car.facebookLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1877F2] text-white font-bold py-4 rounded-xl hover:bg-[#166fe5] transition-all flex items-center justify-center gap-2">
+                                                <a href={car.facebookLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1877F2] text-white font-bold py-4 rounded-none hover:bg-[#166fe5] transition-all flex items-center justify-center gap-2">
                                                     <Facebook className="w-5 h-5" /> Nhắn tin Facebook
                                                 </a>
                                             ) : (
-                                                <button className="w-full bg-white text-gray-900 font-bold py-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+                                                <button className="w-full bg-white text-gray-900 font-bold py-4 rounded-none border border-gray-200 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
                                                     <MessageCircle className="w-5 h-5" /> Chat ngay
                                                 </button>
                                             )}
 
                                             {car.zaloLink && (
-                                                <a href={car.zaloLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#0068FF] text-white font-bold py-4 rounded-xl hover:bg-[#0058D6] transition-all flex items-center justify-center gap-2">
+                                                <a href={car.zaloLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#0068FF] text-white font-bold py-4 rounded-none hover:bg-[#0058D6] transition-all flex items-center justify-center gap-2">
                                                     <MessageCircle className="w-5 h-5" /> Nhắn tin Zalo
                                                 </a>
                                             )}
                                         </>
                                     ) : (
-                                        <div className="w-full bg-gray-100 text-gray-500 font-bold py-4 rounded-xl cursor-not-allowed flex items-center justify-center gap-2 border border-gray-200">
+                                        <div className="w-full bg-gray-100 text-gray-500 font-bold py-4 rounded-none cursor-not-allowed flex items-center justify-center gap-2 border border-gray-200">
                                             <ShieldCheck className="w-5 h-5" /> Đã bán - Ngừng giao dịch
                                         </div>
                                     )}
@@ -448,7 +448,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                                         }
                                                     }
                                                 }}
-                                                className={`flex-shrink-0 font-bold px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
+                                                className={`flex-shrink-0 font-bold px-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
                                                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                                     : 'bg-red-600 text-white hover:bg-red-700'
                                                     }`}
@@ -464,7 +464,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                             {/* Seller Info */}
                             <Link href={car.seller?.id ? `/seller/${car.seller.id}` : '#'} className="block bg-white p-6 rounded-none shadow-sm border border-gray-100 hover:border-[var(--jdm-red)] hover:shadow-md transition-all group cursor-pointer">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-14 h-14 rounded-full bg-black flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-white">
+                                    <div className="w-14 h-14 rounded-none bg-black flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-white">
                                         {car.seller?.name?.[0] || car.seller?.email?.[0]?.toUpperCase() || <User className="w-6 h-6" />}
                                     </div>
                                     <div className="flex-1">
@@ -473,7 +473,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                             <ShieldCheck className="w-3 h-3 text-emerald-500" /> Xác thực
                                         </p>
                                     </div>
-                                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-violet-500 transition-colors" />
+                                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[var(--jdm-red)] transition-colors" />
                                 </div>
                                 <div className="flex items-center justify-between text-sm py-3 border-t border-gray-100">
                                     <span className="text-gray-500">Tham gia</span>
