@@ -82,6 +82,10 @@ export class CreateCarDto {
     @IsOptional()
     registryExpiry?: string;
 
+    @IsBoolean()
+    @IsOptional()
+    noRegistry?: boolean;
+
     @IsString()
     @IsOptional()
     plateNumber?: string;
@@ -188,6 +192,10 @@ export class UpdateCarDto {
     @IsOptional()
     @IsString()
     registryExpiry?: string;
+
+    @IsOptional()
+    @IsBoolean()
+    noRegistry?: boolean;
 
     @IsOptional()
     @IsString()

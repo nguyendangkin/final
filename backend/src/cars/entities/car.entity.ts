@@ -82,6 +82,9 @@ export class Car {
     @Column({ nullable: true })
     registryExpiry: string; // Added this field
 
+    @Column({ default: false })
+    noRegistry: boolean; // Flag for "Không đăng kiểm được"
+
     @Column({ nullable: true })
     plateNumber: string;
 

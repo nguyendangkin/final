@@ -62,41 +62,14 @@ export default function CarDetail({ car }: CarDetailProps) {
         });
     };
 
-    // Mappings for localization
-    const transmissionMap: Record<string, string> = {
-        'MT': 'Số sàn',
-        'AT': 'Số tự động',
-        'CVT': 'Số CVT',
-    };
+    // Mappings are no longer needed since sell page now stores full display text directly.
+    // Data from server should be displayed as-is.
 
-    const drivetrainMap: Record<string, string> = {
-        'FWD': 'Cầu trước',
-        'RWD': 'Cầu sau',
-        'AWD': '4 bánh',
-    };
-
-    const conditionMap: Record<string, string> = {
-        'Stock': 'Zin',
-        'Zin': 'Zin',
-        'Lightly Modded': 'Độ nhẹ',
-        'Heavily Modded': 'Độ nặng',
-        'Track/Drift Build': 'Xe đua/Drift',
-        'Restored': 'Đã dọn',
-        'Restored Modded': 'Dọn kiểng',
-    };
-
-    const paperworkMap: Record<string, string> = {
-        'Legal': 'SANG TÊN ĐƯỢC (Hợp pháp - Mua là an toàn)',
-        'Illegal': 'KHÔNG SANG TÊN ĐƯỢC (Bất hợp pháp - Mua là ôm rủi ro)',
-        'MBC': 'Mẹ bồng con',
-        'GTHL': 'Giấy tờ hợp lệ',
-        'HQCN': 'Hải quan chính ngạch',
-    };
-
-    // Normalize paperwork value if needed or just use direct mapping
-    const getPaperworkText = (val: string) => {
-        if (!val) return 'Đang cập nhật';
-        return paperworkMap[val] || val;
+    // Helper for registry expiry display
+    const getRegistryExpiryText = () => {
+        if (car.noRegistry) return 'KHÔNG ĐĂNG KIỂM ĐƯỢC';
+        if (car.registryExpiry) return car.registryExpiry;
+        return '---';
     };
 
 
@@ -176,7 +149,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 </div>
                                 <div className="absolute top-4 left-4">
                                     <span className="bg-[var(--jdm-red)] backdrop-blur text-white px-3 py-1 rounded-none text-xs font-bold uppercase tracking-wider shadow-sm">
-                                        {conditionMap[car.condition] || car.condition || 'Đã qua sử dụng'}
+                                        {car.condition || 'Đã qua sử dụng'}
                                     </span>
                                 </div>
                                 {car.status === 'SOLD' && (
@@ -233,11 +206,11 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Hộp số</p>
-                                    <p className="font-bold text-gray-900 text-lg">{transmissionMap[car.transmission] || car.transmission || 'MT'}</p>
+                                    <p className="font-bold text-gray-900 text-lg">{car.transmission || '---'}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Hệ dẫn động</p>
-                                    <p className="font-bold text-gray-900 text-lg">{drivetrainMap[car.drivetrain] || car.drivetrain || 'RWD'}</p>
+                                    <p className="font-bold text-gray-900 text-lg">{car.drivetrain || '---'}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Odo</p>
@@ -306,7 +279,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     </div>
                                     <div>
                                         <p className="text-xs text-black font-bold uppercase">Loại giấy tờ</p>
-                                        <p className="font-bold text-gray-900">{getPaperworkText(car.paperwork)}</p>
+                                        <p className="font-bold text-gray-900">{car.paperwork || 'Đang cập nhật'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -315,7 +288,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     </div>
                                     <div>
                                         <p className="text-xs text-black font-bold uppercase">Hạn đăng kiểm</p>
-                                        <p className="font-bold text-gray-900">{car.registryExpiry ? new Date(car.registryExpiry).toLocaleDateString('vi-VN') : '---'}</p>
+                                        <p className="font-bold text-gray-900">{getRegistryExpiryText()}</p>
                                     </div>
                                 </div>
                                 {car.plateNumber && car.plateNumber !== 'Hidden' && (

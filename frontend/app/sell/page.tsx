@@ -190,6 +190,7 @@ export default function SellPage() {
             paperwork: data.paperwork,
             plateNumber: data.hidePlate ? 'Hidden' : data.plateNumber,
             registryExpiry: data.registryExpiry?.toString(), // Ensure string
+            noRegistry: data.noRegistry, // Send the noRegistry flag
 
             // Contact
             phoneNumber: data.phoneNumber,
