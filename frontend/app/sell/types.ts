@@ -12,15 +12,16 @@ export interface CarSpecs {
     // Step 2: The Soul
     chassisCode: string; // e.g., S15, EK9
     engineCode: string; // e.g., SR20DET, B16B
-    transmission: 'MT' | 'AT' | 'CVT' | '';
-    drivetrain: 'FWD' | 'RWD' | 'AWD' | '';
-    condition: 'Stock' | 'Zin' | 'Lightly Modded' | 'Heavily Modded' | 'Track/Drift Build' | 'Restored' | 'Restored Modded' | '';
+    transmission: string; // e.g., "Số sàn (MT)", "Tự động (AT)", "CVT"
+    drivetrain: string;   // e.g., "FWD (Trước)", "RWD (Sau)", "AWD (2 cầu)"
+    condition: string;    // e.g., "Zin", "Độ nhẹ", "Độ khủng", etc.
 
     // Step 3: Legal
-    paperwork: 'Legal' | 'Illegal' | '';
+    paperwork: string;    // e.g., "Sang tên được", "Không sang tên được"
     registryExpiry?: string; // Date string
     plateNumber?: string;
     hidePlate: boolean;
+    noRegistry: boolean;
 
     // Step 4: Mods
     mods: {
@@ -59,6 +60,7 @@ export const initialCarSpecs: CarSpecs = {
     condition: '',
     paperwork: '',
     hidePlate: true,
+    noRegistry: false,
     mods: {
         exterior: [],
         interior: [],

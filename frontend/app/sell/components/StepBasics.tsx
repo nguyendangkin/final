@@ -25,8 +25,10 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
 
     const priceInputRef = useRef<HTMLInputElement>(null);
     const cursorPositionRef = useRef<number | null>(null);
+    const odoInputRef = useRef<HTMLInputElement>(null);
+    const odoCursorPositionRef = useRef<number | null>(null);
 
-    const formatPrice = (value: number) => {
+    const formatNumber = (value: number) => {
         if (!value) return '';
         return new Intl.NumberFormat('vi-VN').format(value);
     };
@@ -38,15 +40,10 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         const rawValue = oldValue.replace(/\./g, '');
 
         if (!isNaN(Number(rawValue))) {
-            // Count dots before cursor in old value
             const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
-            // Calculate raw cursor position (without dots)
             const rawCursorPos = cursorPos - dotsBeforeCursor;
+            const newFormatted = formatNumber(Number(rawValue));
 
-            // Format new value
-            const newFormatted = formatPrice(Number(rawValue));
-
-            // Count dots before raw cursor position in new formatted value
             let newCursorPos = 0;
             let rawCount = 0;
             for (let i = 0; i < newFormatted.length && rawCount < rawCursorPos; i++) {
@@ -61,7 +58,32 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         }
     };
 
-    // Restore cursor position after render
+    const handleOdoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.target;
+        const cursorPos = input.selectionStart || 0;
+        const oldValue = input.value;
+        const rawValue = oldValue.replace(/\./g, '');
+
+        if (!isNaN(Number(rawValue))) {
+            const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
+            const rawCursorPos = cursorPos - dotsBeforeCursor;
+            const newFormatted = formatNumber(Number(rawValue));
+
+            let newCursorPos = 0;
+            let rawCount = 0;
+            for (let i = 0; i < newFormatted.length && rawCount < rawCursorPos; i++) {
+                newCursorPos++;
+                if (newFormatted[i] !== '.') {
+                    rawCount++;
+                }
+            }
+
+            odoCursorPositionRef.current = newCursorPos;
+            updateData({ odo: Number(rawValue) });
+        }
+    };
+
+    // Restore cursor position for Price
     useEffect(() => {
         if (cursorPositionRef.current !== null && priceInputRef.current) {
             priceInputRef.current.setSelectionRange(cursorPositionRef.current, cursorPositionRef.current);
@@ -69,14 +91,22 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         }
     }, [data.price]);
 
+    // Restore cursor position for Odo
+    useEffect(() => {
+        if (odoCursorPositionRef.current !== null && odoInputRef.current) {
+            odoInputRef.current.setSelectionRange(odoCursorPositionRef.current, odoCursorPositionRef.current);
+            odoCursorPositionRef.current = null;
+        }
+    }, [data.odo]);
+
     const inputClass = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
 
     const inputClassWithIcon = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
 
     const inputClassWithIconAndSuffix = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 pr-16 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 pr-16 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none uppercase`;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -108,7 +138,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         <input
                             type="text"
                             value={data.model}
-                            onChange={(e) => updateData({ model: e.target.value })}
+                            onChange={(e) => updateData({ model: e.target.value.toUpperCase() })}
                             placeholder="Ví dụ: Civic, Supra..."
                             className={inputClassWithIcon('model')}
                         />
@@ -139,7 +169,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                     <input
                         type="text"
                         value={data.trim}
-                        onChange={(e) => updateData({ trim: e.target.value })}
+                        onChange={(e) => updateData({ trim: e.target.value.toUpperCase() })}
                         placeholder="Ví dụ: Type R, Spec-R..."
                         className={inputClass('trim')}
                     />
@@ -165,7 +195,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         <input
                             ref={priceInputRef}
                             type="text"
-                            value={formatPrice(data.price)}
+                            value={formatNumber(data.price)}
                             onChange={handlePriceChange}
                             placeholder="Nhập giá bán (VND)"
                             className={inputClassWithIcon('price')}
@@ -182,7 +212,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                     <input
                         type="text"
                         value={data.location}
-                        onChange={(e) => updateData({ location: e.target.value })}
+                        onChange={(e) => updateData({ location: e.target.value.toUpperCase() })}
                         placeholder="Ví dụ: TP.HCM, Hà Nội..."
                         className={inputClass('location')}
                     />
@@ -194,9 +224,10 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                     <label className="text-sm font-medium text-gray-600">Số ODO hiện tại (km) <span className="text-red-500">*</span></label>
                     <div className="relative">
                         <input
-                            type="number"
-                            value={data.odo || ''}
-                            onChange={(e) => updateData({ odo: parseInt(e.target.value) || 0 })}
+                            ref={odoInputRef}
+                            type="text"
+                            value={formatNumber(data.odo || 0)}
+                            onChange={handleOdoChange}
                             placeholder="0"
                             className={inputClassWithIconAndSuffix('odo')}
                         />

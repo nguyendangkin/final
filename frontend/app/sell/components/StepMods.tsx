@@ -28,7 +28,7 @@ const ModSection = ({
         if (e.key === 'Enter') {
             e.preventDefault();
             if (input.trim()) {
-                onAdd(input.trim());
+                onAdd(input.trim().toUpperCase());
                 setInput('');
             }
         }
@@ -36,7 +36,7 @@ const ModSection = ({
 
     const handleAdd = () => {
         if (input.trim()) {
-            onAdd(input.trim());
+            onAdd(input.trim().toUpperCase());
             setInput('');
         }
     }
@@ -56,7 +56,7 @@ const ModSection = ({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
-                    className="flex-1 bg-gray-50 border border-gray-200 text-black rounded-none px-4 py-3 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400"
+                    className="flex-1 bg-gray-50 border border-gray-200 text-black rounded-none px-4 py-3 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400 uppercase"
                 />
                 <button
                     onClick={handleAdd}

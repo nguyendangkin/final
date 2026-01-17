@@ -24,7 +24,7 @@ const ENGINE_SUGGESTIONS = [
 
 export default function StepSoul({ data, updateData, errors = {} }: StepSoulProps) {
     const inputClassWithIcon = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400`;
+        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -69,17 +69,21 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                         <Activity className="w-4 h-4" /> Hộp số <span className="text-red-500">*</span>
                     </label>
                     <div className={`flex bg-gray-100 p-1 rounded-none border ${errors.transmission ? 'border-[var(--jdm-red)]' : 'border-gray-200'}`}>
-                        {['MT', 'AT', 'CVT'].map((type) => (
+                        {[
+                            { val: 'SỐ SÀN (MT)', label: 'SỐ SÀN (MT)' },
+                            { val: 'TỰ ĐỘNG (AT)', label: 'TỰ ĐỘNG (AT)' },
+                            { val: 'CVT', label: 'CVT' }
+                        ].map((item) => (
                             <button
-                                key={type}
+                                key={item.val}
                                 type="button"
-                                onClick={() => updateData({ transmission: type as any })}
-                                className={`flex-1 py-3 rounded-none text-sm font-bold uppercase tracking-wide transition-all ${data.transmission === type
+                                onClick={() => updateData({ transmission: item.val })}
+                                className={`flex-1 py-3 rounded-none text-sm font-bold uppercase tracking-wide transition-all ${data.transmission === item.val
                                     ? 'bg-black text-white shadow-md border border-black'
                                     : 'text-gray-500 hover:text-black hover:bg-gray-200'
                                     }`}
                             >
-                                {type === 'MT' ? 'Số sàn (MT)' : type === 'AT' ? 'Tự động (AT)' : 'CVT'}
+                                {item.label}
                             </button>
                         ))}
                     </div>
@@ -92,17 +96,21 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                         <Zap className="w-4 h-4" /> Hệ dẫn động <span className="text-red-500">*</span>
                     </label>
                     <div className={`flex bg-gray-100 p-1 rounded-none border ${errors.drivetrain ? 'border-[var(--jdm-red)]' : 'border-gray-200'}`}>
-                        {['FWD', 'RWD', 'AWD'].map((type) => (
+                        {[
+                            { val: 'FWD (TRƯỚC)', label: 'FWD (TRƯỚC)' },
+                            { val: 'RWD (SAU)', label: 'RWD (SAU)' },
+                            { val: 'AWD (2 CẦU)', label: 'AWD (2 CẦU)' }
+                        ].map((item) => (
                             <button
-                                key={type}
+                                key={item.val}
                                 type="button"
-                                onClick={() => updateData({ drivetrain: type as any })}
-                                className={`flex-1 py-3 rounded-none text-sm font-bold uppercase tracking-wide transition-all ${data.drivetrain === type
+                                onClick={() => updateData({ drivetrain: item.val })}
+                                className={`flex-1 py-3 rounded-none text-sm font-bold uppercase tracking-wide transition-all ${data.drivetrain === item.val
                                     ? 'bg-black text-white shadow-md border border-black'
                                     : 'text-gray-500 hover:text-black hover:bg-gray-200'
                                     }`}
                             >
-                                {type}
+                                {item.label}
                             </button>
                         ))}
                     </div>
@@ -117,17 +125,17 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                 </label>
                 <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 ${errors.condition ? 'ring-2 ring-[var(--jdm-red)] rounded-none p-2' : ''}`}>
                     {[
-                        { val: 'Zin', label: 'Zin' },
-                        { val: 'Lightly Modded', label: 'Độ nhẹ' },
-                        { val: 'Heavily Modded', label: 'Độ khủng' },
-                        { val: 'Track/Drift Build', label: 'Track/Drift' },
-                        { val: 'Restored', label: 'Đã dọn zin' },
-                        { val: 'Restored Modded', label: 'Đã dọn độ' }
+                        { val: 'ZIN', label: 'ZIN' },
+                        { val: 'ĐỘ NHẸ', label: 'ĐỘ NHẸ' },
+                        { val: 'ĐỘ KHỦNG', label: 'ĐỘ KHỦNG' },
+                        { val: 'TRACK/DRIFT', label: 'TRACK/DRIFT' },
+                        { val: 'VỪA DỌN VỀ ZIN', label: 'VỪA DỌN VỀ ZIN' },
+                        { val: 'VỪA DỌN VÀ ĐỘ', label: 'VỪA DỌN VÀ ĐỘ' }
                     ].map((item) => (
                         <button
                             key={item.val}
                             type="button"
-                            onClick={() => updateData({ condition: item.val as any })}
+                            onClick={() => updateData({ condition: item.val })}
                             className={`py-3 px-4 rounded-none border text-sm font-bold uppercase tracking-wide transition-all text-center ${data.condition === item.val
                                 ? 'bg-[var(--jdm-red)] border-[var(--jdm-red)] text-white'
                                 : 'bg-white border-gray-200 text-gray-500 hover:border-black hover:text-black'

@@ -29,11 +29,11 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                         <select
                             value={data.paperwork}
                             onChange={(e) => updateData({ paperwork: e.target.value as any })}
-                            className={`w-full bg-white border ${errors.paperwork ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none appearance-none transition-all hover:bg-gray-50 hover:border-gray-400`}
+                            className={`w-full bg-white border ${errors.paperwork ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none appearance-none transition-all hover:bg-gray-50 hover:border-gray-400 uppercase`}
                         >
-                            <option value="">-- Chọn loại giấy tờ --</option>
-                            <option value="Legal">SANG TÊN ĐƯỢC (Hợp pháp - Mua là an toàn)</option>
-                            <option value="Illegal">KHÔNG SANG TÊN ĐƯỢC (Bất hợp pháp - Mua là ôm rủi ro)</option>
+                            <option value="">-- CHỌN LOẠI GIẤY TỜ --</option>
+                            <option value="SANG TÊN ĐƯỢC">SANG TÊN ĐƯỢC</option>
+                            <option value="KHÔNG SANG TÊN ĐƯỢC">KHÔNG SANG TÊN ĐƯỢC</option>
                         </select>
                         <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
@@ -44,16 +44,39 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Registry Expiry */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-600">Hạn đăng kiểm</label>
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-medium text-gray-600">Hạn đăng kiểm <span className="text-red-500">*</span></label>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="noRegistry"
+                                    checked={data.noRegistry}
+                                    onChange={(e) => {
+                                        const isChecked = e.target.checked;
+                                        updateData({
+                                            noRegistry: isChecked,
+                                            registryExpiry: isChecked ? '' : data.registryExpiry
+                                        });
+                                    }}
+                                    className="w-4 h-4 rounded-none border-gray-300 text-black focus:ring-black"
+                                />
+                                <label htmlFor="noRegistry" className="text-xs text-gray-500 cursor-pointer select-none">
+                                    Không đăng kiểm được
+                                </label>
+                            </div>
+                        </div>
                         <div className="relative">
                             <input
-                                type="date"
+                                type="text"
+                                disabled={data.noRegistry}
                                 value={data.registryExpiry || ''}
                                 onChange={(e) => updateData({ registryExpiry: e.target.value })}
-                                className="w-full bg-white border border-gray-300 text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400"
+                                placeholder={data.noRegistry ? "Xe không có đăng kiểm" : "MM/YYYY"}
+                                className={`w-full bg-white border ${errors.registryExpiry ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 uppercase disabled:bg-gray-100 disabled:text-gray-400`}
                             />
                             <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         </div>
+                        {errors.registryExpiry && <p className="text-red-500 text-xs mt-1">{errors.registryExpiry}</p>}
                     </div>
                 </div>
             </div>

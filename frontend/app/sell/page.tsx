@@ -8,7 +8,7 @@ import StepSoul from './components/StepSoul';
 import StepLegal from './components/StepLegal';
 import StepMods from './components/StepMods';
 import StepMedia from './components/StepMedia';
-import PreviewCard from './components/PreviewCard';
+
 import { ChevronRight, ChevronLeft, Save, Trash2, CheckCircle2 } from 'lucide-react';
 
 const STEPS = [
@@ -113,6 +113,7 @@ export default function SellPage() {
                 break;
             case 3: // Pháp lý
                 if (!data.paperwork) errs.paperwork = 'Vui lòng chọn loại giấy tờ';
+                if (!data.noRegistry && !data.registryExpiry?.trim()) errs.registryExpiry = 'Vui lòng nhập hạn đăng kiểm hoặc chọn "Không đăng kiểm được"';
                 break;
             case 5: // Thông tin chi tiết
                 if (!data.thumbnail) errs.thumbnail = 'Vui lòng tải lên ảnh đại diện';
@@ -331,46 +332,7 @@ export default function SellPage() {
                     </div>
                 </div>
 
-                {/* BOTTOM SECTION: Preview & Tips */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-200">
 
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-4 uppercase tracking-wider flex items-center gap-2">
-                            <CheckCircle2 className="w-5 h-5 text-[var(--jdm-red)]" />
-                            Xem trước bài đăng
-                        </h3>
-                        <PreviewCard data={data} />
-                    </div>
-
-                    <div>
-                        <div className="bg-white p-6 rounded-none border border-gray-200 text-sm md:text-base shadow-lg shadow-gray-100 h-full">
-                            <h4 className="font-bold text-gray-900 mb-4 uppercase text-xs tracking-wider border-b border-gray-100 pb-2">
-                                Mẹo giúp bán nhanh
-                            </h4>
-                            <ul className="space-y-4 text-gray-600">
-                                <li className="flex gap-3">
-                                    <span className="text-[var(--jdm-red)] font-bold text-lg leading-none">•</span>
-                                    <span>
-                                        <strong>Giá cả linh hoạt:</strong> Chọn "Thương lượng" để thu hút nhiều người quan tâm hơn, thay vì để giá cứng.
-                                    </span>
-                                </li>
-                                <li className="flex gap-3">
-                                    <span className="text-[var(--jdm-red)] font-bold text-lg leading-none">•</span>
-                                    <span>
-                                        <strong>Chi tiết Mods:</strong> Cộng đồng JDM rất soi đồ chơi. Hãy liệt kê chi tiết từng món hàng hiệu bạn đã lên.
-                                    </span>
-                                </li>
-                                <li className="flex gap-3">
-                                    <span className="text-[var(--jdm-red)] font-bold text-lg leading-none">•</span>
-                                    <span>
-                                        <strong>Video Sound Check:</strong> Tiếng pô là linh hồn của xe. Một video ngắn sẽ tăng độ uy tín lên gấp đôi.
-                                    </span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                </div>
 
             </div>
         </div>
