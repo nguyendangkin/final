@@ -23,15 +23,7 @@ export default function CarCard({ car }: CarCardProps) {
         'Restored Modded': 'DỌN KIỂNG',
     };
 
-    // Paperwork short badge
-    const getPaperworkBadge = (val: string) => {
-        if (val === 'Legal' || val === 'HQCN') return { text: 'HQCN', color: 'bg-emerald-600' };
-        if (val === 'MBC') return { text: 'MBC', color: 'bg-yellow-600' };
-        if (val === 'Illegal' || val === 'NoPaper') return { text: 'NO PP', color: 'bg-red-600' };
-        return { text: 'GTHL', color: 'bg-blue-600' };
-    };
 
-    const paperworkInfo = getPaperworkBadge(car.paperwork);
 
     return (
         <Link href={`/cars/${car.id}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-[var(--jdm-red)] h-full flex flex-col">
@@ -86,9 +78,11 @@ export default function CarCard({ car }: CarCardProps) {
 
                 {/* Paperwork Badge */}
                 <div className="absolute top-3 right-3">
-                    <span className={`${paperworkInfo.color} text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-md`}>
-                        {paperworkInfo.text}
-                    </span>
+                    {car.paperwork && (
+                        <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-md">
+                            {car.paperwork}
+                        </span>
+                    )}
                 </div>
             </div>
 
