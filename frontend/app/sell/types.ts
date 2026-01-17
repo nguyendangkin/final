@@ -17,7 +17,7 @@ export interface CarSpecs {
     condition: string;    // e.g., "Zin", "Độ nhẹ", "Độ khủng", etc.
 
     // Step 3: Legal
-    paperwork: string;    // e.g., "Sang tên được", "Không sang tên được"
+    paperwork: string;    // e.g., "CHÍNH CHỦ", "KHÔNG CHÍNH CHỦ"
     registryExpiry?: string; // Date string
     plateNumber?: string;
     hidePlate: boolean;

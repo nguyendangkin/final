@@ -279,7 +279,14 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     </div>
                                     <div>
                                         <p className="text-xs text-black font-bold uppercase">Loại giấy tờ</p>
-                                        <p className="font-medium text-gray-900 text-sm">{car.paperwork || 'Đang cập nhật'}</p>
+                                        <p className="font-medium text-gray-900 text-sm">
+                                            {{
+                                                'SANG TÊN ĐƯỢC': 'CHÍNH CHỦ',
+                                                'KHÔNG SANG TÊN ĐƯỢC': 'KHÔNG CHÍNH CHỦ',
+                                                'CHÍNH CHỦ': 'CHÍNH CHỦ',
+                                                'KHÔNG CHÍNH CHỦ': 'KHÔNG CHÍNH CHỦ'
+                                            }[car.paperwork as string] || car.paperwork || 'Đang cập nhật'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">

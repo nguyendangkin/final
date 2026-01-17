@@ -47,8 +47,8 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                             className={`w-full bg-white border ${errors.paperwork ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none appearance-none transition-all hover:bg-gray-50 hover:border-gray-400 uppercase`}
                         >
                             <option value="">-- CHỌN LOẠI GIẤY TỜ --</option>
-                            <option value="SANG TÊN ĐƯỢC">SANG TÊN ĐƯỢC</option>
-                            <option value="KHÔNG SANG TÊN ĐƯỢC">KHÔNG SANG TÊN ĐƯỢC</option>
+                            <option value="CHÍNH CHỦ">CHÍNH CHỦ</option>
+                            <option value="KHÔNG CHÍNH CHỦ">KHÔNG CHÍNH CHỦ</option>
                         </select>
                         <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />

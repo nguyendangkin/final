@@ -23,6 +23,13 @@ export default function CarCard({ car }: CarCardProps) {
         'Restored Modded': 'DỌN KIỂNG',
     };
 
+    const paperworkMap: Record<string, string> = {
+        'SANG TÊN ĐƯỢC': 'CHÍNH CHỦ',
+        'KHÔNG SANG TÊN ĐƯỢC': 'KHÔNG CHÍNH CHỦ',
+        'CHÍNH CHỦ': 'CHÍNH CHỦ',
+        'KHÔNG CHÍNH CHỦ': 'KHÔNG CHÍNH CHỦ'
+    };
+
 
 
     return (
@@ -80,7 +87,7 @@ export default function CarCard({ car }: CarCardProps) {
                 <div className="absolute top-3 right-3">
                     {car.paperwork && (
                         <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-md">
-                            {car.paperwork}
+                            {paperworkMap[car.paperwork] || car.paperwork}
                         </span>
                     )}
                 </div>

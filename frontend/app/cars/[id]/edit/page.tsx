@@ -31,8 +31,8 @@ const CONDITION_OPTIONS = [
 ];
 
 const PAPERWORK_OPTIONS = [
-    { val: 'SANG TÊN ĐƯỢC', label: 'SANG TÊN ĐƯỢC' },
-    { val: 'KHÔNG SANG TÊN ĐƯỢC', label: 'KHÔNG SANG TÊN ĐƯỢC' }
+    { val: 'CHÍNH CHỦ', label: 'CHÍNH CHỦ' },
+    { val: 'KHÔNG CHÍNH CHỦ', label: 'KHÔNG CHÍNH CHỦ' }
 ];
 
 // Mod Section Component
