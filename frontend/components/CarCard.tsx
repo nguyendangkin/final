@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { GitFork, FileText, CheckCircle2, AlertTriangle, Calendar, Disc } from 'lucide-react';
+import { generateCarSlug } from '@/lib/utils';
 
 interface CarCardProps {
     car: any;
@@ -7,7 +8,7 @@ interface CarCardProps {
 
 export default function CarCard({ car }: CarCardProps) {
     return (
-        <Link href={`/cars/${car.id}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-[var(--jdm-red)] h-full flex flex-col">
+        <Link href={`/cars/${generateCarSlug(car)}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-[var(--jdm-red)] h-full flex flex-col">
             {/* Image Container */}
             <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                 {car.thumbnail || (car.images && car.images.length > 0) ? (

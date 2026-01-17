@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Menu, X, User, LogOut, Wallet } from 'lucide-react';
+import { generateSellerSlug } from '@/lib/utils';
 
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -100,7 +101,7 @@ export default function Header() {
                                         />
                                         <div className="absolute right-0 mt-3 w-64 bg-white rounded-none shadow-xl border border-gray-200 py-2 z-40 transform origin-top-right transition-all ring-1 ring-black/5">
                                             <Link
-                                                href={`/seller/${user.id}`}
+                                                href={`/seller/${generateSellerSlug(user)}`}
                                                 className="block px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition group"
                                                 onClick={() => setIsUserMenuOpen(false)}
                                             >

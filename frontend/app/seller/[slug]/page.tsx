@@ -1,5 +1,6 @@
 import SellerProfile from './SellerProfile';
 import { notFound } from 'next/navigation';
+import { getCarIdFromSlug } from '@/lib/utils';
 
 async function getSellerProfile(id: string) {
     try {
@@ -12,8 +13,9 @@ async function getSellerProfile(id: string) {
     }
 }
 
-export default async function SellerPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export default async function SellerPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const id = getCarIdFromSlug(slug);
     const seller = await getSellerProfile(id);
 
     if (!seller) {

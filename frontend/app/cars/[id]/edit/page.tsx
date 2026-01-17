@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box, Armchair, Hammer, Disc } from 'lucide-react';
+import { getCarIdFromSlug } from '@/lib/utils';
 
 const BRANDS = [
     'Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi', 'Subaru',
@@ -120,7 +121,7 @@ const ModSection = ({
 export default function EditCarPage() {
     const router = useRouter();
     const params = useParams();
-    const carId = params.id as string;
+    const carId = getCarIdFromSlug(params.id as string);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);

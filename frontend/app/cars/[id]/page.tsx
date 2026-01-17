@@ -1,5 +1,6 @@
 import CarDetail from './CarDetail';
 import { notFound } from 'next/navigation';
+import { getCarIdFromSlug } from '@/lib/utils';
 
 async function getCar(id: string) {
     try {
@@ -13,7 +14,8 @@ async function getCar(id: string) {
 }
 
 export default async function CarPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+    const { id: slug } = await params;
+    const id = getCarIdFromSlug(slug);
     const car = await getCar(id);
 
     if (!car) {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History } from 'lucide-react';
 import Lightbox from '@/components/Lightbox';
+import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
 
 interface CarDetailProps {
     car: any;
@@ -392,7 +393,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     {isOwner && (
                                         <div className="flex gap-2">
                                             <Link
-                                                href={`/cars/${car.id}/edit`}
+                                                href={`/cars/${generateCarSlug(car)}/edit`}
                                                 className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
                                             >
                                                 <Pencil className="w-5 h-5" /> Chỉnh sửa
@@ -442,7 +443,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                             </div>
 
                             {/* Seller Info */}
-                            <Link href={car.seller?.id ? `/seller/${car.seller.id}` : '#'} className="block bg-white p-6 rounded-none shadow-sm border border-gray-100 hover:border-[var(--jdm-red)] hover:shadow-md transition-all group cursor-pointer">
+                            <Link href={car.seller?.id ? `/seller/${generateSellerSlug(car.seller)}` : '#'} className="block bg-white p-6 rounded-none shadow-sm border border-gray-100 hover:border-[var(--jdm-red)] hover:shadow-md transition-all group cursor-pointer">
                                 <div className="flex items-center gap-4 mb-4">
                                     <div className="w-14 h-14 rounded-none bg-black flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-white">
                                         {car.seller?.name?.[0] || car.seller?.email?.[0]?.toUpperCase() || <User className="w-6 h-6" />}
