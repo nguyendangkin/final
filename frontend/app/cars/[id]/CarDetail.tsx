@@ -80,10 +80,10 @@ export default function CarDetail({ car }: CarDetailProps) {
         const parsedMods = typeof mods === 'string' ? JSON.parse(mods) : mods;
 
         const categories = [
-            { key: 'engine', label: 'Máy móc & Hiệu suất', icon: Hammer, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
-            { key: 'footwork', label: 'Gầm & Bánh', icon: Disc, color: 'text-gray-800', bg: 'bg-gray-50', border: 'border-gray-200' },
-            { key: 'exterior', label: 'Ngoại thất', icon: Box, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
-            { key: 'interior', label: 'Nội thất', icon: Armchair, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
+            { key: 'engine', label: 'MÁY MÓC & HIỆU SUẤT', icon: Hammer, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
+            { key: 'footwork', label: 'GẦM & BÁNH', icon: Disc, color: 'text-gray-800', bg: 'bg-gray-50', border: 'border-gray-200' },
+            { key: 'exterior', label: 'NGOẠI THẤT', icon: Box, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
+            { key: 'interior', label: 'NỘI THẤT', icon: Armchair, color: 'text-black', bg: 'bg-gray-50', border: 'border-gray-200' },
         ];
 
         return (
@@ -143,7 +143,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <button className="bg-white/90 text-black px-4 py-2 rounded-none font-bold flex items-center gap-2 shadow-lg backdrop-blur transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 uppercase tracking-widest text-xs">
+                                    <button className="bg-[var(--jdm-red)] text-white px-4 py-2 rounded-none font-bold flex items-center gap-2 shadow-lg backdrop-blur transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 uppercase tracking-widest text-xs cursor-pointer hover:bg-red-700">
                                         <Maximize2 className="w-5 h-5" /> Xem toàn màn hình
                                     </button>
                                 </div>
@@ -192,8 +192,8 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Thông số Kỹ thuật */}
                         <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
-                            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                <Gauge className="w-6 h-6 text-[var(--jdm-red)]" /> Thông số Kỹ thuật
+                            <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2 uppercase">
+                                <Gauge className="w-6 h-6 text-[var(--jdm-red)]" /> Thông Số Kỹ Thuật
                             </h3>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                                 <div className="space-y-1">
@@ -226,8 +226,8 @@ export default function CarDetail({ car }: CarDetailProps) {
                         {/* Mod List */}
                         {car.mods && (
                             <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
-                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                    <Box className="w-6 h-6 text-[var(--jdm-red)]" /> Danh sách Đồ chơi
+                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2 uppercase">
+                                    <Box className="w-6 h-6 text-[var(--jdm-red)]" /> Danh Sách Đồ Chơi
                                 </h3>
                                 {renderMods(car.mods)}
                             </div>
@@ -235,8 +235,8 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Description */}
                         <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
-                            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <FileText className="w-6 h-6 text-[var(--jdm-red)]" /> Mô tả chi tiết
+                            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 uppercase">
+                                <FileText className="w-6 h-6 text-[var(--jdm-red)]" /> Mô Tả Chi Tiết
                             </h3>
                             <div className="prose prose-gray max-w-none text-gray-600 whitespace-pre-line leading-relaxed">
                                 {car.description}
@@ -269,8 +269,8 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                         {/* Legal Info */}
                         <div className="bg-gray-50 p-6 md:p-8 rounded-none border border-gray-100">
-                            <h3 className="text-xl font-bold text-black mb-4 flex items-center gap-2">
-                                <ShieldCheck className="w-6 h-6 text-[var(--jdm-red)]" /> Pháp lý & Giấy tờ
+                            <h3 className="text-xl font-bold text-black mb-4 flex items-center gap-2 uppercase">
+                                <ShieldCheck className="w-6 h-6 text-[var(--jdm-red)]" /> Pháp Lý & Giấy Tờ
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="flex items-center gap-3">
@@ -279,7 +279,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     </div>
                                     <div>
                                         <p className="text-xs text-black font-bold uppercase">Loại giấy tờ</p>
-                                        <p className="font-bold text-gray-900">{car.paperwork || 'Đang cập nhật'}</p>
+                                        <p className="font-medium text-gray-900 text-sm">{car.paperwork || 'Đang cập nhật'}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -288,7 +288,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                     </div>
                                     <div>
                                         <p className="text-xs text-black font-bold uppercase">Hạn đăng kiểm</p>
-                                        <p className="font-bold text-gray-900">{getRegistryExpiryText()}</p>
+                                        <p className="font-medium text-gray-900 text-sm">{getRegistryExpiryText()}</p>
                                     </div>
                                 </div>
                                 {car.plateNumber && car.plateNumber !== 'Hidden' && (

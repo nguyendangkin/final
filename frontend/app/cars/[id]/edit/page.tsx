@@ -756,7 +756,16 @@ export default function EditCarPage() {
                                     type="text"
                                     disabled={formData.noRegistry}
                                     value={formData.registryExpiry}
-                                    onChange={(e) => setFormData({ ...formData, registryExpiry: e.target.value.toUpperCase() })}
+                                    onChange={(e) => {
+                                        let value = e.target.value;
+                                        const digitsOnly = value.replace(/[^\d]/g, '');
+                                        if (digitsOnly.length <= 2) {
+                                            value = digitsOnly;
+                                        } else {
+                                            value = digitsOnly.slice(0, 2) + '/' + digitsOnly.slice(2, 6);
+                                        }
+                                        setFormData({ ...formData, registryExpiry: value });
+                                    }}
                                     placeholder={formData.noRegistry ? "XE KHÔNG CÓ ĐĂNG KIỂM" : "MM/YYYY"}
                                     className={`${inputClassBase} disabled:bg-gray-100 disabled:text-gray-400`}
                                 />

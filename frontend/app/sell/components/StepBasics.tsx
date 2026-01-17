@@ -117,7 +117,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                     <div className="relative">
                         <select
                             value={data.make}
-                            onChange={(e) => updateData({ make: e.target.value })}
+                            onChange={(e) => updateData({ make: e.target.value.toUpperCase() })}
                             className={`${inputClassWithIcon('make')} appearance-none`}
                         >
                             <option value="">Chọn hãng xe...</option>

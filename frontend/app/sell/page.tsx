@@ -174,7 +174,7 @@ export default function SellPage() {
             isNegotiable: data.isNegotiable,
             mileage: Number(data.odo), // Mapping 'odo' from frontend to 'mileage' in backend
             location: data.location || 'Vietnam', // Default if empty
-            description: data.description || `Bán xe ${data.year} ${data.make} ${data.model} ${data.trim || ''}`,
+            description: data.description || `BÁN XE ${data.year} ${data.make} ${data.model} ${data.trim || ''}`,
             images: data.images,
             thumbnail: data.thumbnail,
             videoLink: data.videoLink,

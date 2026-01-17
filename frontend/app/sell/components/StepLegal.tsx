@@ -8,6 +8,21 @@ interface StepLegalProps {
 }
 
 export default function StepLegal({ data, updateData, errors = {} }: StepLegalProps) {
+    const handleRegistryExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value;
+
+        // Remove all non-digit characters except /
+        const digitsOnly = value.replace(/[^\d]/g, '');
+
+        // Format as MM/YYYY
+        if (digitsOnly.length <= 2) {
+            value = digitsOnly;
+        } else {
+            value = digitsOnly.slice(0, 2) + '/' + digitsOnly.slice(2, 6);
+        }
+
+        updateData({ registryExpiry: value });
+    };
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="p-6 bg-black border border-gray-800 rounded-none flex items-start gap-4">
@@ -70,7 +85,7 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                                 type="text"
                                 disabled={data.noRegistry}
                                 value={data.registryExpiry || ''}
-                                onChange={(e) => updateData({ registryExpiry: e.target.value })}
+                                onChange={handleRegistryExpiryChange}
                                 placeholder={data.noRegistry ? "Xe không có đăng kiểm" : "MM/YYYY"}
                                 className={`w-full bg-white border ${errors.registryExpiry ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 uppercase disabled:bg-gray-100 disabled:text-gray-400`}
                             />
