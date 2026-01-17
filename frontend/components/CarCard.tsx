@@ -1,37 +1,11 @@
 import Link from 'next/link';
-import { MapPin, Gauge, GitFork, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { GitFork, FileText, CheckCircle2, AlertTriangle, Calendar, Disc } from 'lucide-react';
 
 interface CarCardProps {
     car: any;
 }
 
 export default function CarCard({ car }: CarCardProps) {
-    // Mappings
-    const transmissionMap: Record<string, string> = {
-        'MT': 'Số sàn',
-        'AT': 'Tự động',
-        'CVT': 'CVT',
-    };
-
-    const conditionMap: Record<string, string> = {
-        'Stock': 'ZIN',
-        'Zin': 'ZIN',
-        'Lightly Modded': 'ĐỘ NHẸ',
-        'Heavily Modded': 'ĐỘ NẶNG',
-        'Track/Drift Build': 'XE ĐUA',
-        'Restored': 'ĐÃ DỌN',
-        'Restored Modded': 'DỌN KIỂNG',
-    };
-
-    const paperworkMap: Record<string, string> = {
-        'SANG TÊN ĐƯỢC': 'CHÍNH CHỦ',
-        'KHÔNG SANG TÊN ĐƯỢC': 'KHÔNG CHÍNH CHỦ',
-        'CHÍNH CHỦ': 'CHÍNH CHỦ',
-        'KHÔNG CHÍNH CHỦ': 'KHÔNG CHÍNH CHỦ'
-    };
-
-
-
     return (
         <Link href={`/cars/${car.id}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-[var(--jdm-red)] h-full flex flex-col">
             {/* Image Container */}
@@ -78,7 +52,7 @@ export default function CarCard({ car }: CarCardProps) {
                     {/* Condition Badge */}
                     {car.condition && (
                         <span className="bg-[var(--jdm-red)] text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-md">
-                            {conditionMap[car.condition] || car.condition}
+                            {car.condition}
                         </span>
                     )}
                 </div>
@@ -87,7 +61,7 @@ export default function CarCard({ car }: CarCardProps) {
                 <div className="absolute top-3 right-3">
                     {car.paperwork && (
                         <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider shadow-md">
-                            {paperworkMap[car.paperwork] || car.paperwork}
+                            {car.paperwork}
                         </span>
                     )}
                 </div>
@@ -103,25 +77,25 @@ export default function CarCard({ car }: CarCardProps) {
                 </div>
 
                 {/* Specs Grid */}
-                <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs text-gray-600 mb-4 flex-1">
+                <div className="grid grid-cols-[1.5fr_1fr] gap-y-2 gap-x-4 text-xs text-gray-600 mb-4 flex-1">
                     <div className="flex items-center gap-2">
-                        <Gauge className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="font-semibold">{Number(car.mileage).toLocaleString('vi-VN')} km</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="font-semibold truncate">
+                            {car.registryExpiry || (car.noRegistry ? 'KHÔNG ĐĂNG KIỂM ĐƯỢC' : '---')}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2">
                         <GitFork className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="font-semibold">{transmissionMap[car.transmission] || car.transmission || 'MT'}</span>
+                        <span className="font-semibold">{car.transmission || 'MT'}</span>
                     </div>
-                    <div className="flex items-center gap-2 col-span-2">
-                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="font-semibold truncate">{car.location || "Toàn quốc"}</span>
+                    <div className="flex items-center gap-2">
+                        <Disc className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="font-semibold">{car.drivetrain || '---'}</span>
                     </div>
-                    {car.registryExpiry && (
-                        <div className="flex items-center gap-2 col-span-2 text-[10px] text-gray-400">
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>Đăng kiểm: {car.registryExpiry}</span>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="font-semibold">{car.year}</span>
+                    </div>
                 </div>
 
                 {/* Edit History / Posted Date */}
