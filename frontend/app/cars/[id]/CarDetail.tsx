@@ -367,14 +367,10 @@ export default function CarDetail({ car }: CarDetailProps) {
                                                 </button>
                                             )}
 
-                                            {car.facebookLink ? (
+                                            {car.facebookLink && (
                                                 <a href={car.facebookLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1877F2] text-white font-bold py-4 rounded-none hover:bg-[#166fe5] transition-all flex items-center justify-center gap-2">
                                                     <Facebook className="w-5 h-5" /> Nhắn tin Facebook
                                                 </a>
-                                            ) : (
-                                                <button className="w-full bg-white text-gray-900 font-bold py-4 rounded-none border border-gray-200 hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
-                                                    <MessageCircle className="w-5 h-5" /> Chat ngay
-                                                </button>
                                             )}
 
                                             {car.zaloLink && (
