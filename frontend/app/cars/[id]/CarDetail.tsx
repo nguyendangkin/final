@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History, Flag, AlertTriangle } from 'lucide-react';
+import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History, Flag, AlertTriangle, Camera, Download } from 'lucide-react';
 import Lightbox from '@/components/Lightbox';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
+import { QRCodeSVG } from 'qrcode.react';
+import { toPng } from 'html-to-image';
 
 interface CarDetailProps {
     car: any;
@@ -42,10 +44,46 @@ export default function CarDetail({ car }: CarDetailProps) {
 
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
+    const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
+    const [qrUrl, setQrUrl] = useState('');
+    const posterRef = useRef<HTMLDivElement>(null);
+
+    // Set QR URL on client-side to avoid hydration mismatch
+    useEffect(() => {
+        setQrUrl(`${window.location.origin}/cars/${generateCarSlug(car)}`);
+    }, [car]);
 
     const openLightbox = (index: number) => {
         setLightboxIndex(index);
         setIsLightboxOpen(true);
+    };
+
+    // Generate Poster function
+    const generatePoster = async () => {
+        if (!posterRef.current) return;
+
+        setIsGeneratingPoster(true);
+        const loadingToast = toast.loading('Đang tạo poster...');
+
+        try {
+            const dataUrl = await toPng(posterRef.current, {
+                quality: 1,
+                pixelRatio: 2,
+                cacheBust: true,
+            });
+
+            const link = document.createElement('a');
+            link.download = `poster-${car.make}-${car.model}-${car.year}.png`;
+            link.href = dataUrl;
+            link.click();
+
+            toast.success('Đã tải xuống poster thành công!', { id: loadingToast });
+        } catch (error) {
+            console.error('Error generating poster:', error);
+            toast.error('Có lỗi xảy ra khi tạo poster.', { id: loadingToast });
+        } finally {
+            setIsGeneratingPoster(false);
+        }
     };
 
     // Fix Currency to VND
@@ -387,89 +425,101 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                                     {/* Edit & Mark Sold Buttons - Only visible to owner */}
                                     {isOwner && (
-                                        <div className="flex gap-2">
-                                            <Link
-                                                href={`/cars/${generateCarSlug(car)}/edit`}
-                                                className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
-                                            >
-                                                <Pencil className="w-5 h-5" /> Chỉnh sửa
-                                            </Link>
+                                        <>
+                                            <div className="flex gap-2">
+                                                <Link
+                                                    href={`/cars/${generateCarSlug(car)}/edit`}
+                                                    className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
+                                                >
+                                                    <Pencil className="w-5 h-5" /> Chỉnh sửa
+                                                </Link>
 
-                                            <button
-                                                onClick={async () => {
-                                                    const isSold = car.status === 'SOLD';
-                                                    const newStatus = isSold ? 'AVAILABLE' : 'SOLD';
-                                                    const confirmMsg = isSold
-                                                        ? 'Bạn muốn đăng bán lại xe này?'
-                                                        : 'Bạn có chắc chắn muốn đánh dấu xe này là ĐÃ BÁN?';
+                                                <button
+                                                    onClick={async () => {
+                                                        const isSold = car.status === 'SOLD';
+                                                        const newStatus = isSold ? 'AVAILABLE' : 'SOLD';
+                                                        const confirmMsg = isSold
+                                                            ? 'Bạn muốn đăng bán lại xe này?'
+                                                            : 'Bạn có chắc chắn muốn đánh dấu xe này là ĐÃ BÁN?';
 
-                                                    toast.custom((t) => (
-                                                        <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
-                                                            <div className="p-6">
-                                                                <div className="flex items-start">
-                                                                    <div className="flex-shrink-0 pt-0.5">
-                                                                        <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
-                                                                            <ShieldCheck className="h-6 w-6 text-white" />
+                                                        toast.custom((t) => (
+                                                            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                                                                <div className="p-6">
+                                                                    <div className="flex items-start">
+                                                                        <div className="flex-shrink-0 pt-0.5">
+                                                                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                                                                <ShieldCheck className="h-6 w-6 text-white" />
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="ml-4 flex-1">
+                                                                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                                                                Xác nhận trạng thái
+                                                                            </h3>
+                                                                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                                                                {confirmMsg}
+                                                                            </p>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="ml-4 flex-1">
-                                                                        <h3 className="text-lg font-black text-black uppercase tracking-wide">
-                                                                            Xác nhận trạng thái
-                                                                        </h3>
-                                                                        <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
-                                                                            {confirmMsg}
-                                                                        </p>
-                                                                    </div>
+                                                                </div>
+                                                                <div className="flex bg-gray-50 mt-4">
+                                                                    <button
+                                                                        onClick={() => toast.dismiss(t.id)}
+                                                                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                                                                    >
+                                                                        Hủy
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            toast.dismiss(t.id);
+                                                                            try {
+                                                                                const token = localStorage.getItem('jwt_token');
+                                                                                const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
+                                                                                    method: 'PATCH',
+                                                                                    headers: {
+                                                                                        'Content-Type': 'application/json',
+                                                                                        'Authorization': `Bearer ${token}`
+                                                                                    },
+                                                                                    body: JSON.stringify({ status: newStatus })
+                                                                                });
+                                                                                if (res.ok) {
+                                                                                    toast.success(`Đã đánh dấu xe là ${newStatus === 'SOLD' ? 'ĐÃ BÁN' : 'CÓ SẴN'}`);
+                                                                                    router.refresh();
+                                                                                } else {
+                                                                                    toast.error('Có lỗi xảy ra, vui lòng thử lại.');
+                                                                                }
+                                                                            } catch (error) {
+                                                                                console.error(error);
+                                                                                toast.error('Có lỗi xảy ra.');
+                                                                            }
+                                                                        }}
+                                                                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                                                                    >
+                                                                        Đồng ý
+                                                                    </button>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex bg-gray-50 mt-4">
-                                                                <button
-                                                                    onClick={() => toast.dismiss(t.id)}
-                                                                    className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
-                                                                >
-                                                                    Hủy
-                                                                </button>
-                                                                <button
-                                                                    onClick={async () => {
-                                                                        toast.dismiss(t.id);
-                                                                        try {
-                                                                            const token = localStorage.getItem('jwt_token');
-                                                                            const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
-                                                                                method: 'PATCH',
-                                                                                headers: {
-                                                                                    'Content-Type': 'application/json',
-                                                                                    'Authorization': `Bearer ${token}`
-                                                                                },
-                                                                                body: JSON.stringify({ status: newStatus })
-                                                                            });
-                                                                            if (res.ok) {
-                                                                                toast.success(`Đã đánh dấu xe là ${newStatus === 'SOLD' ? 'ĐÃ BÁN' : 'CÓ SẴN'}`);
-                                                                                router.refresh();
-                                                                            } else {
-                                                                                toast.error('Có lỗi xảy ra, vui lòng thử lại.');
-                                                                            }
-                                                                        } catch (error) {
-                                                                            console.error(error);
-                                                                            toast.error('Có lỗi xảy ra.');
-                                                                        }
-                                                                    }}
-                                                                    className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
-                                                                >
-                                                                    Đồng ý
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ), { duration: 5000 });
-                                                }}
-                                                className={`flex-shrink-0 font-bold px-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
-                                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                                    : 'bg-red-600 text-white hover:bg-red-700'
-                                                    }`}
-                                                title={car.status === 'SOLD' ? 'Đăng bán lại' : 'Đánh dấu đã bán'}
+                                                        ), { duration: 5000 });
+                                                    }}
+                                                    className={`flex-shrink-0 font-bold px-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
+                                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                                        : 'bg-red-600 text-white hover:bg-red-700'
+                                                        }`}
+                                                    title={car.status === 'SOLD' ? 'Đăng bán lại' : 'Đánh dấu đã bán'}
+                                                >
+                                                    {car.status === 'SOLD' ? 'Đăng lại' : 'Đã bán'}
+                                                </button>
+                                            </div>
+
+                                            {/* Generate Poster Button */}
+                                            <button
+                                                onClick={generatePoster}
+                                                disabled={isGeneratingPoster}
+                                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {car.status === 'SOLD' ? 'Đăng lại' : 'Đã bán'}
+                                                <Camera className="w-5 h-5" />
+                                                {isGeneratingPoster ? 'Đang tạo...' : 'Tạo Poster Bán Xe'}
                                             </button>
-                                        </div>
+                                        </>
                                     )}
                                 </div>
                             </div>
@@ -574,6 +624,348 @@ export default function CarDetail({ car }: CarDetailProps) {
                         </div>
                     </div>
 
+                </div>
+            </div>
+
+            {/* Hidden Poster for Screenshot - Website Style */}
+            <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+                <div
+                    ref={posterRef}
+                    style={{
+                        width: '1080px',
+                        height: '1350px',
+                        background: '#ffffff',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        color: '#111111',
+                        position: 'relative',
+                        overflow: 'hidden',
+                    }}
+                >
+                    {/* Red Header Bar */}
+                    <div style={{
+                        background: '#DC2626',
+                        padding: '24px 40px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}>
+                        <div style={{
+                            fontSize: '28px',
+                            fontWeight: 900,
+                            color: 'white',
+                            letterSpacing: '4px',
+                            textTransform: 'uppercase',
+                        }}>
+                            CẦN BÁN
+                        </div>
+                        <div style={{
+                            background: 'white',
+                            color: '#DC2626',
+                            padding: '8px 20px',
+                            fontWeight: 900,
+                            fontSize: '14px',
+                            letterSpacing: '1px',
+                        }}>
+                            {car.condition || 'ĐÃ QUA SỬ DỤNG'}
+                        </div>
+                    </div>
+
+                    {/* Main Image - Large */}
+                    <div style={{
+                        position: 'relative',
+                        height: '540px',
+                        overflow: 'hidden',
+                    }}>
+                        <img
+                            src={images[0]}
+                            alt={`${car.make} ${car.model}`}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                            }}
+                            crossOrigin="anonymous"
+                        />
+                        {/* Price Overlay */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: '20px',
+                            left: '20px',
+                            background: '#DC2626',
+                            padding: '16px 32px',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                        }}>
+                            <span style={{ fontSize: '42px', fontWeight: 900, color: 'white' }}>
+                                {formatMoney(Number(car.price))}
+                            </span>
+                            {car.isNegotiable && (
+                                <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.9)', marginLeft: '12px', fontWeight: 600 }}>
+                                    (Thương lượng)
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Car Title Section */}
+                    <div style={{
+                        background: '#111111',
+                        padding: '28px 40px',
+                    }}>
+                        <h1 style={{
+                            fontSize: '48px',
+                            fontWeight: 900,
+                            fontStyle: 'italic',
+                            textTransform: 'uppercase',
+                            margin: 0,
+                            color: 'white',
+                            lineHeight: 1.1,
+                        }}>
+                            {car.year} {car.make} {car.model}
+                        </h1>
+                        {car.trim && (
+                            <p style={{
+                                fontSize: '24px',
+                                fontWeight: 600,
+                                color: '#DC2626',
+                                margin: '8px 0 0 0',
+                                textTransform: 'uppercase',
+                            }}>
+                                {car.trim}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Specs Grid - 2 rows */}
+                    <div style={{
+                        padding: '24px 40px',
+                        background: '#f3f3f3',
+                    }}>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '16px',
+                        }}>
+                            {[
+                                { label: 'Mã khung', value: car.chassisCode || '---' },
+                                { label: 'Động cơ', value: car.engineCode || '---' },
+                                { label: 'Hộp số', value: car.transmission || '---' },
+                                { label: 'Dẫn động', value: car.drivetrain || '---' },
+                                { label: 'ODO', value: `${Number(car.mileage).toLocaleString('vi-VN')} km` },
+                                { label: 'Năm SX', value: String(car.year) },
+                                { label: 'Giấy tờ', value: car.paperwork === 'SANG TÊN ĐƯỢC' || car.paperwork === 'CHÍNH CHỦ' ? 'Chính chủ' : 'Không CC' },
+                                { label: 'Khu vực', value: car.location || 'Toàn quốc' },
+                            ].map((spec, idx) => (
+                                <div key={idx} style={{
+                                    background: 'white',
+                                    border: '2px solid #e5e5e5',
+                                    padding: '12px 10px',
+                                    textAlign: 'center',
+                                }}>
+                                    <div style={{
+                                        fontSize: '10px',
+                                        color: '#666',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '1px',
+                                        marginBottom: '4px',
+                                        fontWeight: 700
+                                    }}>
+                                        {spec.label}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '14px',
+                                        fontWeight: 800,
+                                        color: '#111'
+                                    }}>
+                                        {spec.value}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Mods Section - If exists */}
+                    {car.mods && (() => {
+                        const parsedMods = typeof car.mods === 'string' ? JSON.parse(car.mods) : car.mods;
+                        const allMods: string[] = [
+                            ...(parsedMods.engine || []),
+                            ...(parsedMods.footwork || []),
+                            ...(parsedMods.exterior || []),
+                            ...(parsedMods.interior || []),
+                        ];
+                        if (allMods.length === 0) return null;
+                        return (
+                            <div style={{
+                                padding: '20px 40px',
+                                background: 'white',
+                                borderTop: '2px solid #e5e5e5',
+                            }}>
+                                <div style={{
+                                    fontSize: '12px',
+                                    fontWeight: 800,
+                                    color: '#DC2626',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '2px',
+                                    marginBottom: '12px',
+                                }}>
+                                    ĐỒ CHƠI ĐÃ ĐỘ
+                                </div>
+                                <div style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    gap: '8px',
+                                }}>
+                                    {allMods.slice(0, 8).map((mod: string, idx: number) => (
+                                        <span key={idx} style={{
+                                            background: '#111',
+                                            color: 'white',
+                                            padding: '6px 14px',
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                        }}>
+                                            {mod}
+                                        </span>
+                                    ))}
+                                    {allMods.length > 8 && (
+                                        <span style={{
+                                            background: '#DC2626',
+                                            color: 'white',
+                                            padding: '6px 14px',
+                                            fontSize: '12px',
+                                            fontWeight: 700,
+                                        }}>
+                                            +{allMods.length - 8} khác
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
+
+                    {/* Footer - Contact & QR */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: '#111111',
+                        padding: '24px 40px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                    }}>
+                        <div>
+                            {/* Seller Name */}
+                            <div style={{
+                                fontSize: '18px',
+                                fontWeight: 800,
+                                marginBottom: '8px',
+                                color: 'white',
+                            }}>
+                                {car.seller?.name || car.seller?.email || 'Người bán'}
+                            </div>
+                            <div style={{
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                marginBottom: '10px',
+                                color: '#DC2626',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px'
+                            }}>
+                                Liên hệ ngay
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {car.phoneNumber && (
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        fontSize: '24px',
+                                        fontWeight: 900,
+                                        color: 'white',
+                                    }}>
+                                        <span style={{
+                                            background: '#DC2626',
+                                            width: '40px',
+                                            height: '40px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}>
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                            </svg>
+                                        </span>
+                                        {car.phoneNumber}
+                                    </div>
+                                )}
+                                {car.zaloLink && (
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        fontSize: '18px',
+                                        fontWeight: 700,
+                                        color: '#999',
+                                    }}>
+                                        <span style={{
+                                            background: '#0068FF',
+                                            width: '40px',
+                                            height: '40px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                        }}>
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                            </svg>
+                                        </span>
+                                        Zalo: {car.zaloLink}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* QR Code Section */}
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '20px',
+                        }}>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{
+                                    fontSize: '14px',
+                                    color: '#666',
+                                    marginBottom: '4px',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px',
+                                    fontWeight: 600,
+                                }}>
+                                    Quét mã QR
+                                </div>
+                                <div style={{
+                                    fontSize: '12px',
+                                    color: '#DC2626',
+                                    fontWeight: 700,
+                                }}>
+                                    Xem chi tiết xe
+                                </div>
+                            </div>
+                            <div style={{
+                                background: 'white',
+                                padding: '10px',
+                            }}>
+                                {qrUrl && (
+                                    <QRCodeSVG
+                                        value={qrUrl}
+                                        size={90}
+                                        level="H"
+                                        includeMargin={false}
+                                        fgColor="#111111"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
