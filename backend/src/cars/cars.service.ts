@@ -205,6 +205,13 @@ export class CarsService {
         return this.carsRepository.save(car);
     }
 
+    async forceHide(id: string): Promise<Car> {
+        const car = await this.carsRepository.findOne({ where: { id } });
+        if (!car) throw new NotFoundException('Car not found');
+        car.status = CarStatus.HIDDEN;
+        return this.carsRepository.save(car);
+    }
+
     async remove(id: string, user: User): Promise<void> {
         const car = await this.findOne(id);
         if (car.seller.id !== user.id) {

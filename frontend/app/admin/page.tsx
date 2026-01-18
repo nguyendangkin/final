@@ -69,11 +69,12 @@ export default function AdminDashboard() {
                                 </div>
                             </Link>
 
-                            {/* Card 3 */}
-                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full opacity-50">
-                                <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Báo cáo</h3>
-                                <p className="text-sm text-gray-500 mt-2">Xem thống kê doanh thu và hoạt động (Coming Soon)</p>
-                            </div>
+                            <Link href="/admin/reports" className="block">
+                                <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full">
+                                    <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý Báo cáo</h3>
+                                    <p className="text-sm text-gray-500 mt-2">Xem và xử lý các bài đăng bị tố cáo</p>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </div>

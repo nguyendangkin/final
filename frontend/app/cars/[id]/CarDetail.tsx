@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History } from 'lucide-react';
+import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History, Flag, AlertTriangle } from 'lucide-react';
 import Lightbox from '@/components/Lightbox';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
@@ -504,6 +504,74 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 </div>
                             </Link>
 
+                            {/* Report Button */}
+                            {!isOwner && (
+                                <div className="text-center">
+                                    <button
+                                        onClick={() => {
+                                            if (!currentUser) {
+                                                router.push('/login');
+                                                return;
+                                            }
+                                            // Open Report Logic
+                                            toast.custom((t) => (
+                                                <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col border border-gray-200`}>
+                                                    <div className="p-6">
+                                                        <div className="flex items-start mb-4">
+                                                            <div className="flex-shrink-0 pt-0.5">
+                                                                <div className="h-10 w-10 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                                                    <Flag className="h-5 w-5 text-white" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="ml-4 flex-1">
+                                                                <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                                                    Tố cáo vi phạm
+                                                                </h3>
+                                                                <p className="mt-1 text-xs text-gray-500 font-medium">
+                                                                    Vui lòng chọn lý do tố cáo bài viết này.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-2">
+                                                            {[
+                                                                { id: 'SENSITIVE', label: 'Nội dung nhạy cảm / Đồi trụy' },
+                                                                { id: 'IRRELEVANT', label: 'Nội dung không liên quan JDM' },
+                                                                { id: 'SPAM', label: 'Spam / Tin rác / Lừa đảo' },
+                                                            ].map((reason) => (
+                                                                <button
+                                                                    key={reason.id}
+                                                                    onClick={() => {
+                                                                        toast.dismiss(t.id);
+                                                                        confirmReport(reason.id, reason.label, car.id);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 text-sm font-bold text-gray-800 uppercase border border-transparent hover:border-gray-300 transition-all flex items-center justify-between group"
+                                                                >
+                                                                    {reason.label}
+                                                                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-gray-50 px-6 py-3 border-t border-gray-100">
+                                                        <button
+                                                            onClick={() => toast.dismiss(t.id)}
+                                                            className="w-full text-center text-xs font-bold text-gray-400 hover:text-black uppercase transition-colors"
+                                                        >
+                                                            Hủy bỏ
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ), { duration: Infinity, id: 'report-modal' });
+                                        }}
+                                        className="inline-flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-[var(--jdm-red)] transition-colors uppercase tracking-wider group"
+                                    >
+                                        <Flag className="w-4 h-4 group-hover:fill-current" />
+                                        Báo cáo bài viết này
+                                    </button>
+                                </div>
+                            )}
+
                         </div>
                     </div>
 
@@ -512,3 +580,72 @@ export default function CarDetail({ car }: CarDetailProps) {
         </div>
     );
 }
+
+// Helper to confirm report with warning
+const confirmReport = (reason: string, reasonLabel: string, carId: string) => {
+    toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col border-2 border-[var(--jdm-red)]`}>
+            <div className="p-6 bg-[var(--jdm-red)]">
+                <div className="flex items-center gap-3 text-white">
+                    <AlertTriangle className="w-8 h-8 fill-yellow-400 text-[var(--jdm-red)]" />
+                    <div>
+                        <h3 className="text-lg font-black uppercase tracking-wide">Cảnh báo nghiêm trọng</h3>
+                        <p className="text-xs font-medium text-white/90">Hành động này không thể hoàn tác</p>
+                    </div>
+                </div>
+            </div>
+            <div className="p-6">
+                <p className="text-sm text-black font-bold mb-2 uppercase">Bạn đang tố cáo bài viết về:</p>
+                <div className="bg-gray-100 p-3 mb-4 font-mono text-xs font-bold border-l-4 border-black">
+                    {reasonLabel}
+                </div>
+                <p className="text-sm text-gray-600 font-medium leading-relaxed">
+                    Chúng tôi sẽ xem xét báo cáo này. Tuy nhiên, nếu phát hiện bạn <span className="text-[var(--jdm-red)] font-black">CỐ TÌNH BÁO CÁO SAI SỰ THẬT</span>, tài khoản của bạn sẽ bị <span className="text-black font-black bg-yellow-300 px-1">KHÓA VĨNH VIỄN</span> ngay lập tức.
+                </p>
+            </div>
+            <div className="flex border-t border-gray-100">
+                <button
+                    onClick={() => toast.dismiss(t.id)}
+                    className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                >
+                    Suy nghĩ lại
+                </button>
+                <button
+                    onClick={() => {
+                        toast.dismiss(t.id);
+                        submitReport(reason, carId);
+                    }}
+                    className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                >
+                    Xác nhận tố cáo
+                </button>
+            </div>
+        </div>
+    ), { duration: Infinity });
+};
+
+const submitReport = async (reason: string, carId: string) => {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) return;
+
+    const toastId = toast.loading('Đang gửi báo cáo...');
+
+    try {
+        const res = await fetch('http://localhost:3000/reports', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ carId, reason })
+        });
+
+        if (res.ok) {
+            toast.success('Đã gửi báo cáo thành công. Cảm ơn bạn đã đóng góp!', { id: toastId });
+        } else {
+            toast.error('Có lỗi xảy ra khi gửi báo cáo.', { id: toastId });
+        }
+    } catch (e) {
+        toast.error('Lỗi kết nối server.', { id: toastId });
+    }
+};

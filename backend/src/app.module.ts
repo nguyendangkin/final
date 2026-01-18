@@ -13,6 +13,8 @@ import { Car } from './cars/entities/car.entity';
 import { UploadModule } from './upload/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ReportsModule } from './reports/reports.module';
+import { Report } from './reports/entities/report.entity';
 
 @Module({
   imports: [
@@ -28,7 +30,7 @@ import { join } from 'path';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction, Car],
+        entities: [User, Transaction, Car, Report],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],
@@ -42,6 +44,7 @@ import { join } from 'path';
     PaymentModule,
     CarsModule,
     UploadModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
