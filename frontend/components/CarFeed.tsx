@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CarCard from './CarCard';
+import CarCardSkeleton from './CarCardSkeleton';
 import { Loader2 } from 'lucide-react';
 
 interface CarFeedProps {
@@ -15,6 +16,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
     const searchParams = useSearchParams();
 
@@ -40,6 +42,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
         setCars([]);
         setPage(1);
         setHasMore(true);
+        setInitialLoading(true); // Set initial loading true when filters change
         fetchCars(1);
     }, [filtersKey]);
 
@@ -79,6 +82,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
             console.error(error);
         } finally {
             setLoading(false);
+            setInitialLoading(false);
         }
     };
 
@@ -95,7 +99,13 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
 
     return (
         <div>
-            {cars.length === 0 && !loading ? (
+            {initialLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {[...Array(6)].map((_, i) => (
+                        <CarCardSkeleton key={i} />
+                    ))}
+                </div>
+            ) : cars.length === 0 && !loading ? (
                 <div className="text-center py-20 bg-white rounded-none shadow-lg border border-gray-200">
                     <p className="text-gray-500 text-lg">Chưa có xe nào.</p>
                 </div>
@@ -108,18 +118,10 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
                             return <div key={car.id}><CarCard car={car} /></div>;
                         }
                     })}
-                </div>
-            )}
-
-            {loading && (
-                <div className="flex justify-center p-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-[var(--jdm-red)]" />
-                </div>
-            )}
-
-            {!hasMore && cars.length > 0 && (
-                <div className="text-center p-8 text-gray-400 text-sm font-medium uppercase tracking-widest">
-                    --- Hết danh sách ---
+                    {/* Show skeletons at bottom when loading more */}
+                    {loading && hasMore && [...Array(3)].map((_, i) => (
+                        <CarCardSkeleton key={`loading-${i}`} />
+                    ))}
                 </div>
             )}
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, ArrowUpRight, ArrowDownLeft, ArrowLeft, History } from 'lucide-react';
+import WalletSkeleton from '@/components/WalletSkeleton';
 
 export default function WalletPage() {
     const [balance, setBalance] = useState<number | null>(null);
@@ -28,6 +29,8 @@ export default function WalletPage() {
         };
         fetchUser();
     }, []);
+
+    if (!user) return <WalletSkeleton />;
 
     return (
         <div className="min-h-screen bg-white pt-20 pb-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-red-500/30">

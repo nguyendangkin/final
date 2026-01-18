@@ -30,3 +30,7 @@ export function generateSellerSlug(seller: any): string {
     return `${slug}-${seller.id}`;
 }
 
+export function cn(...classes: (string | undefined | null | false)[]) {
+    return classes.filter(Boolean).join(' ');
+}
+

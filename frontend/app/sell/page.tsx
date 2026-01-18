@@ -415,7 +415,7 @@ export default function SellPage() {
                         <button
                             onClick={handleBack}
                             disabled={currentStep === 1}
-                            className="px-8 py-4 rounded-xl font-bold flex items-center gap-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 disabled:opacity-0 disabled:cursor-not-allowed transition-all"
+                            className="px-8 py-4 rounded-none font-bold uppercase flex items-center gap-2 text-gray-600 bg-gray-100 hover:text-black hover:bg-gray-200 disabled:opacity-0 disabled:cursor-not-allowed transition-all tracking-wide"
                         >
                             <ChevronLeft className="w-5 h-5" /> Quay lại
                         </button>

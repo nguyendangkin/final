@@ -25,6 +25,7 @@ export default function Header() {
 
     const [user, setUser] = useState<any>(null);
     const [balance, setBalance] = useState<number | null>(null);
+    const [isAuthChecking, setIsAuthChecking] = useState(true);
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentMake = searchParams.get('make');
@@ -166,6 +167,8 @@ export default function Header() {
             const storedToken = localStorage.getItem('jwt_token');
             if (storedToken) {
                 fetchUser(storedToken);
+            } else {
+                setIsAuthChecking(false);
             }
         }
     }, [searchParams]);
@@ -186,6 +189,8 @@ export default function Header() {
             }
         } catch (e) {
             console.error("Failed to fetch user", e);
+        } finally {
+            setIsAuthChecking(false);
         }
     };
 
@@ -438,7 +443,11 @@ export default function Header() {
 
                     {/* User / Login */}
                     <div className="hidden md:flex items-center space-x-4">
-                        {user ? (
+                        {isAuthChecking ? (
+                            <div className="flex items-center justify-center p-1">
+                                <div className="w-9 h-9 rounded-none bg-gray-200 animate-pulse border border-gray-200" />
+                            </div>
+                        ) : user ? (
                             <div className="relative">
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -585,7 +594,11 @@ export default function Header() {
                             Đăng bán xe
                         </Link>
 
-                        {user ? (
+                        {isAuthChecking ? (
+                            <div className="px-3 py-4 text-center">
+                                <div className="inline-block w-6 h-6 border-2 border-[var(--jdm-red)] border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        ) : user ? (
                             <div className="border-t border-gray-200 mt-4 pt-4 px-3">
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="w-8 h-8 rounded-none bg-black flex items-center justify-center text-white font-bold border border-gray-200">

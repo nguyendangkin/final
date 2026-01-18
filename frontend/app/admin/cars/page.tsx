@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import TableSkeleton from '@/components/TableSkeleton';
 
 export default function AdminCars() {
     const [cars, setCars] = useState<any[]>([]);
@@ -157,13 +158,7 @@ export default function AdminCars() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-            </div>
-        );
-    }
+
 
     return (
         <div className="min-h-screen bg-gray-50 pt-20 pb-12">
@@ -208,92 +203,94 @@ export default function AdminCars() {
                     {error && <p className="text-red-500 text-xs mt-2 font-bold">{error}</p>}
                 </div>
 
-                <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Hình ảnh
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Thông tin xe
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Giá bán
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Người bán
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Trạng thái
-                                    </th>
-                                    <th scope="col" className="relative px-6 py-3 text-right">
-                                        <span className="sr-only">Actions</span>
-                                        Hành động
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {cars.map((car) => (
-                                    <tr key={car.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="h-16 w-24 flex-shrink-0">
-                                                <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-gray-900 uppercase">
-                                                {car.year} {car.make} {car.model} {car.trim}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {new Date(car.createdAt).toLocaleDateString('vi-VN')}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--jdm-red)] font-bold">
-                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(car.price))}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {car.seller?.name || 'Unknown'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase ${car.status === 'SOLD' ? 'bg-blue-100 text-blue-800' :
-                                                car.status === 'HIDDEN' ? 'bg-gray-800 text-white' :
-                                                    'bg-green-100 text-green-800'
-                                                }`}>
-                                                {car.status === 'SOLD' ? 'Đã bán' : car.status === 'HIDDEN' ? 'Đã ẩn' : 'Đang bán'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end gap-2">
-                                                <Link href={`/cars/${car.id}`} className="flex items-center gap-1 px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:bg-gray-800 transition-colors">
-                                                    <Eye className="w-3 h-3" /> Xem
-                                                </Link>
-                                                <button
-                                                    onClick={() => toggleHide(car.id, car.status)}
-                                                    className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${car.status === 'HIDDEN'
-                                                        ? 'bg-green-600 text-white hover:bg-green-700'
-                                                        : 'bg-red-600 text-white hover:bg-red-700'
-                                                        }`}
-                                                >
-                                                    {car.status === 'HIDDEN' ? (
-                                                        <>
-                                                            <Eye className="w-3 h-3" /> Hiện
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <EyeOff className="w-3 h-3" /> Ẩn
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </td>
+                {loading ? <TableSkeleton /> : (
+                    <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Hình ảnh
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Thông tin xe
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Giá bán
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Người bán
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Trạng thái
+                                        </th>
+                                        <th scope="col" className="relative px-6 py-3 text-right">
+                                            <span className="sr-only">Actions</span>
+                                            Hành động
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {cars.map((car) => (
+                                        <tr key={car.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="h-16 w-24 flex-shrink-0">
+                                                    <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm font-bold text-gray-900 uppercase">
+                                                    {car.year} {car.make} {car.model} {car.trim}
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    {new Date(car.createdAt).toLocaleDateString('vi-VN')}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--jdm-red)] font-bold">
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(car.price))}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {car.seller?.name || 'Unknown'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase ${car.status === 'SOLD' ? 'bg-blue-100 text-blue-800' :
+                                                    car.status === 'HIDDEN' ? 'bg-gray-800 text-white' :
+                                                        'bg-green-100 text-green-800'
+                                                    }`}>
+                                                    {car.status === 'SOLD' ? 'Đã bán' : car.status === 'HIDDEN' ? 'Đã ẩn' : 'Đang bán'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end gap-2">
+                                                    <Link href={`/cars/${car.id}`} className="flex items-center gap-1 px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:bg-gray-800 transition-colors">
+                                                        <Eye className="w-3 h-3" /> Xem
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => toggleHide(car.id, car.status)}
+                                                        className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${car.status === 'HIDDEN'
+                                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                                            : 'bg-red-600 text-white hover:bg-red-700'
+                                                            }`}
+                                                    >
+                                                        {car.status === 'HIDDEN' ? (
+                                                            <>
+                                                                <Eye className="w-3 h-3" /> Hiện
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <EyeOff className="w-3 h-3" /> Ẩn
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <Pagination
                     currentPage={page}

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Search, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Pagination from '@/components/Pagination';
+import TableSkeleton from '@/components/TableSkeleton';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
@@ -181,13 +182,7 @@ export default function AdminUsers() {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-            </div>
-        );
-    }
+
 
     return (
         <div className="min-h-screen bg-gray-50 pt-20 pb-12">
@@ -232,100 +227,102 @@ export default function AdminUsers() {
                     {error && <p className="text-red-500 text-xs mt-2 font-bold">{error}</p>}
                 </div>
 
-                <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Người dùng
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Email
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Vai trò
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Trạng thái
-                                    </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                        Hành động
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10">
-                                                    {user.avatar ? (
-                                                        <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
-                                                    ) : (
-                                                        <div className="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
-                                                            {user.name?.[0] || 'U'}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="ml-4">
-                                                    <div className="text-sm font-bold text-gray-900">{user.name}</div>
-                                                    <div className="text-xs text-gray-500">{new Date(user.createdAt).toLocaleDateString('vi-VN')}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">{user.email}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {user.isAdmin ? (
-                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-black text-white uppercase">
-                                                    Admin
-                                                </span>
-                                            ) : (
-                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 uppercase">
-                                                    User
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {user.isSellingBanned ? (
-                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-red-100 text-red-800 uppercase">
-                                                    Cấm bán
-                                                </span>
-                                            ) : (
-                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-800 uppercase">
-                                                    Hoạt động
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            {!user.isAdmin && (
-                                                <button
-                                                    onClick={() => toggleBan(user.id, user.isSellingBanned)}
-                                                    className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${user.isSellingBanned
-                                                        ? 'bg-green-600 text-white hover:bg-green-700'
-                                                        : 'bg-red-600 text-white hover:bg-red-700'
-                                                        }`}
-                                                >
-                                                    {user.isSellingBanned ? (
-                                                        <>
-                                                            <CheckCircle className="w-3 h-3" /> Bỏ cấm
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Ban className="w-3 h-3" /> Cấm bán
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
-                                        </td>
+                {loading ? <TableSkeleton /> : (
+                    <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Người dùng
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Email
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Vai trò
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Trạng thái
+                                        </th>
+                                        <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                            Hành động
+                                        </th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {users.map((user) => (
+                                        <tr key={user.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex items-center">
+                                                    <div className="flex-shrink-0 h-10 w-10">
+                                                        {user.avatar ? (
+                                                            <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
+                                                        ) : (
+                                                            <div className="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
+                                                                {user.name?.[0] || 'U'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="ml-4">
+                                                        <div className="text-sm font-bold text-gray-900">{user.name}</div>
+                                                        <div className="text-xs text-gray-500">{new Date(user.createdAt).toLocaleDateString('vi-VN')}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-500">{user.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {user.isAdmin ? (
+                                                    <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-black text-white uppercase">
+                                                        Admin
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 uppercase">
+                                                        User
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {user.isSellingBanned ? (
+                                                    <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-red-100 text-red-800 uppercase">
+                                                        Cấm bán
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-800 uppercase">
+                                                        Hoạt động
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                {!user.isAdmin && (
+                                                    <button
+                                                        onClick={() => toggleBan(user.id, user.isSellingBanned)}
+                                                        className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${user.isSellingBanned
+                                                            ? 'bg-green-600 text-white hover:bg-green-700'
+                                                            : 'bg-red-600 text-white hover:bg-red-700'
+                                                            }`}
+                                                    >
+                                                        {user.isSellingBanned ? (
+                                                            <>
+                                                                <CheckCircle className="w-3 h-3" /> Bỏ cấm
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Ban className="w-3 h-3" /> Cấm bán
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <Pagination
                     currentPage={page}
