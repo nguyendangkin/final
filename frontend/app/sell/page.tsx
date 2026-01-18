@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CarSpecs, initialCarSpecs } from './types';
 import StepBasics from './components/StepBasics';
@@ -25,10 +25,31 @@ export default function SellPage() {
     const [data, setData] = useState<CarSpecs>(initialCarSpecs);
     const [loading, setLoading] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const hasRedirected = useRef(false);
+
+    // Check authentication on mount
+    useEffect(() => {
+        // Prevent double execution in StrictMode
+        if (hasRedirected.current) return;
+
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            hasRedirected.current = true;
+            setIsAuthenticated(false);
+            // Redirect to login page
+            router.push('/login?redirect=/sell');
+        } else {
+            setIsAuthenticated(true);
+        }
+    }, []);
 
     // Load from LocalStorage
     useEffect(() => {
+        // Only load draft if authenticated
+        if (isAuthenticated !== true) return;
+
         const savedData = localStorage.getItem('sell_draft');
         if (savedData) {
             try {
@@ -43,7 +64,7 @@ export default function SellPage() {
             }
         }
         setIsLoaded(true);
-    }, []);
+    }, [isAuthenticated]);
 
     // Save to LocalStorage on change
     useEffect(() => {
@@ -159,9 +180,8 @@ export default function SellPage() {
         const token = localStorage.getItem('jwt_token');
 
         if (!token) {
-            alert('Vui lòng đăng nhập để đăng bán xe!');
             setLoading(false);
-            window.location.href = 'http://localhost:3000/auth/google';
+            router.push('/login?redirect=/sell');
             return;
         }
 
@@ -228,7 +248,19 @@ export default function SellPage() {
         }
     };
 
-    if (!isLoaded) return null; // Hydration fix
+    // Wait for authentication check and data loading
+    if (isAuthenticated === null || !isLoaded) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    // If not authenticated, don't render the form (user is being redirected)
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-white text-black p-6 pt-24 font-sans selection:bg-red-500/30">

@@ -189,7 +189,7 @@ export default function Header() {
     };
 
     const handleLogin = () => {
-        window.location.href = 'http://localhost:3000/auth/google';
+        router.push('/login');
     };
 
     const handleLogout = () => {
