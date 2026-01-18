@@ -456,6 +456,24 @@ export default function Header() {
                                                 <p className="text-xs text-[var(--jdm-red)] mt-1 opacity-0 group-hover:opacity-100 transition-opacity font-bold">XEM HỒ SƠ →</p>
                                             </Link>
 
+                                            {user.isAdmin && (
+                                                <div className="px-4 py-3 border-b border-gray-100">
+                                                    <Link
+                                                        href="/admin"
+                                                        className="flex items-center gap-3 bg-black text-white p-2 hover:bg-[var(--jdm-red)] transition group"
+                                                        onClick={() => setIsUserMenuOpen(false)}
+                                                    >
+                                                        <div className="w-8 h-8 flex items-center justify-center">
+                                                            <SlidersHorizontal className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-xs uppercase font-bold text-gray-300">Quản trị</p>
+                                                            <p className="text-sm font-bold">Admin Dashboard</p>
+                                                        </div>
+                                                    </Link>
+                                                </div>
+                                            )}
+
                                             <div className="px-4 py-3">
                                                 <Link
                                                     href="/wallet"

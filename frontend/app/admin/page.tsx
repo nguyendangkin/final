@@ -1,0 +1,79 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+export default function AdminDashboard() {
+    const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            router.push('/login');
+            return;
+        }
+
+        fetch('http://localhost:3000/users/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.isAdmin) {
+                    router.push('/');
+                    return;
+                }
+                setUser(data);
+                setLoading(false);
+            })
+            .catch(() => {
+                router.push('/login');
+            });
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 pt-20 pb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
+                    <div className="px-4 py-5 sm:px-6 bg-black text-white">
+                        <h3 className="text-lg leading-6 font-bold uppercase tracking-wider">Admin Dashboard</h3>
+                        <p className="mt-1 max-w-2xl text-sm text-gray-300">Quản lý hệ thống sukasuka</p>
+                    </div>
+                    <div className="px-4 py-5 sm:p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 uppercase">Xin chào, {user.name}</h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Card 1 */}
+                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group">
+                                <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý xe</h3>
+                                <p className="text-sm text-gray-500 mt-2">Xem và duyệt các xe đang bán</p>
+                            </div>
+
+                            {/* Card 2 */}
+                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group">
+                                <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý người dùng</h3>
+                                <p className="text-sm text-gray-500 mt-2">Xem danh sách người dùng và cấp quyền</p>
+                            </div>
+
+                            {/* Card 3 */}
+                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group">
+                                <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Báo cáo</h3>
+                                <p className="text-sm text-gray-500 mt-2">Xem thống kê doanh thu và hoạt động</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
