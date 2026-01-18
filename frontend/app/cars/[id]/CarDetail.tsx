@@ -367,15 +367,15 @@ export default function CarDetail({ car }: CarDetailProps) {
                                                 </button>
                                             )}
 
-                                            {car.facebookLink && (
-                                                <a href={car.facebookLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1877F2] text-white font-bold py-4 rounded-none hover:bg-[#166fe5] transition-all flex items-center justify-center gap-2">
-                                                    <Facebook className="w-5 h-5" /> Nhắn tin Facebook
+                                            {car.zaloLink && (
+                                                <a href={`https://zalo.me/${car.zaloLink.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-full bg-[#0068FF] text-white font-bold py-4 rounded-none hover:bg-[#0058D6] transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                                    <MessageCircle className="w-5 h-5" /> Zalo: {car.zaloLink}
                                                 </a>
                                             )}
 
-                                            {car.zaloLink && (
-                                                <a href={car.zaloLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#0068FF] text-white font-bold py-4 rounded-none hover:bg-[#0058D6] transition-all flex items-center justify-center gap-2">
-                                                    <MessageCircle className="w-5 h-5" /> Nhắn tin Zalo
+                                            {car.facebookLink && (
+                                                <a href={car.facebookLink} target="_blank" rel="noopener noreferrer" className="w-full bg-[#1877F2] text-white font-bold py-4 rounded-none hover:bg-[#166fe5] transition-all flex items-center justify-center gap-2">
+                                                    <Facebook className="w-5 h-5" /> Nhắn tin Facebook
                                                 </a>
                                             )}
                                         </>

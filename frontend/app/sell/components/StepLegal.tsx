@@ -25,17 +25,6 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
     };
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="p-6 bg-black border border-gray-800 rounded-none flex items-start gap-4">
-                <FileText className="w-6 h-6 text-white mt-1 flex-shrink-0" />
-                <div>
-                    <h3 className="text-white font-bold mb-1 uppercase tracking-wide">Pháp lý Việt Nam</h3>
-                    <p className="text-sm text-gray-400">
-                        Vấn đề nhạy cảm nhất ở VN. Hãy điền trung thực để tăng độ uy tín cho bài đăng của bạn.
-                        Người mua JDM đặc biệt quan tâm đến vấn đề này.
-                    </p>
-                </div>
-            </div>
-
             <div className="space-y-6">
                 {/* Paperwork */}
                 <div className="space-y-2">

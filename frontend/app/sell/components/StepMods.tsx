@@ -108,7 +108,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-sm text-gray-500 italic mb-4">
-                *Mẹo: Nhập tên món đồ và nhấn <strong>Enter</strong> để thêm nhanh. Chia nhỏ giúp người mua dễ so sánh.
+                *Mẹo: Nhập tên món đồ và nhấn <strong>Enter</strong> (hoặc nút '+') để thêm nhanh. Chia nhỏ giúp người mua dễ so sánh.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <ModSection
@@ -117,7 +117,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     items={data.mods.exterior}
                     onAdd={(item) => addItem('exterior', item)}
                     onRemove={(idx) => removeItem('exterior', idx)}
-                    placeholder="Bodykit, Cánh gió, Đèn..."
+                    placeholder="Bodykit..."
                 />
                 <ModSection
                     title="Nội thất"
@@ -125,7 +125,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     items={data.mods.interior}
                     onAdd={(item) => addItem('interior', item)}
                     onRemove={(idx) => removeItem('interior', idx)}
-                    placeholder="Ghế Recaro, Volang Nardi..."
+                    placeholder="Ghế Recaro..."
                 />
                 <ModSection
                     title="Máy móc & Hiệu suất"
@@ -133,7 +133,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     items={data.mods.engine}
                     onAdd={(item) => addItem('engine', item)}
                     onRemove={(idx) => removeItem('engine', idx)}
-                    placeholder="Turbo Garrett, ECU Haltech, Pô HKS..."
+                    placeholder="Turbo Garrett..."
                 />
                 <ModSection
                     title="Gầm & Bánh"
@@ -141,7 +141,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     items={data.mods.footwork}
                     onAdd={(item) => addItem('footwork', item)}
                     onRemove={(idx) => removeItem('footwork', idx)}
-                    placeholder="Phuộc Tein, Mâm TE37 18x9.5..."
+                    placeholder="Phuộc Tein..."
                 />
             </div>
         </div>

@@ -122,7 +122,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         >
                             <option value="">Chọn hãng xe...</option>
                             {brands.map((make) => (
-                                <option key={make} value={make}>{make}</option>
+                                <option key={make} value={make.toUpperCase()}>{make}</option>
                             ))}
                         </select>
                         <CarFront className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

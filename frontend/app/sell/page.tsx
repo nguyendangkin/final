@@ -195,6 +195,7 @@ export default function SellPage() {
             // Contact
             phoneNumber: data.phoneNumber,
             facebookLink: data.facebookLink,
+            zaloLink: data.zaloLink,
             additionalInfo: data.additionalInfo,
 
             // Mods

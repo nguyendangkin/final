@@ -6,8 +6,8 @@ import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box
 import { getCarIdFromSlug } from '@/lib/utils';
 
 const BRANDS = [
-    'Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi', 'Subaru',
-    'Suzuki', 'Lexus', 'Isuzu', 'Daihatsu', 'Acura', 'Infiniti'
+    'TOYOTA', 'HONDA', 'NISSAN', 'MAZDA', 'MITSUBISHI', 'SUBARU',
+    'SUZUKI', 'LEXUS', 'ISUZU', 'DAIHATSU', 'ACURA', 'INFINITI'
 ];
 
 const TRANSMISSION_OPTIONS = [
@@ -555,7 +555,7 @@ export default function EditCarPage() {
                                     required
                                 >
                                     <option value="">CHỌN HÃNG XE</option>
-                                    {BRANDS.map(b => <option key={b} value={b}>{b.toUpperCase()}</option>)}
+                                    {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
                                 </select>
                             </div>
                             <div>
