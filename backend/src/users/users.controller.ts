@@ -51,8 +51,11 @@ export class UsersController {
         }
         // Filter only available cars and sort by newest first
         // Filter only available cars and sort by newest first
+        // Filter only available cars and sort by newest first
         // If user is banned, hide all cars
+        // Also exclude HIDDEN cars
         const availableCars = (user.isSellingBanned ? [] : user.carsForSale)
+            ?.filter(car => car.status !== 'HIDDEN')
             //.filter(car => car.status === 'AVAILABLE') // Removed to show sold cars
             ?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
         return {

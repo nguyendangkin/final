@@ -4,6 +4,7 @@ import { User } from '../../users/user.entity';
 export enum CarStatus {
     AVAILABLE = 'AVAILABLE',
     SOLD = 'SOLD',
+    HIDDEN = 'HIDDEN',
 }
 
 @Entity()

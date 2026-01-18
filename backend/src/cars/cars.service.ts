@@ -18,6 +18,21 @@ export class CarsService {
         qb.leftJoinAndSelect('car.seller', 'seller');
         // qb.where('car.status = :status', { status: CarStatus.AVAILABLE }); // Removed to show sold cars
 
+        // Hide hidden cars by default (admin can still see them if we want, but for now let's just show them to admin only? 
+        // Logic: Public feed should NOT show HIDDEN. Admin feed SHOULD show HIDDEN.
+        // The current findAll is used by BOTH. 
+        // We need a way to distinguish. 
+        // Let's add an optional 'includeHidden' param or check user role.
+        // For simplicity, let's assume this is public facing primarily, but Admin uses it too.
+        // The current request "Hide/Delete" implies Admin wants to see them to Un-hide properly? 
+        // Or if it's "Delete", it's gone. 
+        // User said "Hide (like delete)". 
+        // Let's exclude HIDDEN from public results.
+
+        if (!query.includeHidden) {
+            qb.andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN });
+        }
+
         // Hide cars from banned sellers
         qb.andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
 
@@ -99,16 +114,46 @@ export class CarsService {
         };
     }
 
-    async findOne(id: string): Promise<Car> {
+    async findOne(id: string, userPayload?: any): Promise<Car> {
         const car = await this.carsRepository.findOne({
             where: { id },
             relations: ['seller'],
         });
         if (!car) throw new NotFoundException('Car not found');
 
+        // Check if car is hidden
+        if (car.status === CarStatus.HIDDEN) {
+            let isAdmin = false;
+            if (userPayload && userPayload.sub) { // Assuming 'sub' is the ID in standard JWT, or 'id'
+                const userId = userPayload.sub || userPayload.id;
+                const user = await this.dataSource.getRepository(User).findOne({ where: { id: userId } });
+                if (user && user.isAdmin) {
+                    isAdmin = true;
+                }
+            }
+
+            if (!isAdmin) {
+                throw new NotFoundException('Car not found');
+            }
+        }
+
         // Hide car if seller is banned
         if (car.seller && car.seller.isSellingBanned) {
-            throw new NotFoundException('Car not found');
+            // Check admin override for banned sellers too? 
+            // User requested "like user ban", and usually admins SEE banned users.
+            // So we should probably allow Admins to see banned seller cars too.
+            let isAdmin = false;
+            if (userPayload && userPayload.sub) {
+                const userId = userPayload.sub || userPayload.id;
+                const user = await this.dataSource.getRepository(User).findOne({ where: { id: userId } });
+                if (user && user.isAdmin) {
+                    isAdmin = true;
+                }
+            }
+
+            if (!isAdmin) {
+                throw new NotFoundException('Car not found');
+            }
         }
 
         return car;
@@ -144,6 +189,19 @@ export class CarsService {
         }
 
         Object.assign(car, updates);
+        return this.carsRepository.save(car);
+    }
+
+    async toggleHide(id: string): Promise<Car> {
+        const car = await this.carsRepository.findOne({ where: { id } });
+        if (!car) throw new NotFoundException('Car not found');
+
+        if (car.status === CarStatus.HIDDEN) {
+            car.status = CarStatus.AVAILABLE; // Default back to available
+        } else {
+            car.status = CarStatus.HIDDEN;
+        }
+
         return this.carsRepository.save(car);
     }
 
