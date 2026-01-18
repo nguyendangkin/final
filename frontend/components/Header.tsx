@@ -30,7 +30,7 @@ export default function Header() {
     const currentMake = searchParams.get('make');
 
     // Filter category labels in Vietnamese - ordered by importance
-    const filterOrder = ['make', 'model', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
+    const filterOrder = ['make', 'model', 'location', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
     const filterLabels: Record<string, string> = {
         make: 'Hãng xe',
         model: 'Dòng xe',
@@ -40,6 +40,7 @@ export default function Header() {
         drivetrain: 'Dẫn động',
         condition: 'Tình trạng',
         paperwork: 'Giấy tờ',
+        location: 'Khu vực',
         mods: 'Mods',
     };
 

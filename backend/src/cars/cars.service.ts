@@ -63,6 +63,9 @@ export class CarsService {
         if (query.sellerId) {
             qb.andWhere('seller.id = :sellerId', { sellerId: query.sellerId });
         }
+        if (query.location) {
+            qb.andWhere('car.location ILIKE :location', { location: `%${query.location}%` });
+        }
 
         // Smart full-text search - concatenate all searchable fields into one string
         // Each word must be found somewhere in this combined searchable text
@@ -461,6 +464,7 @@ export class CarsService {
         maxPrice?: number;
         minYear?: number;
         maxYear?: number;
+        location?: string;
     }): Promise<any> {
         const qb = this.carsRepository.createQueryBuilder('car');
         qb.leftJoin('car.seller', 'seller');
@@ -507,6 +511,9 @@ export class CarsService {
         if (query.maxYear) {
             qb.andWhere('car.year <= :maxYear', { maxYear: query.maxYear });
         }
+        if (query.location) {
+            qb.andWhere('car.location ILIKE :location', { location: `%${query.location}%` });
+        }
 
         const cars = await qb.getMany();
 
@@ -521,6 +528,7 @@ export class CarsService {
             condition: new Set(),
             paperwork: new Set(),
             mods: new Set(),
+            location: new Set(),
         };
 
         let minPrice = Infinity;
@@ -539,6 +547,7 @@ export class CarsService {
             if (car.drivetrain) options.drivetrain.add(car.drivetrain.toUpperCase());
             if (car.condition) options.condition.add(car.condition.toUpperCase());
             if (car.paperwork) options.paperwork.add(car.paperwork.toUpperCase());
+            if (car.location) options.location.add(car.location.toUpperCase());
 
             // Track ranges
             const price = parseInt(car.price);
@@ -591,6 +600,7 @@ export class CarsService {
                 condition: Array.from(options.condition).sort(),
                 paperwork: Array.from(options.paperwork).sort(),
                 mods: Array.from(options.mods).sort(),
+                location: Array.from(options.location).sort(),
             },
             // Ranges
             ranges: {
