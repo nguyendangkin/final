@@ -23,6 +23,15 @@ export class UsersService {
         return this.usersRepository.findOne({ where: { id } });
     }
 
+    async searchByEmail(email: string): Promise<User[]> {
+        return this.usersRepository
+            .createQueryBuilder('user')
+            .where('LOWER(user.email) LIKE LOWER(:email)', { email: `%${email}%` })
+            .orderBy('user.createdAt', 'DESC')
+            .take(20)
+            .getMany();
+    }
+
     async findOneWithCars(id: string): Promise<User | null> {
         return this.usersRepository.findOne({
             where: { id },

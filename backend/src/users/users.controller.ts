@@ -15,6 +15,19 @@ export class UsersController {
         return user;
     }
 
+    @Get('search/email')
+    @UseGuards(AuthGuard('jwt'))
+    async searchByEmail(@Req() req, @Query('q') query: string) {
+        const user = await this.usersService.findOne(req.user.id);
+        if (!user || !user.isAdmin) {
+            throw new NotFoundException('Unauthorized');
+        }
+        if (!query || query.trim().length === 0) {
+            return [];
+        }
+        return this.usersService.searchByEmail(query.trim());
+    }
+
     @Get()
     @UseGuards(AuthGuard('jwt'))
     async findAll(@Req() req, @Query('page') page: number = 1, @Query('limit') limit: number = 10) {

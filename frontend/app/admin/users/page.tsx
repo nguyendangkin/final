@@ -47,15 +47,45 @@ export default function AdminUsers() {
 
     const handleSearch = async () => {
         setError('');
-        if (!searchLink.trim()) {
+        const query = searchLink.trim();
+        if (!query) {
             fetchUsers(1);
             setPage(1);
             return;
         }
 
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            router.push('/login');
+            return;
+        }
+
+        // Check if searching by email (contains @)
+        if (query.includes('@')) {
+            try {
+                const res = await fetch(`http://localhost:3000/users/search/email?q=${encodeURIComponent(query)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    setError('Lỗi khi tìm kiếm người dùng.');
+                    return;
+                }
+                const users = await res.json();
+                if (users && users.length > 0) {
+                    setUsers(users);
+                    setTotalPages(1);
+                } else {
+                    setError('Không tìm thấy người dùng với email này.');
+                }
+            } catch (e) {
+                setError('Lỗi khi tìm kiếm.');
+            }
+            return;
+        }
+
         // Extract ID from link
         const uuidRegex = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
-        const match = searchLink.match(uuidRegex);
+        const match = query.match(uuidRegex);
 
         if (!match) {
             setError('Link không hợp lệ hoặc không tìm thấy ID xe.');
@@ -174,14 +204,14 @@ export default function AdminUsers() {
 
                 {/* Search Box */}
                 <div className="bg-white p-4 shadow-sm border border-gray-200 mb-4 rounded-none">
-                    <p className="text-sm font-bold uppercase mb-2">Tìm kiếm người dùng qua bài bán</p>
+                    <p className="text-sm font-bold uppercase mb-2">Tìm kiếm người dùng</p>
                     <div className="flex gap-2">
                         <input
                             type="text"
                             value={searchLink}
                             onChange={(e) => setSearchLink(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            placeholder="Dán link bài bán xe vào đây và nhấn Enter..."
+                            placeholder="Nhập email hoặc dán link bài bán xe..."
                             className="flex-1 p-2 border border-gray-300 text-sm focus:outline-none focus:border-[var(--jdm-red)]"
                         />
                         <button

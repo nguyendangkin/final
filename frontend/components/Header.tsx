@@ -243,6 +243,12 @@ export default function Header() {
                         >
                             Thông tin
                         </Link>
+                        <Link
+                            href="/sell"
+                            className="px-4 py-2 bg-[var(--jdm-red)] hover:bg-red-700 text-white text-sm font-bold uppercase tracking-wider transition-colors flex items-center"
+                        >
+                            Đăng bán xe
+                        </Link>
                     </nav>
 
                     {/* Search Bar */}
@@ -567,6 +573,15 @@ export default function Header() {
                             className="block px-3 py-3 text-sm font-bold uppercase text-gray-800 hover:text-[var(--jdm-red)] border-b border-gray-200"
                         >
                             Thông tin
+                        </Link>
+
+                        {/* Sell Button */}
+                        <Link
+                            href="/sell"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="block mx-3 mt-3 px-4 py-3 bg-[var(--jdm-red)] hover:bg-red-700 text-white text-sm font-bold uppercase tracking-wide text-center transition-colors"
+                        >
+                            Đăng bán xe
                         </Link>
 
                         {user ? (
