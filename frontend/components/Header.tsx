@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
+import SmartFilter from './SmartFilter';
 
 const BRANDS = [
     'Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi',
@@ -17,8 +18,7 @@ export default function Header() {
     const [isSearchOptionsOpen, setIsSearchOptionsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-    const mobileMinPriceRef = useRef<HTMLInputElement>(null);
-    const mobileMaxPriceRef = useRef<HTMLInputElement>(null);
+
 
     // Smart filter states
     const [smartFilters, setSmartFilters] = useState<any>(null);
@@ -33,20 +33,7 @@ export default function Header() {
     const searchParams = useSearchParams();
     const currentMake = searchParams.get('make');
 
-    // Filter category labels in Vietnamese - ordered by importance
-    const filterOrder = ['make', 'model', 'location', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
-    const filterLabels: Record<string, string> = {
-        make: 'Hãng xe',
-        model: 'Dòng xe',
-        chassisCode: 'Mã gầm',
-        engineCode: 'Mã máy',
-        transmission: 'Hộp số',
-        drivetrain: 'Dẫn động',
-        condition: 'Tình trạng',
-        paperwork: 'Giấy tờ',
-        location: 'Khu vực',
-        mods: 'Mods',
-    };
+
 
     // Fetch smart filters based on current selections
     const fetchSmartFilters = async (filters: Record<string, string>, price?: { min: string; max: string }) => {
@@ -76,9 +63,9 @@ export default function Header() {
         }
     }, [isSearchOptionsOpen]);
 
-    // Re-fetch when filters or price range change
+    // Re-fetch when filters or price range change (both desktop and mobile)
     useEffect(() => {
-        if (isSearchOptionsOpen) {
+        if (isSearchOptionsOpen || isMobileFilterOpen) {
             fetchSmartFilters(selectedFilters, priceRange);
         }
     }, [selectedFilters, priceRange.min, priceRange.max]);
@@ -116,69 +103,10 @@ export default function Header() {
         router.push(`/?${params.toString()}`);
     };
 
+
+
     // Format price for display
-    const formatPrice = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
 
-    // Refs for price inputs to manage cursor
-    const minPriceRef = useRef<HTMLInputElement>(null);
-    const maxPriceRef = useRef<HTMLInputElement>(null);
-
-    // Format price input with cursor management
-    const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>, field: 'min' | 'max') => {
-        const input = e.target;
-        const cursorPos = input.selectionStart || 0;
-        const oldValue = input.value;
-
-        // Count dots before cursor
-        const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
-
-        // Get raw digits only
-        const rawValue = oldValue.replace(/\D/g, '');
-
-        // Store raw value
-        setPriceRange(prev => ({ ...prev, [field]: rawValue }));
-
-        // Calculate new cursor position after formatting
-        setTimeout(() => {
-            const ref = field === 'min' ? minPriceRef : maxPriceRef;
-            if (ref.current) {
-                const newFormatted = ref.current.value;
-                const newDotsBeforeCursor = (newFormatted.slice(0, cursorPos).match(/\./g) || []).length;
-                const adjustment = newDotsBeforeCursor - dotsBeforeCursor;
-                const newPos = Math.max(0, cursorPos + adjustment);
-                ref.current.setSelectionRange(newPos, newPos);
-            }
-        }, 0);
-    };
-
-    // Mobile Price Input Handler
-    const handleMobilePriceInput = (e: React.ChangeEvent<HTMLInputElement>, field: 'min' | 'max') => {
-        const input = e.target;
-        const cursorPos = input.selectionStart || 0;
-        const oldValue = input.value;
-        const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
-        const rawValue = oldValue.replace(/\D/g, '');
-        setPriceRange(prev => ({ ...prev, [field]: rawValue }));
-
-        setTimeout(() => {
-            const ref = field === 'min' ? mobileMinPriceRef : mobileMaxPriceRef;
-            if (ref.current) {
-                const newFormatted = ref.current.value;
-                const newDotsBeforeCursor = (newFormatted.slice(0, cursorPos).match(/\./g) || []).length;
-                const adjustment = newDotsBeforeCursor - dotsBeforeCursor;
-                const newPos = Math.max(0, cursorPos + adjustment);
-                ref.current.setSelectionRange(newPos, newPos);
-            }
-        }, 0);
-    };
-
-    // Display formatted price in input
-    const displayFormattedPrice = (value: string) => {
-        if (!value) return '';
-        const num = parseInt(value);
-        if (isNaN(num)) return '';
-        return new Intl.NumberFormat('vi-VN').format(num);
-    };
 
     useEffect(() => {
         // Check for token in URL (from Google Auth callback)
@@ -219,6 +147,7 @@ export default function Header() {
     };
 
     const handleLogin = () => {
+        setIsMenuOpen(false);
         router.push('/login');
     };
 
@@ -226,6 +155,8 @@ export default function Header() {
         localStorage.removeItem('jwt_token');
         setUser(null);
         setBalance(null);
+        setIsMenuOpen(false);
+        setIsUserMenuOpen(false);
         router.push('/');
     };
 
@@ -325,141 +256,16 @@ export default function Header() {
                                     onClick={() => setIsSearchOptionsOpen(false)}
                                 />
                                 <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 shadow-xl z-40 p-4 max-h-[70vh] overflow-y-auto">
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between mb-3">
-                                        <p className="text-xs font-bold text-gray-500 uppercase">Bộ lọc thông minh</p>
-                                        {smartFilters && (
-                                            <span className="text-xs text-[var(--jdm-red)] font-bold">
-                                                {smartFilters.count} xe phù hợp
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {isLoading && !smartFilters ? (
-                                        <p className="text-xs text-gray-400 text-center py-4">Đang tải bộ lọc...</p>
-                                    ) : smartFilters?.options ? (
-                                        <div className="space-y-3">
-                                            {/* Price Range Filter - Priority First */}
-                                            <div className="bg-gray-50 p-2 border-l-2 border-[var(--jdm-red)]">
-                                                <label className="text-xs font-bold text-gray-700 uppercase mb-1.5 block">
-                                                    Khoảng giá (VNĐ)
-                                                </label>
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        ref={minPriceRef}
-                                                        type="text"
-                                                        placeholder="Từ"
-                                                        value={displayFormattedPrice(priceRange.min)}
-                                                        onChange={(e) => handlePriceInput(e, 'min')}
-                                                        className="w-full p-1.5 border border-gray-300 text-xs focus:outline-none focus:border-[var(--jdm-red)] text-right"
-                                                    />
-                                                    <span className="text-gray-400 text-xs">—</span>
-                                                    <input
-                                                        ref={maxPriceRef}
-                                                        type="text"
-                                                        placeholder="Đến"
-                                                        value={displayFormattedPrice(priceRange.max)}
-                                                        onChange={(e) => handlePriceInput(e, 'max')}
-                                                        className="w-full p-1.5 border border-gray-300 text-xs focus:outline-none focus:border-[var(--jdm-red)] text-right"
-                                                    />
-                                                </div>
-                                                {smartFilters.ranges?.price?.max > 0 && (
-                                                    <p className="text-[10px] text-gray-400 mt-1">
-                                                        {formatPrice(smartFilters.ranges.price.min)} — {formatPrice(smartFilters.ranges.price.max)}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Year Range Info */}
-                                            {smartFilters.ranges?.year?.max > 0 && (
-                                                <div className="text-xs text-gray-500">
-                                                    <span className="font-medium">Năm:</span> {smartFilters.ranges.year.min} - {smartFilters.ranges.year.max}
-                                                </div>
-                                            )}
-
-                                            {/* Dynamic filter sections - ordered by importance */}
-                                            {filterOrder.map(category => {
-                                                const options = smartFilters.options[category];
-                                                if (!options || options.length === 0) return null;
-
-                                                return (
-                                                    <div key={category} className="border-t border-gray-100 pt-2">
-                                                        <label className="text-xs font-bold text-[var(--jdm-red)] uppercase">
-                                                            {filterLabels[category]}
-                                                            {selectedFilters[category] && (
-                                                                <span className="ml-2 text-white bg-black px-1">
-                                                                    {selectedFilters[category]}
-                                                                </span>
-                                                            )}
-                                                        </label>
-                                                        <div className="mt-1.5 flex flex-wrap gap-1">
-                                                            {options.map((value: string) => (
-                                                                <button
-                                                                    key={value}
-                                                                    onClick={() => selectFilter(category, value)}
-                                                                    className={`px-2 py-1 text-xs font-bold uppercase transition-colors ${selectedFilters[category] === value
-                                                                        ? 'bg-[var(--jdm-red)] text-white'
-                                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                                        }`}
-                                                                >
-                                                                    {value}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-gray-400 text-center py-4">Không thể tải bộ lọc</p>
-                                    )}
-
-                                    {/* Selected Filters Summary */}
-                                    {Object.keys(selectedFilters).length > 0 && (
-                                        <div className="border-t border-gray-200 mt-3 pt-3">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <label className="text-xs font-bold text-gray-700 uppercase">
-                                                    Đã chọn ({Object.keys(selectedFilters).length})
-                                                </label>
-                                                <button
-                                                    onClick={clearFilters}
-                                                    className="text-xs text-gray-500 hover:text-[var(--jdm-red)]"
-                                                >
-                                                    Xóa tất cả
-                                                </button>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1">
-                                                {Object.entries(selectedFilters).map(([category, value]) => (
-                                                    <span
-                                                        key={category}
-                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-[var(--jdm-red)] text-white"
-                                                    >
-                                                        <span className="opacity-70">{filterLabels[category]}:</span> {value}
-                                                        <button
-                                                            onClick={() => selectFilter(category, value)}
-                                                            className="hover:bg-white/20 rounded-full p-0.5"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Loading overlay */}
-                                    {isLoading && smartFilters && (
-                                        <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
-                                            <p className="text-xs text-gray-500">Đang cập nhật...</p>
-                                        </div>
-                                    )}
-
-                                    <button
-                                        onClick={performSearch}
-                                        className="w-full mt-3 bg-black hover:bg-[var(--jdm-red)] text-white py-2 text-sm font-bold uppercase tracking-wider transition-colors"
-                                    >
-                                        Tìm kiếm {smartFilters?.count ? `(${smartFilters.count} kết quả)` : ''}
-                                    </button>
+                                    <SmartFilter
+                                        isLoading={isLoading}
+                                        smartFilters={smartFilters}
+                                        selectedFilters={selectedFilters}
+                                        priceRange={priceRange}
+                                        onSelectFilter={selectFilter}
+                                        onClearFilters={clearFilters}
+                                        onPriceChange={(min: string, max: string) => setPriceRange({ min, max })}
+                                        onSearch={performSearch}
+                                    />
                                 </div>
                             </>
                         )}
@@ -615,136 +421,19 @@ export default function Header() {
                             {/* Mobile Smart Filters */}
                             {isMobileFilterOpen && (
                                 <div className="mt-4 p-4 bg-gray-50 border border-gray-200 shadow-inner">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <p className="text-xs font-bold text-gray-500 uppercase">Bộ lọc thông minh</p>
-                                        {smartFilters && (
-                                            <span className="text-xs text-[var(--jdm-red)] font-bold">
-                                                {smartFilters.count} xe
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    {isLoading && !smartFilters ? (
-                                        <p className="text-xs text-gray-400 text-center py-4">Đang tải bộ lọc...</p>
-                                    ) : smartFilters?.options ? (
-                                        <div className="space-y-4">
-                                            {/* Price Range Filter */}
-                                            <div className="bg-white p-3 border border-gray-200">
-                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2 block">
-                                                    Khoảng giá (VNĐ)
-                                                </label>
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        ref={mobileMinPriceRef}
-                                                        type="text"
-                                                        placeholder="Từ"
-                                                        value={displayFormattedPrice(priceRange.min)}
-                                                        onChange={(e) => handleMobilePriceInput(e, 'min')}
-                                                        className="w-full p-2 border border-gray-300 text-sm focus:outline-none focus:border-[var(--jdm-red)] text-right bg-gray-50"
-                                                    />
-                                                    <span className="text-gray-400 text-xs">—</span>
-                                                    <input
-                                                        ref={mobileMaxPriceRef}
-                                                        type="text"
-                                                        placeholder="Đến"
-                                                        value={displayFormattedPrice(priceRange.max)}
-                                                        onChange={(e) => handleMobilePriceInput(e, 'max')}
-                                                        className="w-full p-2 border border-gray-300 text-sm focus:outline-none focus:border-[var(--jdm-red)] text-right bg-gray-50"
-                                                    />
-                                                </div>
-                                                {smartFilters.ranges?.price?.max > 0 && (
-                                                    <p className="text-[10px] text-gray-400 mt-1">
-                                                        {formatPrice(smartFilters.ranges.price.min)} — {formatPrice(smartFilters.ranges.price.max)}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            {/* Year Range Info */}
-                                            {smartFilters.ranges?.year?.max > 0 && (
-                                                <div className="text-xs text-gray-500">
-                                                    <span className="font-medium">Năm:</span> {smartFilters.ranges.year.min} - {smartFilters.ranges.year.max}
-                                                </div>
-                                            )}
-
-                                            {/* Dynamic filter sections */}
-                                            {filterOrder.map(category => {
-                                                const options = smartFilters.options[category];
-                                                if (!options || options.length === 0) return null;
-
-                                                return (
-                                                    <div key={category} className="border-t border-gray-200 pt-3">
-                                                        <label className="text-xs font-bold text-[var(--jdm-red)] uppercase mb-2 block">
-                                                            {filterLabels[category]}
-                                                            {selectedFilters[category] && (
-                                                                <span className="ml-2 text-white bg-black px-1.5 py-0.5 text-[10px]">
-                                                                    {selectedFilters[category]}
-                                                                </span>
-                                                            )}
-                                                        </label>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {options.map((value: string) => (
-                                                                <button
-                                                                    key={value}
-                                                                    onClick={() => selectFilter(category, value)}
-                                                                    className={`px-3 py-1.5 text-xs font-bold uppercase transition-colors border ${selectedFilters[category] === value
-                                                                        ? 'bg-[var(--jdm-red)] text-white border-[var(--jdm-red)]'
-                                                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
-                                                                        }`}
-                                                                >
-                                                                    {value}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-
-                                            {/* Selected Filters Summary */}
-                                            {Object.keys(selectedFilters).length > 0 && (
-                                                <div className="border-t border-gray-200 mt-4 pt-4">
-                                                    <div className="flex items-center justify-between mb-3">
-                                                        <label className="text-xs font-bold text-gray-700 uppercase">
-                                                            Đang chọn
-                                                        </label>
-                                                        <button
-                                                            onClick={clearFilters}
-                                                            className="text-xs text-gray-500 hover:text-[var(--jdm-red)] underline"
-                                                        >
-                                                            Xóa tất cả
-                                                        </button>
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {Object.entries(selectedFilters).map(([category, value]) => (
-                                                            <span
-                                                                key={category}
-                                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-black text-white"
-                                                            >
-                                                                <span className="opacity-70">{filterLabels[category]}:</span> {value}
-                                                                <button
-                                                                    onClick={() => selectFilter(category, value)}
-                                                                    className="hover:text-[var(--jdm-red)] ml-1"
-                                                                >
-                                                                    <X className="w-3 h-3" />
-                                                                </button>
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <button
-                                                onClick={() => {
-                                                    performSearch();
-                                                    setIsMenuOpen(false);
-                                                }}
-                                                className="w-full mt-4 bg-black hover:bg-[var(--jdm-red)] text-white py-3 text-sm font-bold uppercase tracking-wider transition-colors shadow-lg"
-                                            >
-                                                Xem {smartFilters?.count || 0} kết quả
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <p className="text-xs text-gray-400 text-center py-4">Không thể tải bộ lọc</p>
-                                    )}
+                                    <SmartFilter
+                                        isLoading={isLoading}
+                                        smartFilters={smartFilters}
+                                        selectedFilters={selectedFilters}
+                                        priceRange={priceRange}
+                                        onSelectFilter={selectFilter}
+                                        onClearFilters={clearFilters}
+                                        onPriceChange={(min: string, max: string) => setPriceRange({ min, max })}
+                                        onSearch={() => {
+                                            performSearch();
+                                            setIsMenuOpen(false);
+                                        }}
+                                    />
                                 </div>
                             )}
                         </div>

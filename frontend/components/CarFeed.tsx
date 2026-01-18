@@ -32,6 +32,9 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
         maxPrice: searchParams.get('maxPrice'),
         q: searchParams.get('q'),
         location: searchParams.get('location'),
+        chassisCode: searchParams.get('chassisCode'),
+        engineCode: searchParams.get('engineCode'),
+        mods: searchParams.get('mods'),
     };
 
     // Create a stable key for the filters

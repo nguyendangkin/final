@@ -66,6 +66,19 @@ export class CarsService {
         if (query.location) {
             qb.andWhere('car.location ILIKE :location', { location: `%${query.location}%` });
         }
+        if (query.chassisCode) {
+            qb.andWhere('car.chassisCode ILIKE :chassisCode', { chassisCode: `%${query.chassisCode}%` });
+        }
+        if (query.engineCode) {
+            qb.andWhere('car.engineCode ILIKE :engineCode', { engineCode: `%${query.engineCode}%` });
+        }
+        if (query.mods) {
+            // Revert to text-based search for "like other filters" behavior, 
+            // but wrap in quotes to target JSON values specifically and avoid partial word matches.
+            // e.g., searching for "G" becomes ILIKE '%"G"%', which matches ["G"] or [{"name":"G"}] 
+            // but NOT ["Engine"] (because "Engine" doesn't contain "G" with quotes).
+            qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', { mods: `%"${query.mods}"%` });
+        }
 
         // Smart full-text search - concatenate all searchable fields into one string
         // Each word must be found somewhere in this combined searchable text
@@ -497,7 +510,7 @@ export class CarsService {
             qb.andWhere('car.paperwork ILIKE :paperwork', { paperwork: `%${query.paperwork}%` });
         }
         if (query.mods) {
-            qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', { mods: `%${query.mods}%` });
+            qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', { mods: `%"${query.mods}"%` });
         }
         if (query.minPrice) {
             qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', { minPrice: query.minPrice });

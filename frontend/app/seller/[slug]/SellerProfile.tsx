@@ -29,26 +29,22 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Seller Header */}
-                <div className="bg-white rounded-none shadow-sm border border-gray-100 p-8 mb-8">
-                    <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center text-white font-bold text-4xl shadow-lg border-4 border-white overflow-hidden ring-1 ring-gray-100">
-                            {seller.avatar ? (
-                                <img src={seller.avatar} alt={displayName} className="w-full h-full object-cover" />
-                            ) : (
-                                displayName[0]?.toUpperCase() || <User className="w-10 h-10" />
-                            )}
+                <div className="bg-white rounded-none shadow-sm border border-gray-100 p-6 mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-none bg-black flex items-center justify-center text-white font-bold text-2xl border border-gray-200 shadow-sm">
+                            {displayName[0]?.toUpperCase() || 'U'}
                         </div>
                         <div className="flex-1">
-                            <h1 className="text-3xl font-black text-black uppercase tracking-tight">{displayName}</h1>
-                            <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500">
+                            <h1 className="text-xl font-black text-black uppercase tracking-tight">{displayName}</h1>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-gray-500 font-medium">
                                 <span className="flex items-center gap-1">
-                                    <ShieldCheck className="w-4 h-4 text-emerald-500" /> Đã xác thực
+                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Đã xác thực
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" /> Tham gia {joinYear}
+                                    <Calendar className="w-3.5 h-3.5" /> Tham gia {joinYear}
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <Car className="w-4 h-4" />
+                                    <Car className="w-3.5 h-3.5" />
                                     {soldCarsCount > 0
                                         ? `${activeCarsCount} xe đang bán • ${soldCarsCount} xe đã bán`
                                         : `${activeCarsCount} xe đang bán`

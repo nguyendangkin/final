@@ -173,52 +173,122 @@ export default function CarDetail({ car }: CarDetailProps) {
                     {/* LEFT COLUMN: Images & Detail Info */}
                     <div className="lg:col-span-8 space-y-8">
 
-                        {/* Image Gallery */}
-                        <div className="bg-white rounded-none overflow-hidden shadow-sm border border-gray-100">
-                            <div className="relative aspect-[16/9] group cursor-pointer" onClick={() => openLightbox(0)}>
-                                <img
-                                    src={images[0]}
-                                    alt={`${car.year} ${car.make} ${car.model} - ${car.condition || 'Used'}`}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                />
-                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <button className="bg-[var(--jdm-red)] text-white px-4 py-2 rounded-none font-bold flex items-center gap-2 shadow-lg backdrop-blur transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 uppercase tracking-widest text-xs cursor-pointer hover:bg-red-700">
-                                        <Maximize2 className="w-5 h-5" /> Xem toàn màn hình
-                                    </button>
+                        {/* NEW MODERN IMAGE GALLERY */}
+                        <div className="rounded-none overflow-hidden border border-gray-100 bg-white">
+
+                            {/* MOBILE: Carousel (Horizontal Scroll) */}
+                            <div className="lg:hidden relative group">
+                                <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide aspect-[4/3] bg-gray-100">
+                                    {images.map((img: string, idx: number) => (
+                                        <div key={idx}
+                                            className="min-w-full snap-center relative cursor-pointer"
+                                            onClick={() => openLightbox(idx)}
+                                        >
+                                            <img
+                                                src={img}
+                                                alt={`Car image ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
-                                <div className="absolute top-4 left-4">
-                                    <span className="bg-[var(--jdm-red)] backdrop-blur text-white px-3 py-1 rounded-none text-xs font-bold uppercase tracking-wider shadow-sm">
-                                        {car.condition || 'Đã qua sử dụng'}
-                                    </span>
+                                <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+                                    <Camera className="w-3 h-3" />
+                                    <span>{images.length} Ảnh</span>
                                 </div>
                                 {car.status === 'SOLD' && (
-                                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                                        <div className="bg-black border-2 border-[var(--jdm-red)] px-8 py-3 shadow-2xl transform -rotate-12">
-                                            <span className="text-[var(--jdm-red)] font-black text-3xl uppercase tracking-[0.2em] border-2 border-white px-2 py-1 block">ĐÃ BÁN</span>
-                                        </div>
+                                    <div className="absolute top-4 left-4">
+                                        <span className="bg-emerald-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider rounded shadow-sm">
+                                            ĐÃ BÁN
+                                        </span>
                                     </div>
                                 )}
                             </div>
 
-                            {/* Thumbnails */}
-                            {images.length > 1 && (
-                                <div className="p-4 grid grid-cols-5 md:grid-cols-6 gap-2">
-                                    {images.map((img: string, idx: number) => (
-                                        <div
-                                            key={idx}
-                                            onClick={() => openLightbox(idx)}
-                                            className={`relative aspect-square rounded-none overflow-hidden cursor-pointer border-2 transition-all ${idx === 0 ? 'border-[var(--jdm-red)] ring-2 ring-red-500/20' : 'border-transparent hover:border-gray-300'}`}
-                                        >
-                                            <img src={img} alt={`${car.make} ${car.model} view ${idx + 1}`} className="w-full h-full object-cover" />
-                                            {idx === 5 && images.length > 6 && (
-                                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-sm">
-                                                    +{images.length - 6}
+                            {/* DESKTOP: Masonry Grid */}
+                            <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-1 h-[400px] xl:h-[450px] cursor-pointer" onClick={() => openLightbox(0)}>
+                                {images.length === 1 && (
+                                    <div className="col-span-4 row-span-2 relative group overflow-hidden">
+                                        <img src={images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car" />
+                                    </div>
+                                )}
+
+                                {images.length === 2 && (
+                                    <>
+                                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
+                                            <img src={images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" />
+                                        </div>
+                                        <div className="col-span-2 row-span-2 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(1); }}>
+                                            <img src={images[1]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" />
+                                        </div>
+                                    </>
+                                )}
+
+                                {images.length === 3 && (
+                                    <>
+                                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
+                                            <img src={images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" />
+                                        </div>
+                                        <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(1); }}>
+                                            <img src={images[1]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" />
+                                        </div>
+                                        <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(2); }}>
+                                            <img src={images[2]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" />
+                                        </div>
+                                    </>
+                                )}
+
+                                {images.length === 4 && (
+                                    <>
+                                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
+                                            <img src={images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" />
+                                        </div>
+                                        <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(1); }}>
+                                            <img src={images[1]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" />
+                                        </div>
+                                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(2); }}>
+                                            <img src={images[2]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" />
+                                        </div>
+                                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(3); }}>
+                                            <img src={images[3]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 4" />
+                                        </div>
+                                    </>
+                                )}
+
+                                {images.length >= 5 && (
+                                    <>
+                                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
+                                            <img src={images[0]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" />
+                                            {car.status === 'SOLD' && (
+                                                <div className="absolute top-4 left-4">
+                                                    <span className="bg-emerald-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider rounded shadow-sm">
+                                                        ĐÃ BÁN
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
-                                    )).slice(0, 6)}
-                                </div>
-                            )}
+                                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(1); }}>
+                                            <img src={images[1]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" />
+                                        </div>
+                                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(2); }}>
+                                            <img src={images[2]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" />
+                                        </div>
+                                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); openLightbox(3); }}>
+                                            <img src={images[3]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 4" />
+                                        </div>
+                                        <div className="col-span-1 row-span-1 relative group overflow-hidden cursor-pointer" onClick={(e) => { e.stopPropagation(); openLightbox(4); }}>
+                                            <img src={images[4]} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 5" />
+                                            {images.length > 5 && (
+                                                <div className="absolute inset-0 bg-black/50 hover:bg-black/40 transition-colors flex items-center justify-center">
+                                                    <span className="text-white font-bold text-xl flex items-center gap-1">
+                                                        +{images.length - 5}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
 
