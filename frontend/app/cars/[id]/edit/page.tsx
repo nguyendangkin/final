@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box, Armchair, Hammer, Disc } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { getCarIdFromSlug } from '@/lib/utils';
 
 const BRANDS = [
@@ -291,7 +292,7 @@ export default function EditCarPage() {
             return result.url;
         } catch (error) {
             console.error('Error uploading:', error);
-            alert('Tải ảnh thất bại. Vui lòng thử lại.');
+            toast.error('Tải ảnh thất bại. Vui lòng thử lại.');
             return null;
         }
     };
@@ -317,13 +318,13 @@ export default function EditCarPage() {
             const remainingSlots = 20 - currentCount;
 
             if (remainingSlots <= 0) {
-                alert('Bạn đã đạt giới hạn 20 ảnh chi tiết.');
+                toast.error('Bạn đã đạt giới hạn 20 ảnh chi tiết.');
                 return;
             }
 
             let filesToUpload = files;
             if (files.length > remainingSlots) {
-                alert(`Bạn chỉ có thể thêm ${remainingSlots} ảnh nữa.`);
+                toast.error(`Bạn chỉ có thể thêm ${remainingSlots} ảnh nữa.`);
                 filesToUpload = files.slice(0, remainingSlots);
             }
 

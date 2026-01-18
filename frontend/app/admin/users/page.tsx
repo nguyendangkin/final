@@ -1,0 +1,306 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Search, Ban, CheckCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+export default function AdminUsers() {
+    const [users, setUsers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchLink, setSearchLink] = useState('');
+    const [originalUsers, setOriginalUsers] = useState<any[]>([]);
+    const [error, setError] = useState('');
+    const router = useRouter();
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const fetchUsers = () => {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) {
+            router.push('/login');
+            return;
+        }
+
+        fetch('http://localhost:3000/users', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Unauthorized');
+                return res.json();
+            })
+            .then(data => {
+                setUsers(data);
+                setOriginalUsers(data);
+                setLoading(false);
+            })
+            .catch(() => {
+                router.push('/');
+            });
+    };
+
+    const handleSearch = async () => {
+        setError('');
+        if (!searchLink.trim()) {
+            setUsers(originalUsers);
+            return;
+        }
+
+        // Extract ID from link
+        // Example: http://localhost:3000/cars/some-uuid
+        // or just some-uuid
+        const uuidRegex = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
+        const match = searchLink.match(uuidRegex);
+
+        if (!match) {
+            setError('Link không hợp lệ hoặc không tìm thấy ID xe.');
+            return;
+        }
+
+        const carId = match[0];
+
+        try {
+            const res = await fetch(`http://localhost:3000/cars/${carId}`);
+            if (!res.ok) {
+                setError('Không tìm thấy xe với ID này.');
+                return;
+            }
+            const car = await res.json();
+            if (car && car.seller) {
+                // Filter users to show only the seller
+                const seller = originalUsers.find(u => u.id === car.seller.id);
+                if (seller) {
+                    setUsers([seller]);
+                } else {
+                    setError('Không tìm thấy người bán trong danh sách người dùng.');
+                }
+            }
+        } catch (e) {
+            setError('Lỗi khi tìm kiếm xe.');
+        }
+    };
+
+    const toggleBan = (userId: string, currentStatus: boolean) => {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) return;
+
+        toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                <div className="p-6">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                <Ban className="h-6 w-6 text-white" />
+                            </div>
+                        </div>
+                        <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                Xác nhận hành động
+                            </h3>
+                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                Bạn có chắc chắn muốn <span className="font-bold">{currentStatus ? 'BỎ CẤM' : 'CẤM'}</span> người dùng này bán xe?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex bg-gray-50 mt-4">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            executeBan(userId, currentStatus, token);
+                        }}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                    >
+                        Đồng ý
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
+    };
+
+    const executeBan = async (userId: string, currentStatus: boolean, token: string) => {
+        try {
+            const res = await fetch(`http://localhost:3000/users/${userId}/ban`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                // Update local state
+                setUsers(prev => prev.map(u =>
+                    u.id === userId ? { ...u, isSellingBanned: !currentStatus } : u
+                ));
+                setOriginalUsers(prev => prev.map(u =>
+                    u.id === userId ? { ...u, isSellingBanned: !currentStatus } : u
+                ));
+                toast.success(`Đã ${!currentStatus ? 'cấm' : 'bỏ cấm'} người dùng thành công.`);
+            } else {
+                toast.error('Có lỗi xảy ra khi cập nhật trạng thái.');
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Lỗi kết nối.');
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50 pt-20 pb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mb-6 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold uppercase tracking-wide">Quản lý người dùng</h1>
+                        <p className="text-sm text-gray-500">Danh sách tất cả người dùng trong hệ thống</p>
+                    </div>
+                    <Link href="/admin" className="text-sm font-bold uppercase hover:text-[var(--jdm-red)] transition-colors">
+                        ← Quay lại Dashboard
+                    </Link>
+                </div>
+
+                {/* Search Box */}
+                <div className="bg-white p-4 shadow-sm border border-gray-200 mb-4 rounded-none">
+                    <p className="text-sm font-bold uppercase mb-2">Tìm kiếm người dùng qua bài bán</p>
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={searchLink}
+                            onChange={(e) => setSearchLink(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                            placeholder="Dán link bài bán xe vào đây và nhấn Enter..."
+                            className="flex-1 p-2 border border-gray-300 text-sm focus:outline-none focus:border-[var(--jdm-red)]"
+                        />
+                        <button
+                            onClick={handleSearch}
+                            className="bg-black text-white px-4 py-2 text-sm font-bold uppercase hover:bg-[var(--jdm-red)] transition-colors"
+                        >
+                            Tìm kiếm
+                        </button>
+                        {searchLink && (
+                            <button
+                                onClick={() => { setSearchLink(''); setUsers(originalUsers); setError(''); }}
+                                className="bg-gray-200 text-gray-700 px-4 py-2 text-sm font-bold uppercase hover:bg-gray-300 transition-colors"
+                            >
+                                Đặt lại
+                            </button>
+                        )}
+                    </div>
+                    {error && <p className="text-red-500 text-xs mt-2 font-bold">{error}</p>}
+                </div>
+
+                <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Người dùng
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Email
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Vai trò
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Trạng thái
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                        Hành động
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {users.map((user) => (
+                                    <tr key={user.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <div className="flex-shrink-0 h-10 w-10">
+                                                    {user.avatar ? (
+                                                        <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
+                                                    ) : (
+                                                        <div className="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
+                                                            {user.name?.[0] || 'U'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="ml-4">
+                                                    <div className="text-sm font-bold text-gray-900">{user.name}</div>
+                                                    <div className="text-xs text-gray-500">{new Date(user.createdAt).toLocaleDateString('vi-VN')}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-gray-500">{user.email}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {user.isAdmin ? (
+                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-black text-white uppercase">
+                                                    Admin
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 uppercase">
+                                                    User
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {user.isSellingBanned ? (
+                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-red-100 text-red-800 uppercase">
+                                                    Cấm bán
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 inline-flex text-xs leading-5 font-bold rounded-full bg-green-100 text-green-800 uppercase">
+                                                    Hoạt động
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            {!user.isAdmin && (
+                                                <button
+                                                    onClick={() => toggleBan(user.id, user.isSellingBanned)}
+                                                    className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${user.isSellingBanned
+                                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                                        : 'bg-red-600 text-white hover:bg-red-700'
+                                                        }`}
+                                                >
+                                                    {user.isSellingBanned ? (
+                                                        <>
+                                                            <CheckCircle className="w-3 h-3" /> Bỏ cấm
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Ban className="w-3 h-3" /> Cấm bán
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

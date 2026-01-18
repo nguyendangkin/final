@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History } from 'lucide-react';
 import Lightbox from '@/components/Lightbox';
+import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
 
 interface CarDetailProps {
@@ -403,27 +404,63 @@ export default function CarDetail({ car }: CarDetailProps) {
                                                         ? 'Bạn muốn đăng bán lại xe này?'
                                                         : 'Bạn có chắc chắn muốn đánh dấu xe này là ĐÃ BÁN?';
 
-                                                    if (confirm(confirmMsg)) {
-                                                        try {
-                                                            const token = localStorage.getItem('jwt_token');
-                                                            const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
-                                                                method: 'PATCH',
-                                                                headers: {
-                                                                    'Content-Type': 'application/json',
-                                                                    'Authorization': `Bearer ${token}`
-                                                                },
-                                                                body: JSON.stringify({ status: newStatus })
-                                                            });
-                                                            if (res.ok) {
-                                                                router.refresh();
-                                                            } else {
-                                                                alert('Có lỗi xảy ra, vui lòng thử lại.');
-                                                            }
-                                                        } catch (error) {
-                                                            console.error(error);
-                                                            alert('Có lỗi xảy ra.');
-                                                        }
-                                                    }
+                                                    toast.custom((t) => (
+                                                        <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                                                            <div className="p-6">
+                                                                <div className="flex items-start">
+                                                                    <div className="flex-shrink-0 pt-0.5">
+                                                                        <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                                                            <ShieldCheck className="h-6 w-6 text-white" />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="ml-4 flex-1">
+                                                                        <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                                                            Xác nhận trạng thái
+                                                                        </h3>
+                                                                        <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                                                            {confirmMsg}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex bg-gray-50 mt-4">
+                                                                <button
+                                                                    onClick={() => toast.dismiss(t.id)}
+                                                                    className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                                                                >
+                                                                    Hủy
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        toast.dismiss(t.id);
+                                                                        try {
+                                                                            const token = localStorage.getItem('jwt_token');
+                                                                            const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
+                                                                                method: 'PATCH',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'Authorization': `Bearer ${token}`
+                                                                                },
+                                                                                body: JSON.stringify({ status: newStatus })
+                                                                            });
+                                                                            if (res.ok) {
+                                                                                toast.success(`Đã đánh dấu xe là ${newStatus === 'SOLD' ? 'ĐÃ BÁN' : 'CÓ SẴN'}`);
+                                                                                router.refresh();
+                                                                            } else {
+                                                                                toast.error('Có lỗi xảy ra, vui lòng thử lại.');
+                                                                            }
+                                                                        } catch (error) {
+                                                                            console.error(error);
+                                                                            toast.error('Có lỗi xảy ra.');
+                                                                        }
+                                                                    }}
+                                                                    className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                                                                >
+                                                                    Đồng ý
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ), { duration: 5000 });
                                                 }}
                                                 className={`flex-shrink-0 font-bold px-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
                                                     ? 'bg-emerald-600 text-white hover:bg-emerald-700'

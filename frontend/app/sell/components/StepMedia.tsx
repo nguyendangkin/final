@@ -1,5 +1,6 @@
 import { CarSpecs } from '../types';
 import { Image as ImageIcon, Video, Plus, X, Link as LinkIcon, AlertCircle, UploadCloud, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 
 interface StepMediaProps {
@@ -37,7 +38,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
             return result.url;
         } catch (error) {
             console.error('Error uploading:', error);
-            alert('Tải ảnh thất bại. Vui lòng thử lại.');
+            toast.error('Tải ảnh thất bại. Vui lòng thử lại.');
             return null;
         }
     };
@@ -64,13 +65,13 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
             const remainingSlots = 20 - currentCount;
 
             if (remainingSlots <= 0) {
-                alert('Bạn đã đạt giới hạn 20 ảnh chi tiết.');
+                toast.error('Bạn đã đạt giới hạn 20 ảnh chi tiết.');
                 return;
             }
 
             let filesToUpload = files;
             if (files.length > remainingSlots) {
-                alert(`Bạn chỉ có thể thêm ${remainingSlots} ảnh nữa. Hệ thống sẽ chỉ tải lên ${remainingSlots} ảnh đầu tiên.`);
+                toast.error(`Bạn chỉ có thể thêm ${remainingSlots} ảnh nữa. Hệ thống sẽ chỉ tải lên ${remainingSlots} ảnh đầu tiên.`);
                 filesToUpload = files.slice(0, remainingSlots);
             }
 

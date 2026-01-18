@@ -10,6 +10,7 @@ import StepMods from './components/StepMods';
 import StepMedia from './components/StepMedia';
 
 import { ChevronRight, ChevronLeft, Save, Trash2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const STEPS = [
     { id: 1, title: 'Định danh', subtitle: 'Cơ bản' },
@@ -26,6 +27,7 @@ export default function SellPage() {
     const [loading, setLoading] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+    const [isBanned, setIsBanned] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const hasRedirected = useRef(false);
 
@@ -41,7 +43,25 @@ export default function SellPage() {
             // Redirect to login page
             router.push('/login?redirect=/sell');
         } else {
-            setIsAuthenticated(true);
+            // Validate token and check ban status
+            fetch('http://localhost:3000/users/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => {
+                    if (res.ok) return res.json();
+                    throw new Error('Unauthorized');
+                })
+                .then(user => {
+                    setIsAuthenticated(true);
+                    if (user.isSellingBanned) {
+                        setIsBanned(true);
+                    }
+                })
+                .catch(() => {
+                    localStorage.removeItem('jwt_token');
+                    setIsAuthenticated(false);
+                    router.push('/login?redirect=/sell');
+                });
         }
     }, []);
 
@@ -106,11 +126,47 @@ export default function SellPage() {
     }, [data.make, data.model, data.year]);
 
     const clearDraft = () => {
-        if (confirm('Bạn có chắc muốn xóa bản nháp này không?')) {
-            localStorage.removeItem('sell_draft');
-            setData(initialCarSpecs);
-            setCurrentStep(1);
-        }
+        toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                <div className="p-6">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <div className="h-12 w-12 rounded-none bg-yellow-500 flex items-center justify-center">
+                                <Trash2 className="h-6 w-6 text-white" />
+                            </div>
+                        </div>
+                        <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                Xác nhận xóa nháp
+                            </h3>
+                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                Bạn có chắc muốn xóa bản nháp này không?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex bg-gray-50 mt-4">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            localStorage.removeItem('sell_draft');
+                            setData(initialCarSpecs);
+                            setCurrentStep(1);
+                            toast.success('Đã xóa bản nháp thành công!');
+                        }}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-red-600 hover:bg-black focus:outline-none uppercase transition-all"
+                    >
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
     };
 
     const validateStep = (step: number): Record<string, string> => {
@@ -237,19 +293,19 @@ export default function SellPage() {
                 throw new Error(errData.message || 'Failed to create listing');
             }
 
-            alert('Đăng bán thành công! Xe của bạn đã lên sàn.');
+            toast.success('Đăng bán thành công! Xe của bạn đã lên sàn.');
             localStorage.removeItem('sell_draft');
             router.push('/');
         } catch (error: any) {
             console.error('Error submitting:', error);
-            alert(`Lỗi: ${error.message}`);
+            toast.error(`Lỗi: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
 
     // Wait for authentication check and data loading
-    if (isAuthenticated === null || !isLoaded) {
+    if (isAuthenticated === null || (!isLoaded && isAuthenticated && !isBanned)) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="w-8 h-8 border-4 border-gray-200 border-t-red-600 rounded-full animate-spin"></div>
@@ -260,6 +316,28 @@ export default function SellPage() {
     // If not authenticated, don't render the form (user is being redirected)
     if (!isAuthenticated) {
         return null;
+    }
+
+    if (isBanned) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-red-50 border border-red-200 p-8 text-center">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl">🚫</span>
+                    </div>
+                    <h2 className="text-2xl font-black uppercase text-red-800 mb-2">Đã bị cấm bán</h2>
+                    <p className="text-red-700 font-medium mb-6">
+                        Tài khoản của bạn đã bị cấm đăng bán xe mới. Vui lòng liên hệ Admin để biết thêm chi tiết.
+                    </p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="bg-red-700 text-white px-6 py-2 uppercase font-bold hover:bg-red-800 transition-colors"
+                    >
+                        Quay về trang chủ
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (

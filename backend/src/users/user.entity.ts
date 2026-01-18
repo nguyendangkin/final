@@ -21,6 +21,9 @@ export class User {
     @Column({ default: false })
     isAdmin: boolean;
 
+    @Column({ default: false })
+    isSellingBanned: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 

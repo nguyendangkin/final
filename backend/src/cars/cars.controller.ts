@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseUUIDPipe, ForbiddenException } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -20,7 +20,25 @@ export class CarsController {
     @Post()
     @UseGuards(AuthGuard('jwt'))
     create(@Body() createCarDto: CreateCarDto, @Req() req) {
-        return this.carsService.create(createCarDto, req.user); // req.user comes from JwtStrategy
+        if (req.user.isSellingBanned) {
+            throw new ForbiddenException('You are banned from selling');
+        }
+        // req.user might just be payload, we need to check full user status
+        // However, for performance we might trust the token payload IF it had the claim.
+        // But here we'll rely on the service to check or fetch user. 
+        // Strategy: Let CarsService.create handle it or fetch here. 
+        // Let's fetch here to throw earlier.
+        // Actually, I can't easily fetch user service here without injecting it.
+        // Better to handle in CarsService or inject UsersService.
+        // Let's assume req.user is populated by Strategy. 
+        // Standard JwtStrategy returns payload. If I want fresh data, I should fetch.
+        // I'll update CarsService.create to take the user from the entity. 
+        // But wait, CarsService already takes `seller: User`. 
+        // The controller passes `req.user`. 
+        // If `req.user` is partial, `isSellingBanned` might be missing (undefined -> false).
+        // I should probably inject UsersService into CarsController to check? 
+        // Or update CarsService to check. CarsService is where business logic lives.
+        return this.carsService.create(createCarDto, req.user);
     }
 
     @Patch(':id')

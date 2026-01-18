@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards, Param, ParseUUIDPipe, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards, Param, ParseUUIDPipe, NotFoundException, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 
@@ -13,6 +13,34 @@ export class UsersController {
         // We might want to fetch fresh data from DB to get latest balance
         const user = await this.usersService.findOne(req.user.id);
         return user;
+    }
+
+    @Get()
+    @UseGuards(AuthGuard('jwt'))
+    async findAll(@Req() req) {
+        const user = await this.usersService.findOne(req.user.id);
+        if (!user || !user.isAdmin) {
+            throw new NotFoundException('Unauthorized');
+        }
+        return this.usersService.findAll();
+    }
+
+    @Patch(':id/ban')
+    @UseGuards(AuthGuard('jwt'))
+    async toggleBan(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+        // Check if requester is admin
+        const requestingUser = await this.usersService.findOne(req.user.id);
+        if (!requestingUser || !requestingUser.isAdmin) {
+            throw new NotFoundException('Unauthorized');
+        }
+
+        const userToBan = await this.usersService.findOne(id);
+        if (!userToBan) {
+            throw new NotFoundException('User not found');
+        }
+
+        userToBan.isSellingBanned = !userToBan.isSellingBanned;
+        return this.usersService.usersRepository.save(userToBan);
     }
 
     @Get(':id/profile')

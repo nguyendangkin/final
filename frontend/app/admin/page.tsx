@@ -54,21 +54,25 @@ export default function AdminDashboard() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {/* Card 1 */}
-                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group">
-                                <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý xe</h3>
-                                <p className="text-sm text-gray-500 mt-2">Xem và duyệt các xe đang bán</p>
-                            </div>
+                            <Link href="/admin/cars" className="block">
+                                <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full">
+                                    <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý xe</h3>
+                                    <p className="text-sm text-gray-500 mt-2">Xem và duyệt các xe đang bán</p>
+                                </div>
+                            </Link>
 
                             {/* Card 2 */}
-                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group">
-                                <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý người dùng</h3>
-                                <p className="text-sm text-gray-500 mt-2">Xem danh sách người dùng và cấp quyền</p>
-                            </div>
+                            <Link href="/admin/users" className="block">
+                                <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full">
+                                    <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý người dùng</h3>
+                                    <p className="text-sm text-gray-500 mt-2">Xem danh sách người dùng và cấp quyền</p>
+                                </div>
+                            </Link>
 
                             {/* Card 3 */}
-                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group">
+                            <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full opacity-50">
                                 <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Báo cáo</h3>
-                                <p className="text-sm text-gray-500 mt-2">Xem thống kê doanh thu và hoạt động</p>
+                                <p className="text-sm text-gray-500 mt-2">Xem thống kê doanh thu và hoạt động (Coming Soon)</p>
                             </div>
                         </div>
                     </div>

@@ -7,7 +7,7 @@ import { User } from './user.entity';
 export class UsersService {
     constructor(
         @InjectRepository(User)
-        private usersRepository: Repository<User>,
+        public usersRepository: Repository<User>,
     ) { }
 
     async findByEmail(email: string): Promise<User | null> {
@@ -28,5 +28,9 @@ export class UsersService {
             where: { id },
             relations: ['carsForSale'],
         });
+    }
+
+    async findAll(): Promise<User[]> {
+        return this.usersRepository.find();
     }
 }
