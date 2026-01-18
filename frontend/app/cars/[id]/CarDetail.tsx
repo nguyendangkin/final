@@ -179,7 +179,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                             <div className="relative aspect-[16/9] group cursor-pointer" onClick={() => openLightbox(0)}>
                                 <img
                                     src={images[0]}
-                                    alt="Main"
+                                    alt={`${car.year} ${car.make} ${car.model} - ${car.condition || 'Used'}`}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -210,7 +210,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                             onClick={() => openLightbox(idx)}
                                             className={`relative aspect-square rounded-none overflow-hidden cursor-pointer border-2 transition-all ${idx === 0 ? 'border-[var(--jdm-red)] ring-2 ring-red-500/20' : 'border-transparent hover:border-gray-300'}`}
                                         >
-                                            <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-cover" />
+                                            <img src={img} alt={`${car.make} ${car.model} view ${idx + 1}`} className="w-full h-full object-cover" />
                                             {idx === 5 && images.length > 6 && (
                                                 <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-sm">
                                                     +{images.length - 6}
