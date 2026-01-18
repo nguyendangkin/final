@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
+import { Eye, EyeOff } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function AdminCars() {
     const [cars, setCars] = useState<any[]>([]);
@@ -87,12 +89,51 @@ export default function AdminCars() {
         }
     };
 
-    const toggleHide = async (carId: string) => {
+    const toggleHide = (carId: string, currentStatus: string) => {
         const token = localStorage.getItem('jwt_token');
         if (!token) return;
 
-        if (!confirm('Bạn có chắc chắn muốn ẩn/hiện xe này?')) return;
+        toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                <div className="p-6">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                {currentStatus === 'HIDDEN' ? <Eye className="h-6 w-6 text-white" /> : <EyeOff className="h-6 w-6 text-white" />}
+                            </div>
+                        </div>
+                        <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                Xác nhận hành động
+                            </h3>
+                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                Bạn có chắc chắn muốn <span className="font-bold">{currentStatus === 'HIDDEN' ? 'HIỆN' : 'ẨN'}</span> xe này?
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex bg-gray-50 mt-4">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            executeToggleHide(carId, currentStatus, token);
+                        }}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                    >
+                        Đồng ý
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
+    };
 
+    const executeToggleHide = async (carId: string, currentStatus: string, token: string) => {
         try {
             const res = await fetch(`http://localhost:3000/cars/${carId}/hide`, {
                 method: 'PATCH',
@@ -102,14 +143,17 @@ export default function AdminCars() {
             });
 
             if (res.ok) {
-                // Refresh list to show updated status
-                fetchCars(page);
+                // Update local state to avoid flicker
+                setCars(prev => prev.map(c =>
+                    c.id === carId ? { ...c, status: currentStatus === 'HIDDEN' ? 'AVAILABLE' : 'HIDDEN' } : c
+                ));
+                toast.success(`Đã ${currentStatus === 'HIDDEN' ? 'hiện' : 'ẩn'} xe thành công.`);
             } else {
-                alert('Có lỗi xảy ra.');
+                toast.error('Có lỗi xảy ra.');
             }
         } catch (e) {
             console.error(e);
-            alert('Lỗi kết nối.');
+            toast.error('Lỗi kết nối.');
         }
     };
 
@@ -214,22 +258,35 @@ export default function AdminCars() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-bold rounded-full uppercase ${car.status === 'SOLD' ? 'bg-blue-100 text-blue-800' :
-                                                    car.status === 'HIDDEN' ? 'bg-gray-800 text-white' :
-                                                        'bg-green-100 text-green-800'
+                                                car.status === 'HIDDEN' ? 'bg-gray-800 text-white' :
+                                                    'bg-green-100 text-green-800'
                                                 }`}>
                                                 {car.status === 'SOLD' ? 'Đã bán' : car.status === 'HIDDEN' ? 'Đã ẩn' : 'Đang bán'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <Link href={`/cars/${car.id}`} className="text-black hover:text-[var(--jdm-red)] font-bold uppercase transition-colors">
-                                                Xem
-                                            </Link>
-                                            <button
-                                                onClick={() => toggleHide(car.id)}
-                                                className={`font-bold uppercase transition-colors ${car.status === 'HIDDEN' ? 'text-green-600 hover:text-green-800' : 'text-red-600 hover:text-red-800'}`}
-                                            >
-                                                {car.status === 'HIDDEN' ? 'Hiện' : 'Ẩn'}
-                                            </button>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div className="flex justify-end gap-2">
+                                                <Link href={`/cars/${car.id}`} className="flex items-center gap-1 px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:bg-gray-800 transition-colors">
+                                                    <Eye className="w-3 h-3" /> Xem
+                                                </Link>
+                                                <button
+                                                    onClick={() => toggleHide(car.id, car.status)}
+                                                    className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${car.status === 'HIDDEN'
+                                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                                        : 'bg-red-600 text-white hover:bg-red-700'
+                                                        }`}
+                                                >
+                                                    {car.status === 'HIDDEN' ? (
+                                                        <>
+                                                            <Eye className="w-3 h-3" /> Hiện
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <EyeOff className="w-3 h-3" /> Ẩn
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

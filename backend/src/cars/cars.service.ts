@@ -260,7 +260,10 @@ export class CarsService {
     async getFiltersByBrand(make: string): Promise<any> {
         const cars = await this.carsRepository
             .createQueryBuilder('car')
+            .leftJoin('car.seller', 'seller')
             .where('car.make ILIKE :make', { make: `%${make}%` })
+            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
+            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN })
             .getMany();
 
         // Extract unique values for each filterable field
@@ -329,6 +332,7 @@ export class CarsService {
             .select('DISTINCT car.model', 'model')
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
+            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN })
             .getRawMany();
 
         return models.map(m => m.model).filter(Boolean).sort();
@@ -343,6 +347,7 @@ export class CarsService {
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('car.model ILIKE :model', { model: `%${model}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
+            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN })
             .getRawMany();
 
         return trims.map(t => t.trim).filter(Boolean).sort();
@@ -354,7 +359,8 @@ export class CarsService {
             .createQueryBuilder('car')
             .leftJoin('car.seller', 'seller')
             .where('car.make ILIKE :make', { make: `%${make}%` })
-            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
+            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
+            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN });
 
         if (model) {
             qb.andWhere('car.model ILIKE :model', { model: `%${model}%` });
@@ -452,6 +458,7 @@ export class CarsService {
         const qb = this.carsRepository.createQueryBuilder('car');
         qb.leftJoin('car.seller', 'seller');
         qb.where('seller.isSellingBanned = :isBanned', { isBanned: false });
+        qb.andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN });
 
         // Apply existing filters
         if (query.make) {
