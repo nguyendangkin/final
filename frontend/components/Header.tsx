@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
@@ -20,6 +20,7 @@ export default function Header() {
     // Smart filter states
     const [smartFilters, setSmartFilters] = useState<any>(null);
     const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
+    const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
     const [isLoading, setIsLoading] = useState(false);
 
     const [user, setUser] = useState<any>(null);
@@ -43,12 +44,15 @@ export default function Header() {
     };
 
     // Fetch smart filters based on current selections
-    const fetchSmartFilters = async (filters: Record<string, string>) => {
+    const fetchSmartFilters = async (filters: Record<string, string>, price?: { min: string; max: string }) => {
         setIsLoading(true);
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
             if (value) params.append(key, value);
         });
+        // Add price range if set
+        if (price?.min) params.append('minPrice', price.min);
+        if (price?.max) params.append('maxPrice', price.max);
 
         try {
             const res = await fetch(`http://localhost:3000/cars/filters/smart?${params.toString()}`);
@@ -63,16 +67,16 @@ export default function Header() {
     // Initial load - get all available options
     useEffect(() => {
         if (isSearchOptionsOpen && !smartFilters) {
-            fetchSmartFilters({});
+            fetchSmartFilters({}, priceRange);
         }
     }, [isSearchOptionsOpen]);
 
-    // Re-fetch when filters change
+    // Re-fetch when filters or price range change
     useEffect(() => {
         if (isSearchOptionsOpen) {
-            fetchSmartFilters(selectedFilters);
+            fetchSmartFilters(selectedFilters, priceRange);
         }
-    }, [selectedFilters]);
+    }, [selectedFilters, priceRange.min, priceRange.max]);
 
     // Select a filter value
     const selectFilter = (category: string, value: string) => {
@@ -90,6 +94,7 @@ export default function Header() {
     // Clear all filters
     const clearFilters = () => {
         setSelectedFilters({});
+        setPriceRange({ min: '', max: '' });
     };
 
     // Perform search - navigate with filter params
@@ -98,14 +103,56 @@ export default function Header() {
         Object.entries(selectedFilters).forEach(([key, value]) => {
             if (value) params.append(key, value);
         });
+        if (priceRange.min) params.append('minPrice', priceRange.min);
+        if (priceRange.max) params.append('maxPrice', priceRange.max);
         if (searchQuery) params.append('q', searchQuery);
 
         setIsSearchOptionsOpen(false);
         router.push(`/?${params.toString()}`);
     };
 
-    // Format price
+    // Format price for display
     const formatPrice = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
+
+    // Refs for price inputs to manage cursor
+    const minPriceRef = useRef<HTMLInputElement>(null);
+    const maxPriceRef = useRef<HTMLInputElement>(null);
+
+    // Format price input with cursor management
+    const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>, field: 'min' | 'max') => {
+        const input = e.target;
+        const cursorPos = input.selectionStart || 0;
+        const oldValue = input.value;
+
+        // Count dots before cursor
+        const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
+
+        // Get raw digits only
+        const rawValue = oldValue.replace(/\D/g, '');
+
+        // Store raw value
+        setPriceRange(prev => ({ ...prev, [field]: rawValue }));
+
+        // Calculate new cursor position after formatting
+        setTimeout(() => {
+            const ref = field === 'min' ? minPriceRef : maxPriceRef;
+            if (ref.current) {
+                const newFormatted = ref.current.value;
+                const newDotsBeforeCursor = (newFormatted.slice(0, cursorPos).match(/\./g) || []).length;
+                const adjustment = newDotsBeforeCursor - dotsBeforeCursor;
+                const newPos = Math.max(0, cursorPos + adjustment);
+                ref.current.setSelectionRange(newPos, newPos);
+            }
+        }, 0);
+    };
+
+    // Display formatted price in input
+    const displayFormattedPrice = (value: string) => {
+        if (!value) return '';
+        const num = parseInt(value);
+        if (isNaN(num)) return '';
+        return new Intl.NumberFormat('vi-VN').format(num);
+    };
 
     useEffect(() => {
         // Check for token in URL (from Google Auth callback)
@@ -250,25 +297,41 @@ export default function Header() {
                                         <p className="text-xs text-gray-400 text-center py-4">Đang tải bộ lọc...</p>
                                     ) : smartFilters?.options ? (
                                         <div className="space-y-3">
-                                            {/* Price & Year Range Info */}
-                                            {smartFilters.ranges && (
-                                                <div className="bg-gray-50 p-2 text-xs grid grid-cols-2 gap-2">
-                                                    {smartFilters.ranges.price.max > 0 && (
-                                                        <div>
-                                                            <span className="font-bold">Giá: </span>
-                                                            <span className="text-[var(--jdm-red)]">
-                                                                {formatPrice(smartFilters.ranges.price.min)} - {formatPrice(smartFilters.ranges.price.max)}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                    {smartFilters.ranges.year.max > 0 && (
-                                                        <div>
-                                                            <span className="font-bold">Năm: </span>
-                                                            <span className="text-[var(--jdm-red)]">
-                                                                {smartFilters.ranges.year.min} - {smartFilters.ranges.year.max}
-                                                            </span>
-                                                        </div>
-                                                    )}
+                                            {/* Price Range Filter - Priority First */}
+                                            <div className="bg-gray-50 p-2 border-l-2 border-[var(--jdm-red)]">
+                                                <label className="text-xs font-bold text-gray-700 uppercase mb-1.5 block">
+                                                    Khoảng giá (VNĐ)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        ref={minPriceRef}
+                                                        type="text"
+                                                        placeholder="Từ"
+                                                        value={displayFormattedPrice(priceRange.min)}
+                                                        onChange={(e) => handlePriceInput(e, 'min')}
+                                                        className="w-full p-1.5 border border-gray-300 text-xs focus:outline-none focus:border-[var(--jdm-red)] text-right"
+                                                    />
+                                                    <span className="text-gray-400 text-xs">—</span>
+                                                    <input
+                                                        ref={maxPriceRef}
+                                                        type="text"
+                                                        placeholder="Đến"
+                                                        value={displayFormattedPrice(priceRange.max)}
+                                                        onChange={(e) => handlePriceInput(e, 'max')}
+                                                        className="w-full p-1.5 border border-gray-300 text-xs focus:outline-none focus:border-[var(--jdm-red)] text-right"
+                                                    />
+                                                </div>
+                                                {smartFilters.ranges?.price?.max > 0 && (
+                                                    <p className="text-[10px] text-gray-400 mt-1">
+                                                        {formatPrice(smartFilters.ranges.price.min)} — {formatPrice(smartFilters.ranges.price.max)}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Year Range Info */}
+                                            {smartFilters.ranges?.year?.max > 0 && (
+                                                <div className="text-xs text-gray-500">
+                                                    <span className="font-medium">Năm:</span> {smartFilters.ranges.year.min} - {smartFilters.ranges.year.max}
                                                 </div>
                                             )}
 

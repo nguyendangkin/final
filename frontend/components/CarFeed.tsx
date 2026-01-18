@@ -26,6 +26,8 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
         drivetrain: searchParams.get('drivetrain'),
         condition: searchParams.get('condition'),
         paperwork: searchParams.get('paperwork'),
+        minPrice: searchParams.get('minPrice'),
+        maxPrice: searchParams.get('maxPrice'),
         q: searchParams.get('q'),
     };
 

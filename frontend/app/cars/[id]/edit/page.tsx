@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box, Armchair, Hammer, Disc } from 'lucide-react';
 import { getCarIdFromSlug } from '@/lib/utils';
@@ -239,12 +239,38 @@ export default function EditCarPage() {
         }
     };
 
+    // Price input ref for cursor management
+    const priceRef = useRef<HTMLInputElement>(null);
+
     const formatPrice = (value: number) => {
+        if (!value) return '';
         return value.toLocaleString('vi-VN');
     };
 
-    const parsePrice = (value: string) => {
-        return parseInt(value.replace(/\D/g, '')) || 0;
+    const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.target;
+        const cursorPos = input.selectionStart || 0;
+        const oldValue = input.value;
+
+        // Count dots before cursor
+        const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
+
+        // Get raw digits only
+        const rawValue = oldValue.replace(/\D/g, '');
+        const newPrice = parseInt(rawValue) || 0;
+
+        setFormData({ ...formData, price: newPrice });
+
+        // Calculate new cursor position after formatting
+        setTimeout(() => {
+            if (priceRef.current) {
+                const newFormatted = priceRef.current.value;
+                const newDotsBeforeCursor = (newFormatted.slice(0, cursorPos).match(/\./g) || []).length;
+                const adjustment = newDotsBeforeCursor - dotsBeforeCursor;
+                const newPos = Math.max(0, cursorPos + adjustment);
+                priceRef.current.setSelectionRange(newPos, newPos);
+            }
+        }, 0);
     };
 
     const uploadFile = async (file: File): Promise<string | null> => {
@@ -567,10 +593,11 @@ export default function EditCarPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Giá bán (VNĐ) <span className="text-red-500">*</span></label>
                                 <input
+                                    ref={priceRef}
                                     type="text"
                                     value={formatPrice(formData.price)}
-                                    onChange={(e) => setFormData({ ...formData, price: parsePrice(e.target.value) })}
-                                    className={`${inputClassBase} font-bold`}
+                                    onChange={handlePriceInput}
+                                    className={`${inputClassBase} font-bold text-right`}
                                     required
                                 />
                             </div>
