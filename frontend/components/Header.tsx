@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
+import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
 
 const BRANDS = [
@@ -237,6 +237,12 @@ export default function Header() {
                                 ))}
                             </div>
                         </div>
+                        <Link
+                            href="/info"
+                            className="text-sm font-bold uppercase tracking-wider hover:text-[var(--jdm-red)] transition-colors h-16 flex items-center text-gray-700"
+                        >
+                            Thông tin
+                        </Link>
                     </nav>
 
                     {/* Search Bar */}
@@ -553,6 +559,15 @@ export default function Header() {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Info Link */}
+                        <Link
+                            href="/info"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="block px-3 py-3 text-sm font-bold uppercase text-gray-800 hover:text-[var(--jdm-red)] border-b border-gray-200"
+                        >
+                            Thông tin
+                        </Link>
 
                         {user ? (
                             <div className="border-t border-gray-200 mt-4 pt-4 px-3">

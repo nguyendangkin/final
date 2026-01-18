@@ -854,7 +854,7 @@ export default function EditCarPage() {
                                     value={formData.videoLink}
                                     onChange={(e) => setFormData({ ...formData, videoLink: e.target.value })}
                                     className={inputClassNormal}
-                                    placeholder="https://youtube.com/..."
+                                    placeholder="Đường dẫn tới video"
                                 />
                             </div>
                             <div>

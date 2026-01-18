@@ -251,24 +251,6 @@ export default function CarDetail({ car }: CarDetailProps) {
                             )}
                         </div>
 
-                        {/* Video Link */}
-                        {car.videoLink && (
-                            <div className="bg-black text-white p-6 md:p-8 rounded-none shadow-lg shadow-gray-200 uppercase tracking-wider relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black opacity-90 group-hover:opacity-100 transition-opacity" />
-                                <h3 className="text-xl font-bold flex items-center gap-2 mb-4 relative z-10">
-                                    <Youtube className="w-6 h-6 text-red-500" /> Video xe
-                                </h3>
-                                <a
-                                    href={car.videoLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-none font-bold hover:scale-105 transition-transform relative z-10"
-                                >
-                                    <PlayCircle className="w-5 h-5" /> Xem Video Ngay
-                                </a>
-                            </div>
-                        )}
-
                         {/* Legal Info */}
                         <div className="bg-gray-50 p-6 md:p-8 rounded-none border border-gray-100">
                             <h3 className="text-xl font-bold text-black mb-4 flex items-center gap-2 uppercase">
@@ -313,6 +295,23 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 )}
                             </div>
                         </div>
+
+                        {/* Video Link */}
+                        {car.videoLink && (
+                            <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2 uppercase">
+                                    <Youtube className="w-6 h-6 text-[var(--jdm-red)]" /> Video Xe
+                                </h3>
+                                <a
+                                    href={car.videoLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 bg-[var(--jdm-red)] text-white px-6 py-3 rounded-none font-bold hover:bg-black transition-all uppercase tracking-wide"
+                                >
+                                    <PlayCircle className="w-5 h-5" /> Xem Video Ngay
+                                </a>
+                            </div>
+                        )}
 
                         {/* Edit History - Public section */}
                         {car.editHistory && car.editHistory.length > 0 && (

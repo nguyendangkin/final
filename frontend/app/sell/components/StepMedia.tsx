@@ -284,6 +284,20 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                             className="w-full bg-white border border-gray-300 text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50"
                         />
                     </div>
+
+                    {/* Video Link - Optional */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                            <span>🎬 Link video</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={data.videoLink}
+                            onChange={(e) => updateData({ videoLink: e.target.value })}
+                            placeholder="Đường dẫn tới video"
+                            className="w-full bg-white border border-gray-300 text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50"
+                        />
+                    </div>
                 </div>
 
                 {/* Additional Info / Notes */}
