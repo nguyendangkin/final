@@ -16,6 +16,9 @@ export default function Header() {
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isSearchOptionsOpen, setIsSearchOptionsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+    const mobileMinPriceRef = useRef<HTMLInputElement>(null);
+    const mobileMaxPriceRef = useRef<HTMLInputElement>(null);
 
     // Smart filter states
     const [smartFilters, setSmartFilters] = useState<any>(null);
@@ -138,6 +141,27 @@ export default function Header() {
         // Calculate new cursor position after formatting
         setTimeout(() => {
             const ref = field === 'min' ? minPriceRef : maxPriceRef;
+            if (ref.current) {
+                const newFormatted = ref.current.value;
+                const newDotsBeforeCursor = (newFormatted.slice(0, cursorPos).match(/\./g) || []).length;
+                const adjustment = newDotsBeforeCursor - dotsBeforeCursor;
+                const newPos = Math.max(0, cursorPos + adjustment);
+                ref.current.setSelectionRange(newPos, newPos);
+            }
+        }, 0);
+    };
+
+    // Mobile Price Input Handler
+    const handleMobilePriceInput = (e: React.ChangeEvent<HTMLInputElement>, field: 'min' | 'max') => {
+        const input = e.target;
+        const cursorPos = input.selectionStart || 0;
+        const oldValue = input.value;
+        const dotsBeforeCursor = (oldValue.slice(0, cursorPos).match(/\./g) || []).length;
+        const rawValue = oldValue.replace(/\D/g, '');
+        setPriceRange(prev => ({ ...prev, [field]: rawValue }));
+
+        setTimeout(() => {
+            const ref = field === 'min' ? mobileMinPriceRef : mobileMaxPriceRef;
             if (ref.current) {
                 const newFormatted = ref.current.value;
                 const newDotsBeforeCursor = (newFormatted.slice(0, cursorPos).match(/\./g) || []).length;
@@ -551,8 +575,179 @@ export default function Header() {
 
             {/* Mobile Menu */}
             {isMenuOpen && (
-                <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-gray-200">
+                <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-gray-200 max-h-[calc(100vh-4rem)] overflow-y-auto">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                        {/* Mobile Search & Filter */}
+                        <div className="mb-4 px-2">
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                router.push(searchQuery ? `/?q=${encodeURIComponent(searchQuery)}` : '/');
+                                                setIsMenuOpen(false);
+                                            }
+                                        }}
+                                        placeholder="Tìm kiếm xe..."
+                                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 text-sm font-medium focus:outline-none focus:border-[var(--jdm-red)] transition-colors"
+                                    />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        if (!isMobileFilterOpen && !smartFilters) {
+                                            fetchSmartFilters(selectedFilters, priceRange);
+                                        }
+                                        setIsMobileFilterOpen(!isMobileFilterOpen);
+                                    }}
+                                    className={`p-2.5 border transition-colors flex items-center justify-center ${isMobileFilterOpen || Object.keys(selectedFilters).length > 0
+                                        ? 'bg-[var(--jdm-red)] border-[var(--jdm-red)] text-white'
+                                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <SlidersHorizontal className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Mobile Smart Filters */}
+                            {isMobileFilterOpen && (
+                                <div className="mt-4 p-4 bg-gray-50 border border-gray-200 shadow-inner">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <p className="text-xs font-bold text-gray-500 uppercase">Bộ lọc thông minh</p>
+                                        {smartFilters && (
+                                            <span className="text-xs text-[var(--jdm-red)] font-bold">
+                                                {smartFilters.count} xe
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {isLoading && !smartFilters ? (
+                                        <p className="text-xs text-gray-400 text-center py-4">Đang tải bộ lọc...</p>
+                                    ) : smartFilters?.options ? (
+                                        <div className="space-y-4">
+                                            {/* Price Range Filter */}
+                                            <div className="bg-white p-3 border border-gray-200">
+                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2 block">
+                                                    Khoảng giá (VNĐ)
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        ref={mobileMinPriceRef}
+                                                        type="text"
+                                                        placeholder="Từ"
+                                                        value={displayFormattedPrice(priceRange.min)}
+                                                        onChange={(e) => handleMobilePriceInput(e, 'min')}
+                                                        className="w-full p-2 border border-gray-300 text-sm focus:outline-none focus:border-[var(--jdm-red)] text-right bg-gray-50"
+                                                    />
+                                                    <span className="text-gray-400 text-xs">—</span>
+                                                    <input
+                                                        ref={mobileMaxPriceRef}
+                                                        type="text"
+                                                        placeholder="Đến"
+                                                        value={displayFormattedPrice(priceRange.max)}
+                                                        onChange={(e) => handleMobilePriceInput(e, 'max')}
+                                                        className="w-full p-2 border border-gray-300 text-sm focus:outline-none focus:border-[var(--jdm-red)] text-right bg-gray-50"
+                                                    />
+                                                </div>
+                                                {smartFilters.ranges?.price?.max > 0 && (
+                                                    <p className="text-[10px] text-gray-400 mt-1">
+                                                        {formatPrice(smartFilters.ranges.price.min)} — {formatPrice(smartFilters.ranges.price.max)}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Year Range Info */}
+                                            {smartFilters.ranges?.year?.max > 0 && (
+                                                <div className="text-xs text-gray-500">
+                                                    <span className="font-medium">Năm:</span> {smartFilters.ranges.year.min} - {smartFilters.ranges.year.max}
+                                                </div>
+                                            )}
+
+                                            {/* Dynamic filter sections */}
+                                            {filterOrder.map(category => {
+                                                const options = smartFilters.options[category];
+                                                if (!options || options.length === 0) return null;
+
+                                                return (
+                                                    <div key={category} className="border-t border-gray-200 pt-3">
+                                                        <label className="text-xs font-bold text-[var(--jdm-red)] uppercase mb-2 block">
+                                                            {filterLabels[category]}
+                                                            {selectedFilters[category] && (
+                                                                <span className="ml-2 text-white bg-black px-1.5 py-0.5 text-[10px]">
+                                                                    {selectedFilters[category]}
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {options.map((value: string) => (
+                                                                <button
+                                                                    key={value}
+                                                                    onClick={() => selectFilter(category, value)}
+                                                                    className={`px-3 py-1.5 text-xs font-bold uppercase transition-colors border ${selectedFilters[category] === value
+                                                                        ? 'bg-[var(--jdm-red)] text-white border-[var(--jdm-red)]'
+                                                                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    {value}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+
+                                            {/* Selected Filters Summary */}
+                                            {Object.keys(selectedFilters).length > 0 && (
+                                                <div className="border-t border-gray-200 mt-4 pt-4">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <label className="text-xs font-bold text-gray-700 uppercase">
+                                                            Đang chọn
+                                                        </label>
+                                                        <button
+                                                            onClick={clearFilters}
+                                                            className="text-xs text-gray-500 hover:text-[var(--jdm-red)] underline"
+                                                        >
+                                                            Xóa tất cả
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {Object.entries(selectedFilters).map(([category, value]) => (
+                                                            <span
+                                                                key={category}
+                                                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-black text-white"
+                                                            >
+                                                                <span className="opacity-70">{filterLabels[category]}:</span> {value}
+                                                                <button
+                                                                    onClick={() => selectFilter(category, value)}
+                                                                    className="hover:text-[var(--jdm-red)] ml-1"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </button>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <button
+                                                onClick={() => {
+                                                    performSearch();
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className="w-full mt-4 bg-black hover:bg-[var(--jdm-red)] text-white py-3 text-sm font-bold uppercase tracking-wider transition-colors shadow-lg"
+                                            >
+                                                Xem {smartFilters?.count || 0} kết quả
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-gray-400 text-center py-4">Không thể tải bộ lọc</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <div className="border-b border-gray-200 pb-2 mb-2">
                             <p className="px-3 py-2 text-sm font-black text-[var(--jdm-red)] uppercase tracking-wider">Hãng xe</p>
                             <div className="grid grid-cols-2 gap-1 px-3">

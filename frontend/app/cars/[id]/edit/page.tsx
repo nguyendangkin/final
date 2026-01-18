@@ -823,7 +823,7 @@ export default function EditCarPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Facebook</label>
                                 <input
-                                    type="url"
+                                    type="text"
                                     value={formData.facebookLink}
                                     onChange={(e) => setFormData({ ...formData, facebookLink: e.target.value })}
                                     className={inputClassNormal}
@@ -850,7 +850,7 @@ export default function EditCarPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Link video</label>
                                 <input
-                                    type="url"
+                                    type="text"
                                     value={formData.videoLink}
                                     onChange={(e) => setFormData({ ...formData, videoLink: e.target.value })}
                                     className={inputClassNormal}

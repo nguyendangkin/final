@@ -100,7 +100,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
     return (
         <div>
             {initialLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
                     {[...Array(6)].map((_, i) => (
                         <CarCardSkeleton key={i} />
                     ))}
@@ -110,7 +110,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
                     <p className="text-gray-500 text-lg">Chưa có xe nào.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
                     {cars.map((car, index) => {
                         if (cars.length === index + 1) {
                             return <div ref={lastCarElementRef} key={car.id}><CarCard car={car} /></div>;
