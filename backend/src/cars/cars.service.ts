@@ -46,16 +46,30 @@ export class CarsService {
             qb.andWhere('seller.id = :sellerId', { sellerId: query.sellerId });
         }
 
-        // Full-text search across multiple fields
+        // Smart full-text search - concatenate all searchable fields into one string
+        // Each word must be found somewhere in this combined searchable text
         if (query.q) {
-            const searchTerm = `%${query.q}%`;
-            qb.andWhere(
-                `(car.make ILIKE :q OR car.model ILIKE :q OR car.trim ILIKE :q ` +
-                `OR car.description ILIKE :q OR car.chassisCode ILIKE :q ` +
-                `OR car.engineCode ILIKE :q OR car.condition ILIKE :q ` +
-                `OR CAST(car.mods AS TEXT) ILIKE :q)`,
-                { q: searchTerm }
-            );
+            const searchWords = query.q.trim().split(/\s+/).filter((w: string) => w.length > 0);
+
+            // Create a combined searchable column from all relevant fields
+            const searchableFields = `CONCAT_WS(' ', 
+                COALESCE(car.make, ''), 
+                COALESCE(car.model, ''), 
+                COALESCE(car.trim, ''), 
+                COALESCE(car.chassisCode, ''), 
+                COALESCE(car.engineCode, ''), 
+                COALESCE(car.transmission, ''),
+                COALESCE(car.drivetrain, ''),
+                COALESCE(car.condition, ''), 
+                COALESCE(car.paperwork, ''), 
+                COALESCE(car.description, ''),
+                COALESCE(CAST(car.mods AS TEXT), '')
+            )`;
+
+            searchWords.forEach((word: string, index: number) => {
+                const paramName = `q${index}`;
+                qb.andWhere(`${searchableFields} ILIKE :${paramName}`, { [paramName]: `%${word}%` });
+            });
         }
 
         // Sắp xếp bài mới nhất lên trên
