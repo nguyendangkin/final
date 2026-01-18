@@ -13,7 +13,7 @@ export class CarsService {
         private dataSource: DataSource,
     ) { }
 
-    async findAll(query: any): Promise<Car[]> {
+    async findAll(query: any): Promise<{ data: Car[], meta: any }> {
         const qb = this.carsRepository.createQueryBuilder('car');
         qb.leftJoinAndSelect('car.seller', 'seller');
         // qb.where('car.status = :status', { status: CarStatus.AVAILABLE }); // Removed to show sold cars
@@ -86,7 +86,17 @@ export class CarsService {
         qb.take(limit);
         qb.skip(skip);
 
-        return qb.getMany();
+        const [cars, total] = await qb.getManyAndCount();
+
+        return {
+            data: cars,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async findOne(id: string): Promise<Car> {

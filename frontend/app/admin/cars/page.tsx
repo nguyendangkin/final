@@ -3,18 +3,27 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Pagination from '@/components/Pagination';
 
 export default function AdminCars() {
     const [cars, setCars] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const router = useRouter();
 
     useEffect(() => {
+        fetchCars(page);
+    }, [page]);
+
+    const fetchCars = (currentPage: number) => {
         const token = localStorage.getItem('jwt_token');
         if (!token) {
             router.push('/login');
             return;
         }
+
+        setLoading(true);
 
         // First check if admin
         fetch('http://localhost:3000/users/me', {
@@ -26,23 +35,21 @@ export default function AdminCars() {
                     router.push('/');
                     return;
                 }
-                // Then fetch all cars
-                // We use the existing public endpoint but it might filter 'available' by default depending on implementation
-                // For admin we really want ALL cars.
-                // The current CarsService implementation REMOVED the available filter so it returns all cars, which is good for admin.
-                return fetch('http://localhost:3000/cars?limit=100');
+                // Then fetch all cars with pagination
+                return fetch(`http://localhost:3000/cars?page=${currentPage}&limit=12`);
             })
             .then(res => res && res.json())
             .then(data => {
                 if (data) {
-                    setCars(data);
+                    setCars(data.data);
+                    setTotalPages(data.meta.totalPages);
                 }
                 setLoading(false);
             })
             .catch(() => {
                 router.push('/');
             });
-    }, []);
+    };
 
     if (loading) {
         return (
@@ -129,6 +136,12 @@ export default function AdminCars() {
                         </table>
                     </div>
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                />
             </div>
         </div>
     );

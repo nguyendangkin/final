@@ -5,27 +5,30 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import Pagination from '@/components/Pagination';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchLink, setSearchLink] = useState('');
-    const [originalUsers, setOriginalUsers] = useState<any[]>([]);
     const [error, setError] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const router = useRouter();
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        fetchUsers(page);
+    }, [page]);
 
-    const fetchUsers = () => {
+    const fetchUsers = (currentPage: number) => {
+        setLoading(true);
         const token = localStorage.getItem('jwt_token');
         if (!token) {
             router.push('/login');
             return;
         }
 
-        fetch('http://localhost:3000/users', {
+        fetch(`http://localhost:3000/users?page=${currentPage}&limit=12`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {
@@ -33,8 +36,8 @@ export default function AdminUsers() {
                 return res.json();
             })
             .then(data => {
-                setUsers(data);
-                setOriginalUsers(data);
+                setUsers(data.data);
+                setTotalPages(data.totalPages);
                 setLoading(false);
             })
             .catch(() => {
@@ -45,13 +48,12 @@ export default function AdminUsers() {
     const handleSearch = async () => {
         setError('');
         if (!searchLink.trim()) {
-            setUsers(originalUsers);
+            fetchUsers(1);
+            setPage(1);
             return;
         }
 
         // Extract ID from link
-        // Example: http://localhost:3000/cars/some-uuid
-        // or just some-uuid
         const uuidRegex = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
         const match = searchLink.match(uuidRegex);
 
@@ -70,13 +72,10 @@ export default function AdminUsers() {
             }
             const car = await res.json();
             if (car && car.seller) {
-                // Filter users to show only the seller
-                const seller = originalUsers.find(u => u.id === car.seller.id);
-                if (seller) {
-                    setUsers([seller]);
-                } else {
-                    setError('Không tìm thấy người bán trong danh sách người dùng.');
-                }
+                setUsers([car.seller]);
+                setTotalPages(1);
+            } else {
+                setError('Không tìm thấy người bán trong danh sách người dùng.');
             }
         } catch (e) {
             setError('Lỗi khi tìm kiếm xe.');
@@ -142,9 +141,6 @@ export default function AdminUsers() {
                 setUsers(prev => prev.map(u =>
                     u.id === userId ? { ...u, isSellingBanned: !currentStatus } : u
                 ));
-                setOriginalUsers(prev => prev.map(u =>
-                    u.id === userId ? { ...u, isSellingBanned: !currentStatus } : u
-                ));
                 toast.success(`Đã ${!currentStatus ? 'cấm' : 'bỏ cấm'} người dùng thành công.`);
             } else {
                 toast.error('Có lỗi xảy ra khi cập nhật trạng thái.');
@@ -196,7 +192,7 @@ export default function AdminUsers() {
                         </button>
                         {searchLink && (
                             <button
-                                onClick={() => { setSearchLink(''); setUsers(originalUsers); setError(''); }}
+                                onClick={() => { setSearchLink(''); fetchUsers(1); setError(''); }}
                                 className="bg-gray-200 text-gray-700 px-4 py-2 text-sm font-bold uppercase hover:bg-gray-300 transition-colors"
                             >
                                 Đặt lại
@@ -300,6 +296,12 @@ export default function AdminUsers() {
                         </table>
                     </div>
                 </div>
+
+                <Pagination
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={setPage}
+                />
             </div>
         </div>
     );

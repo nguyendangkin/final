@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards, Param, ParseUUIDPipe, NotFoundException, Patch } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards, Param, ParseUUIDPipe, NotFoundException, Patch, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 
@@ -17,12 +17,12 @@ export class UsersController {
 
     @Get()
     @UseGuards(AuthGuard('jwt'))
-    async findAll(@Req() req) {
+    async findAll(@Req() req, @Query('page') page: number = 1, @Query('limit') limit: number = 10) {
         const user = await this.usersService.findOne(req.user.id);
         if (!user || !user.isAdmin) {
             throw new NotFoundException('Unauthorized');
         }
-        return this.usersService.findAll();
+        return this.usersService.findAll(page, limit);
     }
 
     @Patch(':id/ban')

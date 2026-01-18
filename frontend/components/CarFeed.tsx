@@ -58,11 +58,10 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
 
             const res = await fetch(`http://localhost:3000/cars?${queryParams.toString()}`);
             if (!res.ok) throw new Error('Failed to fetch');
-            const newCars = await res.json();
+            const data = await res.json();
+            const newCars = data.data || [];
 
-            if (newCars.length < 12) {
-                setHasMore(false);
-            }
+            setHasMore(pageToFetch < data.meta.totalPages);
 
             if (pageToFetch === 1) {
                 setCars(newCars);

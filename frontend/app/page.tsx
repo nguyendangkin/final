@@ -21,7 +21,8 @@ async function getCars(searchParams: any) {
 
     const res = await fetch(`http://localhost:3000/cars?${params.toString()}`, { cache: 'no-store' });
     if (!res.ok) return [];
-    return res.json();
+    const data = await res.json();
+    return data.data || [];
   } catch (error) {
     console.error("Failed to fetch cars", error);
     return [];
