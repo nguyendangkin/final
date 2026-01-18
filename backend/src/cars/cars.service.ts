@@ -352,10 +352,13 @@ export class CarsService {
     async getSmartFilters(query: {
         make?: string;
         model?: string;
+        chassisCode?: string;
+        engineCode?: string;
         transmission?: string;
         drivetrain?: string;
         condition?: string;
         paperwork?: string;
+        mods?: string;
         minPrice?: number;
         maxPrice?: number;
         minYear?: number;
@@ -370,6 +373,12 @@ export class CarsService {
         if (query.model) {
             qb.andWhere('car.model ILIKE :model', { model: `%${query.model}%` });
         }
+        if (query.chassisCode) {
+            qb.andWhere('car.chassisCode ILIKE :chassisCode', { chassisCode: `%${query.chassisCode}%` });
+        }
+        if (query.engineCode) {
+            qb.andWhere('car.engineCode ILIKE :engineCode', { engineCode: `%${query.engineCode}%` });
+        }
         if (query.transmission) {
             qb.andWhere('car.transmission ILIKE :transmission', { transmission: `%${query.transmission}%` });
         }
@@ -381,6 +390,9 @@ export class CarsService {
         }
         if (query.paperwork) {
             qb.andWhere('car.paperwork ILIKE :paperwork', { paperwork: `%${query.paperwork}%` });
+        }
+        if (query.mods) {
+            qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', { mods: `%${query.mods}%` });
         }
         if (query.minPrice) {
             qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', { minPrice: query.minPrice });
