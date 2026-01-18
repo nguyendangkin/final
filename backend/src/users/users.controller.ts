@@ -50,7 +50,9 @@ export class UsersController {
             throw new NotFoundException('User not found');
         }
         // Filter only available cars and sort by newest first
-        const availableCars = user.carsForSale
+        // Filter only available cars and sort by newest first
+        // If user is banned, hide all cars
+        const availableCars = (user.isSellingBanned ? [] : user.carsForSale)
             //.filter(car => car.status === 'AVAILABLE') // Removed to show sold cars
             ?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
         return {

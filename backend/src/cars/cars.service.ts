@@ -18,6 +18,9 @@ export class CarsService {
         qb.leftJoinAndSelect('car.seller', 'seller');
         // qb.where('car.status = :status', { status: CarStatus.AVAILABLE }); // Removed to show sold cars
 
+        // Hide cars from banned sellers
+        qb.andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
+
         if (query.make) {
             qb.andWhere('car.make ILIKE :make', { make: `%${query.make}%` });
         }
@@ -92,6 +95,12 @@ export class CarsService {
             relations: ['seller'],
         });
         if (!car) throw new NotFoundException('Car not found');
+
+        // Hide car if seller is banned
+        if (car.seller && car.seller.isSellingBanned) {
+            throw new NotFoundException('Car not found');
+        }
+
         return car;
     }
 
@@ -171,8 +180,10 @@ export class CarsService {
     async getBrands(): Promise<string[]> {
         const brands = await this.carsRepository
             .createQueryBuilder('car')
+            .leftJoin('car.seller', 'seller')
             .select('DISTINCT car.make', 'make')
             .where('car.status = :status', { status: CarStatus.AVAILABLE })
+            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
             .getRawMany();
 
         return brands.map(b => b.make).filter(Boolean);
@@ -246,8 +257,10 @@ export class CarsService {
     async getModelsByBrand(make: string): Promise<string[]> {
         const models = await this.carsRepository
             .createQueryBuilder('car')
+            .leftJoin('car.seller', 'seller')
             .select('DISTINCT car.model', 'model')
             .where('car.make ILIKE :make', { make: `%${make}%` })
+            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
             .getRawMany();
 
         return models.map(m => m.model).filter(Boolean).sort();
@@ -257,9 +270,11 @@ export class CarsService {
     async getTrimsByModel(make: string, model: string): Promise<string[]> {
         const trims = await this.carsRepository
             .createQueryBuilder('car')
+            .leftJoin('car.seller', 'seller')
             .select('DISTINCT car.trim', 'trim')
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('car.model ILIKE :model', { model: `%${model}%` })
+            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
             .getRawMany();
 
         return trims.map(t => t.trim).filter(Boolean).sort();
@@ -269,7 +284,9 @@ export class CarsService {
     async getFilterDetails(make: string, model?: string, trim?: string): Promise<any> {
         const qb = this.carsRepository
             .createQueryBuilder('car')
-            .where('car.make ILIKE :make', { make: `%${make}%` });
+            .leftJoin('car.seller', 'seller')
+            .where('car.make ILIKE :make', { make: `%${make}%` })
+            .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
 
         if (model) {
             qb.andWhere('car.model ILIKE :model', { model: `%${model}%` });
@@ -365,6 +382,8 @@ export class CarsService {
         maxYear?: number;
     }): Promise<any> {
         const qb = this.carsRepository.createQueryBuilder('car');
+        qb.leftJoin('car.seller', 'seller');
+        qb.where('seller.isSellingBanned = :isBanned', { isBanned: false });
 
         // Apply existing filters
         if (query.make) {
