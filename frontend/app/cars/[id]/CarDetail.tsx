@@ -752,7 +752,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 { label: 'Dẫn động', value: car.drivetrain || '---' },
                                 { label: 'ODO', value: `${Number(car.mileage).toLocaleString('vi-VN')} km` },
                                 { label: 'Năm SX', value: String(car.year) },
-                                { label: 'Giấy tờ', value: car.paperwork === 'SANG TÊN ĐƯỢC' || car.paperwork === 'CHÍNH CHỦ' ? 'Chính chủ' : 'Không CC' },
+                                { label: 'Giấy tờ', value: car.paperwork === 'SANG TÊN ĐƯỢC' || car.paperwork === 'CHÍNH CHỦ' ? 'CHÍNH CHỦ' : (car.paperwork ? car.paperwork.toUpperCase() : 'KHÔNG CHÍNH CHỦ') },
                                 { label: 'Khu vực', value: car.location || 'Toàn quốc' },
                             ].map((spec, idx) => (
                                 <div key={idx} style={{
