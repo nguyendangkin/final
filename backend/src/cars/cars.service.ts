@@ -1,17 +1,56 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Car, CarStatus } from './entities/car.entity';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
 import { User } from '../users/user.entity';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class CarsService {
+    private readonly logger = new Logger(CarsService.name);
+
     constructor(
         @InjectRepository(Car)
         private carsRepository: Repository<Car>,
         private dataSource: DataSource,
     ) { }
+
+    /**
+     * Delete image files associated with a car from the uploads folder
+     */
+    private async deleteCarImages(car: Car): Promise<void> {
+        const imagesToDelete: string[] = [];
+
+        // Collect all image URLs
+        if (car.images && Array.isArray(car.images)) {
+            imagesToDelete.push(...car.images);
+        }
+        if (car.thumbnail) {
+            imagesToDelete.push(car.thumbnail);
+        }
+
+        // Delete each image file
+        for (const imageUrl of imagesToDelete) {
+            try {
+                // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
+                const filename = imageUrl.split('/uploads/').pop();
+                if (filename) {
+                    const filePath = path.join(process.cwd(), 'uploads', filename);
+
+                    // Check if file exists before deleting
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                        this.logger.log(`Deleted image: ${filename}`);
+                    }
+                }
+            } catch (error) {
+                // Log error but don't fail the deletion
+                this.logger.warn(`Failed to delete image ${imageUrl}: ${error.message}`);
+            }
+        }
+    }
 
     async findAll(query: any): Promise<{ data: Car[], meta: any }> {
         const qb = this.carsRepository.createQueryBuilder('car');
@@ -230,16 +269,32 @@ export class CarsService {
         if (!user.isAdmin && car.seller.id !== user.id) {
             throw new BadRequestException('You can only delete your own listings');
         }
+
+        // Delete associated images from disk
+        await this.deleteCarImages(car);
+
         await this.carsRepository.remove(car);
     }
 
     async deleteAllBySeller(sellerId: string): Promise<void> {
+        // Find all cars by seller to delete their images
+        const cars = await this.carsRepository.find({ where: { seller: { id: sellerId } } });
+
+        // Delete images for each car
+        for (const car of cars) {
+            await this.deleteCarImages(car);
+        }
+
         await this.carsRepository.delete({ seller: { id: sellerId } });
     }
 
     async forceDelete(id: string): Promise<void> {
         const car = await this.carsRepository.findOne({ where: { id } });
         if (!car) throw new NotFoundException('Car not found');
+
+        // Delete associated images from disk
+        await this.deleteCarImages(car);
+
         await this.carsRepository.remove(car);
     }
 
@@ -773,6 +828,10 @@ export class CarsService {
 
         // Delete ALL cars with this tag
         if (verifiedCars.length > 0) {
+            // Delete images for each car
+            for (const car of verifiedCars) {
+                await this.deleteCarImages(car);
+            }
             await this.carsRepository.remove(verifiedCars);
         }
 
