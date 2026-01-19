@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info } from 'lucide-react';
+import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info, Heart } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
 import SmartFilter from './SmartFilter';
 
@@ -339,6 +339,24 @@ export default function Header() {
                                                         <p className="text-xs text-gray-500 uppercase font-bold">Ví của tôi</p>
                                                         <p className="text-sm font-black text-black">
                                                             {balance !== null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(balance) : '...'}
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            </div>
+
+                                            <div className="px-4 py-3 pt-0">
+                                                <Link
+                                                    href="/favorites"
+                                                    className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 p-2 rounded-none transition group border border-transparent hover:border-gray-200"
+                                                    onClick={() => setIsUserMenuOpen(false)}
+                                                >
+                                                    <div className="w-8 h-8 rounded-none bg-black flex items-center justify-center group-hover:bg-[var(--jdm-red)] transition">
+                                                        <Heart className="w-4 h-4 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 uppercase font-bold">Yêu thích</p>
+                                                        <p className="text-xs font-bold text-black">
+                                                            Xe đã lưu
                                                         </p>
                                                     </div>
                                                 </Link>

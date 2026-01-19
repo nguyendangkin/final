@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Car } from '../cars/entities/car.entity';
+import { Favorite } from '../favorites/entities/favorite.entity';
 
 @Entity()
 export class User {
@@ -35,4 +36,7 @@ export class User {
 
     @OneToMany(() => Car, (car) => car.seller)
     carsForSale: Car[];
+
+    @OneToMany(() => Favorite, (favorite) => favorite.user)
+    favorites: Favorite[];
 }

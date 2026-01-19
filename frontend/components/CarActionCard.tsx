@@ -1,8 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Phone, MessageCircle, Facebook, ShieldCheck, Pencil, CheckCircle2, Camera, Flag, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Phone, MessageCircle, Facebook, ShieldCheck, Pencil, CheckCircle2, Camera, Flag, ChevronRight, AlertTriangle, Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
 import { MapPin, User } from 'lucide-react';
@@ -25,6 +26,49 @@ export default function CarActionCard({
     className = ""
 }: CarActionCardProps) {
     const router = useRouter();
+    const [isFavorited, setIsFavorited] = useState(false);
+    const [isLoadingFav, setIsLoadingFav] = useState(false);
+
+    useEffect(() => {
+        if (currentUser && car) {
+            const token = localStorage.getItem('jwt_token');
+            fetch(`http://localhost:3000/favorites/check/${car.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => res.json())
+                .then(data => setIsFavorited(data.isFavorited))
+                .catch(err => console.error("Error checking favorite:", err));
+        }
+    }, [currentUser, car]);
+
+    const toggleFavorite = async () => {
+        if (!currentUser) {
+            router.push('/login');
+            return;
+        }
+        if (isLoadingFav) return;
+        setIsLoadingFav(true);
+
+        const token = localStorage.getItem('jwt_token');
+        try {
+            const res = await fetch(`http://localhost:3000/favorites/toggle/${car.id}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setIsFavorited(data.isFavorited);
+                toast.success(data.isFavorited ? 'Đã thêm vào yêu thích' : 'Đã xóa khỏi yêu thích');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra');
+        } finally {
+            setIsLoadingFav(false);
+        }
+    };
 
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
@@ -116,6 +160,17 @@ export default function CarActionCard({
                             <CheckCircle2 className="w-4 h-4" /> Có thương lượng
                         </div>
                     )}
+                    <button
+                        onClick={toggleFavorite}
+                        disabled={isLoadingFav}
+                        className={`mt-4 w-full flex items-center justify-center gap-2 py-2 font-bold uppercase text-sm border-2 transition-all ${isFavorited
+                            ? 'bg-[var(--jdm-red)] text-white border-[var(--jdm-red)]'
+                            : 'bg-white text-gray-400 border-gray-200 hover:border-[var(--jdm-red)] hover:text-[var(--jdm-red)]'
+                            }`}
+                    >
+                        <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+                        {isFavorited ? 'Đã yêu thích' : 'Yêu thích xe này'}
+                    </button>
                 </div>
 
                 <div className="space-y-3">

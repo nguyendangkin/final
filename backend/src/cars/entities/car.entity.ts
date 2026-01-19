@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/user.entity';
+import { Favorite } from '../../favorites/entities/favorite.entity';
 
 export enum CarStatus {
     AVAILABLE = 'AVAILABLE',
@@ -102,6 +103,9 @@ export class Car {
     @ManyToOne(() => User, (user) => user.carsForSale)
     @JoinColumn({ name: 'sellerId' })
     seller: User;
+
+    @OneToMany(() => Favorite, (favorite) => favorite.car)
+    favorites: Favorite[];
 
     @Column({ nullable: true })
     sellerId: string;

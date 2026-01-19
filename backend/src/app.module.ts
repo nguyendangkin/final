@@ -16,6 +16,8 @@ import { join } from 'path';
 import { ReportsModule } from './reports/reports.module';
 import { Report } from './reports/entities/report.entity';
 import { StatsModule } from './stats/stats.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { Favorite } from './favorites/entities/favorite.entity';
 
 @Module({
   imports: [
@@ -31,7 +33,7 @@ import { StatsModule } from './stats/stats.module';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction, Car, Report],
+        entities: [User, Transaction, Car, Report, Favorite],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],
@@ -47,6 +49,7 @@ import { StatsModule } from './stats/stats.module';
     UploadModule,
     ReportsModule,
     StatsModule,
+    FavoritesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -106,8 +106,21 @@ export class CarsService {
             });
         }
 
-        // Sắp xếp bài mới nhất lên trên
-        qb.orderBy('car.createdAt', 'DESC');
+        if (query.status) {
+            qb.andWhere('car.status = :status', { status: query.status });
+        }
+
+        // Default sort: AVAILABLE first, then others (SOLD, HIDDEN etc at the end)
+        // We can explicitly sort by whether status is AVAILABLE or not.
+        // Assuming we want SOLD at the end.
+        // Let's use a CASE statement for custom ordering if no specific status filter is active
+        if (!query.status) {
+            // 'AVAILABLE' < 'SOLD' alphabetically, so this puts available cars first
+            qb.orderBy('car.status', 'ASC');
+            qb.addOrderBy('car.createdAt', 'DESC');
+        } else {
+            qb.orderBy('car.createdAt', 'DESC');
+        }
 
         // Pagination
         const page = query.page ? parseInt(query.page) : 1;
