@@ -22,6 +22,9 @@ export class SystemAnnouncement {
     @Column({ default: true })
     isPublished: boolean;
 
+    @Column({ default: false })
+    isGlobal: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 

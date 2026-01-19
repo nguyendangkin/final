@@ -10,12 +10,13 @@ export class AnnouncementsService {
         private announcementRepo: Repository<SystemAnnouncement>,
     ) { }
 
-    async create(authorId: string, dto: { title: string; content: string }) {
+    async create(authorId: string, dto: { title: string; content: string; isGlobal?: boolean }) {
         const announcement = this.announcementRepo.create({
             title: dto.title,
             content: dto.content,
             authorId,
             isPublished: true,
+            isGlobal: dto.isGlobal ?? false, // Default to normal (time-restricted)
         });
         return this.announcementRepo.save(announcement);
     }
@@ -58,7 +59,7 @@ export class AnnouncementsService {
         };
     }
 
-    async update(id: string, dto: { title?: string; content?: string; isPublished?: boolean }) {
+    async update(id: string, dto: { title?: string; content?: string; isPublished?: boolean; isGlobal?: boolean }) {
         const announcement = await this.announcementRepo.findOne({ where: { id } });
         if (!announcement) {
             throw new NotFoundException('Announcement not found');

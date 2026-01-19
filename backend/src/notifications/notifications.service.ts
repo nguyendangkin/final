@@ -63,13 +63,28 @@ export class NotificationsService {
     // ==================== SYSTEM ANNOUNCEMENTS FOR USERS ====================
 
     async getSystemAnnouncements(userId: string, page: number = 1, limit: number = 10) {
-        const [announcements, total] = await this.announcementRepo.findAndCount({
-            where: { isPublished: true },
-            order: { createdAt: 'DESC' },
-            skip: (page - 1) * limit,
-            take: limit,
-            relations: ['author'],
-        });
+        // Get user creation time
+        const user = await this.announcementRepo.manager.findOne('User', {
+            where: { id: userId },
+            select: ['createdAt'],
+        } as any) as any;
+
+        if (!user) {
+            return { items: [], total: 0, page, limit, hasMore: false };
+        }
+
+        const queryBuilder = this.announcementRepo.createQueryBuilder('announcement')
+            .leftJoinAndSelect('announcement.author', 'author')
+            .where('announcement.isPublished = :isPublished', { isPublished: true })
+            .andWhere(
+                '(announcement.isGlobal = :isGlobal OR announcement.createdAt >= :userCreatedAt)',
+                { isGlobal: true, userCreatedAt: user.createdAt }
+            )
+            .orderBy('announcement.createdAt', 'DESC')
+            .skip((page - 1) * limit)
+            .take(limit);
+
+        const [announcements, total] = await queryBuilder.getManyAndCount();
 
         // Get read status for each announcement
         const readRecords = await this.readRepo.find({

@@ -11,6 +11,7 @@ interface Announcement {
     id: string;
     title: string;
     content: string;
+    isGlobal: boolean;
     isPublished: boolean;
     author: { id: string; name: string } | null;
     createdAt: string;
@@ -27,6 +28,7 @@ export default function AdminAnnouncementsPage() {
     // Write form state
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [isGlobal, setIsGlobal] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
 
@@ -141,12 +143,13 @@ export default function AdminAnnouncementsPage() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ title: title.trim(), content: content.trim() })
+                body: JSON.stringify({ title: title.trim(), content: content.trim(), isGlobal })
             });
 
             if (res.ok) {
                 setTitle('');
                 setContent('');
+                setIsGlobal(false);
                 setEditingId(null);
                 // Refresh history
                 fetchAnnouncements(1, true);
@@ -163,6 +166,7 @@ export default function AdminAnnouncementsPage() {
         setEditingId(announcement.id);
         setTitle(announcement.title);
         setContent(announcement.content);
+        setIsGlobal(announcement.isGlobal);
         setActiveTab('write');
     };
 
@@ -171,6 +175,7 @@ export default function AdminAnnouncementsPage() {
         setEditingId(null);
         setTitle('');
         setContent('');
+        setIsGlobal(false);
     };
 
     // Delete announcement
@@ -318,6 +323,21 @@ export default function AdminAnnouncementsPage() {
                                 )}
                             </div>
 
+                            <div>
+                                <label className="flex items-center space-x-3 mb-4 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={isGlobal}
+                                        onChange={(e) => setIsGlobal(e.target.checked)}
+                                        className="w-5 h-5 text-black border-2 border-gray-300 rounded focus:ring-0 cursor-pointer accent-black"
+                                    />
+                                    <div>
+                                        <span className="text-sm font-bold uppercase text-gray-700 block">Gửi toàn cục</span>
+                                        <span className="text-xs text-gray-500 block">Nếu tích chọn: Thông báo sẽ gửi cho toàn bộ người dùng (kể cả người mới đăng ký sau này). Nếu không chọn: Chỉ gửi cho người dùng hiện tại (trước thời điểm đăng).</span>
+                                    </div>
+                                </label>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={isSubmitting || !title.trim() || !content.trim()}
@@ -358,6 +378,11 @@ export default function AdminAnnouncementsPage() {
                                                 {!announcement.isPublished && (
                                                     <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">
                                                         Ẩn
+                                                    </span>
+                                                )}
+                                                {announcement.isGlobal && (
+                                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                                        Toàn cục
                                                     </span>
                                                 )}
                                             </div>

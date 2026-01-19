@@ -16,7 +16,7 @@ export class AnnouncementsController {
     @Post()
     async create(
         @Request() req,
-        @Body() dto: { title: string; content: string },
+        @Body() dto: { title: string; content: string; isGlobal?: boolean },
     ) {
         this.checkAdmin(req.user);
         return this.announcementsService.create(req.user.id, dto);
@@ -42,7 +42,7 @@ export class AnnouncementsController {
     async update(
         @Request() req,
         @Param('id') id: string,
-        @Body() dto: { title?: string; content?: string; isPublished?: boolean },
+        @Body() dto: { title?: string; content?: string; isPublished?: boolean; isGlobal?: boolean },
     ) {
         this.checkAdmin(req.user);
         return this.announcementsService.update(id, dto);
