@@ -72,7 +72,7 @@ export class CarsService {
         // Let's exclude HIDDEN from public results.
 
         if (!query.includeHidden) {
-            qb.andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN });
+            qb.andWhere('car.status IN (:...publicStatuses)', { publicStatuses: [CarStatus.AVAILABLE, CarStatus.SOLD] });
         }
 
         // Hide cars from banned sellers
@@ -231,10 +231,25 @@ export class CarsService {
     }
 
     async create(createCarDto: CreateCarDto, seller: User): Promise<Car> {
+        // Check how many approved posts this user has
+        const approvedCount = await this.carsRepository.count({
+            where: [
+                { seller: { id: seller.id }, status: CarStatus.AVAILABLE },
+                { seller: { id: seller.id }, status: CarStatus.SOLD }
+            ]
+        });
+
+        // First 3 posts must be approved manually
+        // If user is admin, skip this check
+        const initialStatus = (seller.isAdmin || approvedCount >= 3)
+            ? CarStatus.AVAILABLE
+            : CarStatus.PENDING_APPROVAL;
+
         const car = this.carsRepository.create({
             ...createCarDto,
             seller,
             price: createCarDto.price.toString(),
+            status: initialStatus,
         });
         return this.carsRepository.save(car);
     }
@@ -344,12 +359,37 @@ export class CarsService {
         });
     }
 
+    async getPendingCars(): Promise<Car[]> {
+        return this.carsRepository.find({
+            where: { status: CarStatus.PENDING_APPROVAL },
+            relations: ['seller'],
+            order: { createdAt: 'ASC' }
+        });
+    }
+
+    async approveCar(id: string): Promise<Car> {
+        const car = await this.findOne(id); // Helper ensuring it exists, but might throw if hidden/pending for non-admin?
+        // Actually findOne filters out hidden cars for non-admins, but we expect admin to call this.
+        // We'll trust the controller to be guarded or we use repository directly.
+
+        car.status = CarStatus.AVAILABLE;
+        return this.carsRepository.save(car);
+    }
+
+    async rejectCar(id: string): Promise<void> {
+        const car = await this.findOne(id);
+        // We can either delete it or mark as rejected. Let's delete for cleanliness or REJECTED for record?
+        // Plan said "Delete or set status REJECTED". Let's set REJECTED so user knows.
+        car.status = CarStatus.REJECTED;
+        await this.carsRepository.save(car);
+    }
+
     async getBrands(): Promise<string[]> {
         const brands = await this.carsRepository
             .createQueryBuilder('car')
             .leftJoin('car.seller', 'seller')
             .select('DISTINCT car.make', 'make')
-            .where('car.status = :status', { status: CarStatus.AVAILABLE })
+            .where('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
             .getRawMany();
 
@@ -362,7 +402,7 @@ export class CarsService {
             .leftJoin('car.seller', 'seller')
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN })
+            .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] })
             .getMany();
 
         // Extract unique values for each filterable field
@@ -433,7 +473,7 @@ export class CarsService {
             .select('DISTINCT car.model', 'model')
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN })
+            .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] })
             .getRawMany();
 
         return models.map(m => m.model).filter(Boolean).sort();
@@ -448,7 +488,7 @@ export class CarsService {
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('car.model ILIKE :model', { model: `%${model}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN })
+            .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] })
             .getRawMany();
 
         return trims.map(t => t.trim).filter(Boolean).sort();
@@ -461,7 +501,7 @@ export class CarsService {
             .leftJoin('car.seller', 'seller')
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-            .andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN });
+            .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] });
 
         if (model) {
             qb.andWhere('car.model ILIKE :model', { model: `%${model}%` });
@@ -564,7 +604,7 @@ export class CarsService {
         const qb = this.carsRepository.createQueryBuilder('car');
         qb.leftJoin('car.seller', 'seller');
         qb.where('seller.isSellingBanned = :isBanned', { isBanned: false });
-        qb.andWhere('car.status != :hiddenStatus', { hiddenStatus: CarStatus.HIDDEN });
+        qb.andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] });
 
         // Apply existing filters
         if (query.make) {

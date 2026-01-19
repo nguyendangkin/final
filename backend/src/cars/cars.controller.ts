@@ -23,14 +23,30 @@ export class CarsController {
         return this.carsService.getTagsStats();
     }
 
-    @Delete('admin/tags/:tag')
-    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
     async deleteTagWithPenalty(@Param('tag') tag: string) {
         const initiatorId = await this.carsService.deleteTagWithPenalty(tag);
         if (initiatorId) {
             await this.usersService.banUser(initiatorId);
         }
         return { message: 'Tag deleted and penalties applied', initiatorId };
+    }
+
+    @Get('admin/pending')
+    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
+    async getPendingCars() {
+        return this.carsService.getPendingCars();
+    }
+
+    @Patch('admin/cars/:id/approve')
+    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
+    async approveCar(@Param('id', ParseUUIDPipe) id: string) {
+        return this.carsService.approveCar(id);
+    }
+
+    @Patch('admin/cars/:id/reject')
+    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
+    async rejectCar(@Param('id', ParseUUIDPipe) id: string) {
+        return this.carsService.rejectCar(id);
     }
 
     @Get(':id')

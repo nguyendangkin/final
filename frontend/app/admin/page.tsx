@@ -61,6 +61,13 @@ export default function AdminDashboard() {
                                 </div>
                             </Link>
 
+                            <Link href="/admin/approvals" className="block">
+                                <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full">
+                                    <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Duyệt bài đăng</h3>
+                                    <p className="text-sm text-gray-500 mt-2">Duyệt 3 bài đầu tiên của thành viên mới</p>
+                                </div>
+                            </Link>
+
                             {/* Card 2 */}
                             <Link href="/admin/users" className="block">
                                 <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full">

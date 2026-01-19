@@ -6,6 +6,8 @@ export enum CarStatus {
     AVAILABLE = 'AVAILABLE',
     SOLD = 'SOLD',
     HIDDEN = 'HIDDEN',
+    PENDING_APPROVAL = 'PENDING_APPROVAL',
+    REJECTED = 'REJECTED',
 }
 
 @Entity()

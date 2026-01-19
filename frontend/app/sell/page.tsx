@@ -288,12 +288,40 @@ export default function SellPage() {
                 body: JSON.stringify(payload)
             });
 
+            const responseData = await res.json();
+
             if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.message || 'Failed to create listing');
+                throw new Error(responseData.message || 'Failed to create listing');
             }
 
-            toast.success('Đăng bán thành công! Xe của bạn đã lên sàn.');
+            if (responseData.status === 'PENDING_APPROVAL') {
+                toast.custom((t) => (
+                    <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-sm pointer-events-auto flex flex-col border-l-4 border-yellow-500`}>
+                        <div className="p-4 flex items-start gap-4">
+                            <div className="flex-shrink-0 pt-0.5">
+                                <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                                    <span className="text-xl">⏳</span>
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900">Đang chờ duyệt</h3>
+                                <p className="mt-1 text-sm text-gray-600">
+                                    Bài đăng của bạn đã được gửi và đang chờ Admin kiểm duyệt trước khi hiển thị công khai.
+                                </p>
+                            </div>
+                            <button onClick={() => toast.dismiss(t.id)} className="text-gray-400 hover:text-gray-600">
+                                <span className="sr-only">Close</span>
+                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                ), { duration: 6000 });
+            } else {
+                toast.success('Đăng bán thành công! Xe của bạn đã lên sàn.');
+            }
+
             localStorage.removeItem('sell_draft');
             router.push('/');
         } catch (error: any) {
