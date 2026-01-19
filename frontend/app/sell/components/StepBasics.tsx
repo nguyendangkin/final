@@ -22,7 +22,66 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
     const [suggestedYears, setSuggestedYears] = useState<string[]>([]);
     const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
 
-    // Fetch smart suggestions based on current context (Make, Model)
+    // Fetch Model suggestions based on Make
+    useEffect(() => {
+        let active = true;
+
+        if (data.make) {
+            const fetchModels = async () => {
+                try {
+                    const res = await fetch(`http://localhost:3000/tags/suggestions/model?parent=${encodeURIComponent(data.make)}`);
+                    const resData = await res.json();
+                    if (active && Array.isArray(resData)) {
+                        setSuggestedModels(resData);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch models', err);
+                }
+            };
+            fetchModels();
+        } else {
+            setSuggestedModels([]);
+        }
+
+        return () => { active = false; };
+    }, [data.make]);
+
+    // Fetch Trim & Chassis suggestions based on Model (Use chassisCode as trim if trim not available)
+    useEffect(() => {
+        let active = true;
+
+        if (data.model) {
+            const fetchTrims = async () => {
+                try {
+                    // Try to fetch trims first
+                    const res = await fetch(`http://localhost:3000/tags/suggestions/trim?parent=${encodeURIComponent(data.model)}`);
+                    let trims = await res.json();
+
+                    // If no explicit trims, try chassisCodes as trims (common in JDM)
+                    if (!trims || trims.length === 0) {
+                        const resChassis = await fetch(`http://localhost:3000/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
+                        trims = await resChassis.json();
+                    }
+
+                    if (active && Array.isArray(trims)) {
+                        setSuggestedTrims(trims);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch trims', err);
+                }
+            };
+            fetchTrims();
+        } else {
+            setSuggestedTrims([]);
+        }
+
+        return () => { active = false; };
+    }, [data.model]);
+
+    // Fetch filtering options (Location, Year range) from smart filter (still needs active cars for accurate pricing/location availability)
+
+
+    // Fetch smart suggestions for year range (still needs active cars)
     useEffect(() => {
         let active = true;
 
@@ -32,19 +91,11 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                 if (data.make) params.append('make', data.make);
                 if (data.model) params.append('model', data.model);
 
-                // Fetch Smart Filter Data for Year and Location
                 const res = await fetch(`http://localhost:3000/cars/filters/smart?${params.toString()}`);
                 const resData = await res.json();
 
                 if (active) {
-                    // Update Location Suggestions
-                    if (resData.options && Array.isArray(resData.options.location)) {
-                        setSuggestedLocations(resData.options.location);
-                    } else {
-                        setSuggestedLocations([]);
-                    }
-
-                    // Update Year Suggestions from Range
+                    // Update Year Suggestions from Range (only from active cars)
                     if (resData.ranges && resData.ranges.year) {
                         const { min, max } = resData.ranges.year;
                         if (min > 0 && max > 0 && min !== Infinity) {
@@ -68,49 +119,23 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         return () => { active = false; };
     }, [data.make, data.model]);
 
-    // Fetch Models (Keep specific endpoint for precision if needed, or could migrate to smart)
+    // Fetch Location suggestions (Global)
     useEffect(() => {
         let active = true;
-        if (data.make) {
-            const fetchModels = async () => {
-                try {
-                    const res = await fetch(`http://localhost:3000/cars/filters/models?make=${encodeURIComponent(data.make)}`);
-                    const resData = await res.json();
-                    if (active && Array.isArray(resData)) {
-                        setSuggestedModels(resData);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch models', err);
+        const fetchLocations = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/tags/suggestions/location');
+                const data = await res.json();
+                if (active && Array.isArray(data)) {
+                    setSuggestedLocations(data);
                 }
-            };
-            fetchModels();
-        } else {
-            setSuggestedModels([]);
-        }
+            } catch (err) {
+                console.error('Failed to fetch locations', err);
+            }
+        };
+        fetchLocations();
         return () => { active = false; };
-    }, [data.make]);
-
-    // Fetch Trims
-    useEffect(() => {
-        let active = true;
-        if (data.make && data.model) {
-            const fetchTrims = async () => {
-                try {
-                    const res = await fetch(`http://localhost:3000/cars/filters/trims?make=${encodeURIComponent(data.make)}&model=${encodeURIComponent(data.model)}`);
-                    const resData = await res.json();
-                    if (active && Array.isArray(resData)) {
-                        setSuggestedTrims(resData);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch trims', err);
-                }
-            };
-            fetchTrims();
-        } else {
-            setSuggestedTrims([]);
-        }
-        return () => { active = false; };
-    }, [data.make, data.model]);
+    }, []);
 
     const priceInputRef = useRef<HTMLInputElement>(null);
     const cursorPositionRef = useRef<number | null>(null);

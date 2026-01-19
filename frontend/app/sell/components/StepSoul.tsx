@@ -21,31 +21,38 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
         engineCode: string[];
     }>({ chassisCode: [], engineCode: [] });
 
+    // Fetch Chassis & Engine suggestions based on Model
     useEffect(() => {
         let active = true;
 
-        if (data.make || data.model) {
-            let url = 'http://localhost:3000/cars/filters/details?';
-            if (data.make) url += `make=${encodeURIComponent(data.make)}&`;
-            if (data.model) url += `model=${encodeURIComponent(data.model)}&`;
+        if (data.model) {
+            const fetchSuggestions = async () => {
+                try {
+                    // Fetch Chassis Codes
+                    const resChassis = await fetch(`http://localhost:3000/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
+                    const chassisData = await resChassis.json();
 
-            fetch(url)
-                .then(res => res.json())
-                .then(resData => {
+                    // Fetch Engine Codes
+                    const resEngine = await fetch(`http://localhost:3000/tags/suggestions/engineCode?parent=${encodeURIComponent(data.model)}`);
+                    const engineData = await resEngine.json();
+
                     if (active) {
                         setSuggestions({
-                            chassisCode: Array.isArray(resData.chassisCode) ? resData.chassisCode : [],
-                            engineCode: Array.isArray(resData.engineCode) ? resData.engineCode : [],
+                            chassisCode: Array.isArray(chassisData) ? chassisData : [],
+                            engineCode: Array.isArray(engineData) ? engineData : [],
                         });
                     }
-                })
-                .catch(err => console.error('Failed to fetch details', err));
+                } catch (err) {
+                    console.error('Failed to fetch details', err);
+                }
+            };
+            fetchSuggestions();
         } else {
             setSuggestions({ chassisCode: [], engineCode: [] });
         }
 
         return () => { active = false; };
-    }, [data.make, data.model]);
+    }, [data.model]);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

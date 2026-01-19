@@ -96,26 +96,38 @@ const ModSection = ({
 };
 
 export default function StepMods({ data, updateData }: StepModsProps) {
-    const [suggestedMods, setSuggestedMods] = useState<string[]>([]);
+    const [suggestions, setSuggestions] = useState<{
+        exterior: string[];
+        interior: string[];
+        engine: string[];
+        footwork: string[];
+    }>({ exterior: [], interior: [], engine: [], footwork: [] });
 
+    // Fetch mod suggestions from Tag table (includes tags from deleted cars)
     useEffect(() => {
         let active = true;
-        if (data.make || data.model) {
-            let url = 'http://localhost:3000/cars/filters/details?';
-            if (data.make) url += `make=${encodeURIComponent(data.make)}&`;
-            if (data.model) url += `model=${encodeURIComponent(data.model)}&`;
 
-            fetch(url)
-                .then(res => res.json())
-                .then(resData => {
-                    if (active && Array.isArray(resData.mods)) {
-                        setSuggestedMods(resData.mods);
-                    }
-                })
-                .catch(err => console.error('Failed to fetch mods', err));
-        }
+        const fetchModSuggestions = async () => {
+            try {
+                const res = await fetch('http://localhost:3000/tags/suggestions');
+                const data = await res.json();
+                if (active && data) {
+                    setSuggestions({
+                        exterior: Array.isArray(data.mods_exterior) ? data.mods_exterior : [],
+                        interior: Array.isArray(data.mods_interior) ? data.mods_interior : [],
+                        engine: Array.isArray(data.mods_engine) ? data.mods_engine : [],
+                        footwork: Array.isArray(data.mods_footwork) ? data.mods_footwork : [],
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to fetch mod suggestions', err);
+            }
+        };
+
+        fetchModSuggestions();
+
         return () => { active = false; };
-    }, [data.make, data.model]);
+    }, []);
 
     const updateMods = (category: keyof typeof data.mods, newItems: string[]) => {
         updateData({
@@ -147,7 +159,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('exterior', item)}
                     onRemove={(idx) => removeItem('exterior', idx)}
                     placeholder="Bodykit..."
-                    suggestions={suggestedMods}
+                    suggestions={suggestions.exterior}
                 />
                 <ModSection
                     title="Nội thất"
@@ -156,7 +168,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('interior', item)}
                     onRemove={(idx) => removeItem('interior', idx)}
                     placeholder="Ghế Recaro..."
-                    suggestions={suggestedMods}
+                    suggestions={suggestions.interior}
                 />
                 <ModSection
                     title="Máy móc & Hiệu suất"
@@ -165,7 +177,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('engine', item)}
                     onRemove={(idx) => removeItem('engine', idx)}
                     placeholder="Turbo Garrett..."
-                    suggestions={suggestedMods}
+                    suggestions={suggestions.engine}
                 />
                 <ModSection
                     title="Gầm & Bánh"
@@ -174,7 +186,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('footwork', item)}
                     onRemove={(idx) => removeItem('footwork', idx)}
                     placeholder="Phuộc Tein..."
-                    suggestions={suggestedMods}
+                    suggestions={suggestions.footwork}
                 />
             </div>
         </div>

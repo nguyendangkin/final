@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { TagsService } from '../tags/tags.service';
 
 @Injectable()
 export class CarsService {
@@ -18,6 +19,7 @@ export class CarsService {
         private carsRepository: Repository<Car>,
         private dataSource: DataSource,
         private notificationsService: NotificationsService,
+        private tagsService: TagsService,
     ) { }
 
     /**
@@ -251,7 +253,12 @@ export class CarsService {
             price: createCarDto.price.toString(),
             status: initialStatus,
         });
-        return this.carsRepository.save(car);
+        const savedCar = await this.carsRepository.save(car);
+
+        // Sync tags to Tag table (increment usageCount)
+        await this.tagsService.syncTagsFromCar(savedCar, true);
+
+        return savedCar;
     }
 
     async update(id: string, updateCarDto: UpdateCarDto, user: User): Promise<Car> {
@@ -259,6 +266,10 @@ export class CarsService {
         if (car.seller.id !== user.id) {
             throw new BadRequestException('You can only update your own listings');
         }
+
+        // Sync tags: Remove old tags usage
+        // We do this BEFORE updating the car object so we have the old values
+        await this.tagsService.syncTagsFromCar(car, false);
 
         // Handle price conversion if it's in the DTO
         const updates: any = { ...updateCarDto };
@@ -275,7 +286,13 @@ export class CarsService {
         }
 
         Object.assign(car, updates);
-        return this.carsRepository.save(car);
+        const updatedCar = await this.carsRepository.save(car);
+
+        // Sync tags: Add new tags usage
+        // We do this AFTER saving so we have stored the new values (and validation passed)
+        await this.tagsService.syncTagsFromCar(updatedCar, true);
+
+        return updatedCar;
     }
 
 
@@ -302,6 +319,9 @@ export class CarsService {
             );
         }
 
+        // Decrement tag usage counts before removing car
+        await this.tagsService.syncTagsFromCar(car, false);
+
         await this.carsRepository.remove(car);
     }
 
@@ -309,9 +329,10 @@ export class CarsService {
         // Find all cars by seller to delete their images
         const cars = await this.carsRepository.find({ where: { seller: { id: sellerId } } });
 
-        // Delete images for each car
+        // Delete images and decrement tags for each car
         for (const car of cars) {
             await this.deleteCarImages(car);
+            await this.tagsService.syncTagsFromCar(car, false);
         }
 
         await this.carsRepository.delete({ seller: { id: sellerId } });
@@ -323,6 +344,9 @@ export class CarsService {
 
         // Delete associated images from disk
         await this.deleteCarImages(car);
+
+        // Decrement tag usage counts
+        await this.tagsService.syncTagsFromCar(car, false);
 
         await this.carsRepository.remove(car);
     }
@@ -783,68 +807,8 @@ export class CarsService {
     }
 
     async getTagsStats(): Promise<{ category: string, items: { tag: string, count: number }[] }[]> {
-        const cars = await this.carsRepository.find({
-            select: ['make', 'model', 'chassisCode', 'engineCode', 'transmission', 'drivetrain', 'condition', 'paperwork', 'location', 'mods'],
-        });
-
-        const categories: Record<string, Record<string, number>> = {
-            'Hãng xe (Make)': {},
-            'Dòng xe (Model)': {},
-            'Mã khung (Chassis)': {},
-            'Mã máy (Engine)': {},
-            'Hộp số (Transmission)': {},
-            'Dẫn động (Drivetrain)': {},
-            'Tình trạng (Condition)': {},
-            'Giấy tờ (Paperwork)': {},
-            'Khu vực (Location)': {},
-            'Nâng cấp (Mods)': {},
-        };
-
-        for (const car of cars) {
-            if (car.make) categories['Hãng xe (Make)'][car.make.toUpperCase()] = (categories['Hãng xe (Make)'][car.make.toUpperCase()] || 0) + 1;
-            if (car.model) categories['Dòng xe (Model)'][car.model.toUpperCase()] = (categories['Dòng xe (Model)'][car.model.toUpperCase()] || 0) + 1;
-            if (car.chassisCode) categories['Mã khung (Chassis)'][car.chassisCode.toUpperCase()] = (categories['Mã khung (Chassis)'][car.chassisCode.toUpperCase()] || 0) + 1;
-            if (car.engineCode) categories['Mã máy (Engine)'][car.engineCode.toUpperCase()] = (categories['Mã máy (Engine)'][car.engineCode.toUpperCase()] || 0) + 1;
-            if (car.transmission) categories['Hộp số (Transmission)'][car.transmission.toUpperCase()] = (categories['Hộp số (Transmission)'][car.transmission.toUpperCase()] || 0) + 1;
-            if (car.drivetrain) categories['Dẫn động (Drivetrain)'][car.drivetrain.toUpperCase()] = (categories['Dẫn động (Drivetrain)'][car.drivetrain.toUpperCase()] || 0) + 1;
-            if (car.condition) categories['Tình trạng (Condition)'][car.condition.toUpperCase()] = (categories['Tình trạng (Condition)'][car.condition.toUpperCase()] || 0) + 1;
-            if (car.paperwork) categories['Giấy tờ (Paperwork)'][car.paperwork.toUpperCase()] = (categories['Giấy tờ (Paperwork)'][car.paperwork.toUpperCase()] || 0) + 1;
-            if (car.location) categories['Khu vực (Location)'][car.location.toUpperCase()] = (categories['Khu vực (Location)'][car.location.toUpperCase()] || 0) + 1;
-
-            if (car.mods) {
-                let tags: string[] = [];
-                if (Array.isArray(car.mods)) {
-                    car.mods.forEach((mod: any) => {
-                        if (typeof mod === 'string' && mod.trim()) {
-                            tags.push(mod.trim().toUpperCase());
-                        } else if (mod && mod.name) {
-                            tags.push(mod.name.trim().toUpperCase());
-                        }
-                    });
-                } else if (typeof car.mods === 'object') {
-                    Object.values(car.mods).forEach((values: any) => {
-                        if (Array.isArray(values)) {
-                            values.forEach((v: string) => {
-                                if (v && typeof v === 'string') {
-                                    tags.push(v.trim().toUpperCase());
-                                }
-                            });
-                        }
-                    });
-                }
-
-                tags.forEach(tag => {
-                    categories['Nâng cấp (Mods)'][tag] = (categories['Nâng cấp (Mods)'][tag] || 0) + 1;
-                });
-            }
-        }
-
-        return Object.entries(categories).map(([category, counts]) => ({
-            category,
-            items: Object.entries(counts)
-                .map(([tag, count]) => ({ tag, count }))
-                .sort((a, b) => b.count - a.count)
-        })).filter(cat => cat.items.length > 0);
+        // Delegate to TagsService which reads from Tag table
+        return this.tagsService.getAllTagsStats();
     }
 
     // Circular dependency note: We need UsersService to ban user. 
@@ -912,9 +876,10 @@ export class CarsService {
 
         // Delete ALL cars with this tag
         if (verifiedCars.length > 0) {
-            // Delete images for each car
+            // Delete images and decrement tags for each car
             for (const car of verifiedCars) {
                 await this.deleteCarImages(car);
+                await this.tagsService.syncTagsFromCar(car, false);
             }
             await this.carsRepository.remove(verifiedCars);
 
