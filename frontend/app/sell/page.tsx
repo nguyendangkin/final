@@ -175,7 +175,7 @@ export default function SellPage() {
             case 1: // Định danh
                 if (!data.make) errs.make = 'Vui lòng chọn hãng xe';
                 if (!data.model.trim()) errs.model = 'Vui lòng nhập dòng xe';
-                if (!data.year || data.year < 1900 || data.year > new Date().getFullYear() + 1) errs.year = 'Vui lòng nhập năm sản xuất hợp lệ';
+                if (!data.year || data.year > new Date().getFullYear() + 1) errs.year = 'Vui lòng nhập năm sản xuất hợp lệ';
                 if (!data.trim.trim()) errs.trim = 'Vui lòng nhập phiên bản (Trim)';
                 if (!data.price || data.price <= 0) errs.price = 'Vui lòng nhập mức giá';
                 if (!data.location.trim()) errs.location = 'Vui lòng nhập khu vực';

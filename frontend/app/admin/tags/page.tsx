@@ -5,6 +5,7 @@ import { getTagsStats, deleteTagWithPenalty } from '@/services/cars.service';
 import { Trash2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Toaster, toast } from 'react-hot-toast';
+import TagsSkeleton from '@/components/TagsSkeleton';
 
 interface TagCategory {
     category: string;
@@ -16,8 +17,8 @@ export default function TagsManagementPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const fetchTags = async () => {
-        setLoading(true);
+    const fetchTags = async (showLoading = true) => {
+        if (showLoading) setLoading(true);
         try {
             const data = await getTagsStats();
             setCategories(data);
@@ -25,7 +26,7 @@ export default function TagsManagementPage() {
             setError('Không thể tải danh sách tags');
             console.error(err);
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
@@ -84,7 +85,8 @@ export default function TagsManagementPage() {
     const executeDelete = async (tag: string) => {
         try {
             await deleteTagWithPenalty(tag);
-            fetchTags();
+            // Refetch silently (without loading spinner) to get all cascading deletions
+            fetchTags(false);
             toast.success(`Đã xóa tag "${tag}" và thi hành án phạt.`, {
                 style: {
                     borderRadius: '0px',
@@ -139,9 +141,7 @@ export default function TagsManagementPage() {
                 )}
 
                 {loading ? (
-                    <div className="flex justify-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-                    </div>
+                    <TagsSkeleton />
                 ) : (
                     <div className="space-y-8">
                         {categories.map((cat) => (

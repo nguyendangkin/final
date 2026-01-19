@@ -281,9 +281,12 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                         <input
                             type="text"
                             value={data.zaloLink}
-                            onChange={(e) => updateData({ zaloLink: e.target.value })}
+                            onChange={(e) => {
+                                const val = e.target.value.replace(/[^0-9]/g, '');
+                                if (val.length <= 10) updateData({ zaloLink: val });
+                            }}
                             placeholder="0912345678"
-                            maxLength={255}
+                            maxLength={10}
                             className="w-full bg-white border border-gray-300 text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50"
                         />
                     </div>
