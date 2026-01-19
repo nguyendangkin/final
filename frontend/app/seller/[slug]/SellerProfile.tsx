@@ -32,8 +32,17 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                 {/* Seller Header */}
                 <div className="bg-white rounded-none shadow-sm border border-gray-100 p-6 mb-8">
                     <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-none bg-black flex items-center justify-center text-white font-bold text-2xl border border-gray-200 shadow-sm">
-                            {displayName[0]?.toUpperCase() || 'U'}
+                        <div className="w-16 h-16 rounded-none bg-black flex items-center justify-center text-white font-bold text-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            {seller.avatar ? (
+                                <img
+                                    src={seller.avatar}
+                                    alt={displayName}
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                />
+                            ) : (
+                                displayName[0]?.toUpperCase() || 'U'
+                            )}
                         </div>
                         <div className="flex-1">
                             <h1 className="text-xl font-black text-black uppercase tracking-tight">{displayName}</h1>

@@ -12,19 +12,20 @@ export class AuthService {
     async validateGoogleUser(details: any) {
         const user = await this.usersService.findByEmail(details.email);
         if (user) {
-            if (!user.googleId) {
-                // Link google account to existing user if needed, or just update info
-                user.googleId = details.googleId;
-                user.avatar = details.picture;
-                if (!user.name) {
-                    user.name = `${details.firstName} ${details.lastName}`;
-                }
-                await this.usersService.create(user); // utilizing create for save/update simple logic
-            } else if (!user.name) {
-                // Even if linked, update name if missing
+            // Always update avatar and googleId to ensure they are current
+            user.googleId = details.googleId;
+            user.avatar = details.picture;
+
+            // Update name if missing or potentially outdated (optional preference, here we prioritized keeping existing name if set, 
+            // but for avatar user specifically asked for "real avatar", so let's sync it. 
+            // If we want to force sync name too: user.name = ...
+            // Lets stick to updating avatar as primary goal, and name if missing.
+            if (!user.name) {
                 user.name = `${details.firstName} ${details.lastName}`;
-                await this.usersService.create(user);
             }
+
+            // Save the updated user info
+            await this.usersService.create(user);
             return user;
         }
         const newUser = await this.usersService.create({
