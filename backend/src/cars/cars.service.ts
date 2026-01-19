@@ -359,12 +359,24 @@ export class CarsService {
         });
     }
 
-    async getPendingCars(): Promise<Car[]> {
-        return this.carsRepository.find({
+    async getPendingCars(page: number = 1, limit: number = 10): Promise<{ data: Car[], meta: any }> {
+        const [cars, total] = await this.carsRepository.findAndCount({
             where: { status: CarStatus.PENDING_APPROVAL },
             relations: ['seller'],
-            order: { createdAt: 'ASC' }
+            order: { createdAt: 'ASC' }, // FIFO: Oldest first
+            skip: (page - 1) * limit,
+            take: limit,
         });
+
+        return {
+            data: cars,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
     async approveCar(id: string): Promise<Car> {
@@ -373,7 +385,17 @@ export class CarsService {
         // We'll trust the controller to be guarded or we use repository directly.
 
         car.status = CarStatus.AVAILABLE;
-        return this.carsRepository.save(car);
+        await this.carsRepository.save(car);
+
+        // Notify user
+        await this.notificationsService.createNotification(
+            car.seller.id,
+            NotificationType.POST_APPROVED,
+            'Bài đăng được duyệt',
+            `Bài đăng "${car.year} ${car.make} ${car.model}" của bạn đã được phê duyệt và hiển thị công khai.`
+        );
+
+        return car;
     }
 
     async rejectCar(id: string): Promise<void> {
@@ -382,6 +404,14 @@ export class CarsService {
         // Plan said "Delete or set status REJECTED". Let's set REJECTED so user knows.
         car.status = CarStatus.REJECTED;
         await this.carsRepository.save(car);
+
+        // Notify user
+        await this.notificationsService.createNotification(
+            car.seller.id,
+            NotificationType.POST_REJECTED,
+            'Bài đăng bị từ chối',
+            `Bài đăng "${car.year} ${car.make} ${car.model}" của bạn đã bị từ chối. Vui lòng kiểm tra lại nội dung.`
+        );
     }
 
     async getBrands(): Promise<string[]> {

@@ -6,6 +6,7 @@ export enum NotificationType {
     ACCOUNT_UNBAN = 'ACCOUNT_UNBAN',
     POST_DELETED = 'POST_DELETED',
     POST_APPROVED = 'POST_APPROVED',
+    POST_REJECTED = 'POST_REJECTED',
     GENERAL = 'GENERAL',
 }
 

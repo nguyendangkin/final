@@ -1,22 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Check, X, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
+import Pagination from '@/components/Pagination';
 
 export default function AdminApprovals() {
     const [cars, setCars] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const router = useRouter();
 
-    useEffect(() => {
-        fetchPendingCars();
-    }, []);
+    // Limits per fetch
+    const LIMIT = 10;
 
-    const fetchPendingCars = () => {
+    useEffect(() => {
+        fetchPendingCars(page);
+    }, [page]);
+
+    const fetchPendingCars = useCallback(async (pageNum: number) => {
         const token = localStorage.getItem('jwt_token');
         if (!token) {
             router.push('/login');
@@ -25,30 +31,36 @@ export default function AdminApprovals() {
 
         setLoading(true);
 
-        fetch('http://localhost:3000/users/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (!data.isAdmin) {
-                    router.push('/');
-                    return;
-                }
-                return fetch('http://localhost:3000/cars/admin/pending', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-            })
-            .then(res => res && res.json())
-            .then(data => {
-                if (data) {
-                    setCars(data);
-                }
-                setLoading(false);
-            })
-            .catch(() => {
-                router.push('/');
+        try {
+            // First verify admin status (could be optimized to not do this every time if we trust token but good for security)
+            const userRes = await fetch('http://localhost:3000/users/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-    };
+            const userData = await userRes.json();
+
+            if (!userData.isAdmin) {
+                router.push('/');
+                return;
+            }
+
+            const pendingRes = await fetch(`http://localhost:3000/cars/admin/pending?page=${pageNum}&limit=${LIMIT}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await pendingRes.json();
+
+            if (data && data.data) {
+                setCars(data.data);
+                if (data.meta) {
+                    setTotalPages(data.meta.totalPages);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching approvals:", error);
+            toast.error("Lỗi tải danh sách.");
+        } finally {
+            setLoading(false);
+        }
+    }, [router]);
 
     const handleApprove = async (carId: string) => {
         const token = localStorage.getItem('jwt_token');
@@ -65,6 +77,12 @@ export default function AdminApprovals() {
             if (res.ok) {
                 setCars(prev => prev.filter(c => c.id !== carId));
                 toast.success('Đã duyệt bài đăng.');
+                // Refresh if empty to get next page items
+                if (cars.length <= 1 && page < totalPages) {
+                    fetchPendingCars(page);
+                } else if (cars.length <= 1 && page > 1) {
+                    setPage(prev => prev - 1);
+                }
             } else {
                 toast.error('Có lỗi xảy ra khi duyệt bài.');
             }
@@ -93,6 +111,11 @@ export default function AdminApprovals() {
             if (res.ok) {
                 setCars(prev => prev.filter(c => c.id !== carId));
                 toast.success('Đã từ chối bài đăng.');
+                if (cars.length <= 1 && page < totalPages) {
+                    fetchPendingCars(page);
+                } else if (cars.length <= 1 && page > 1) {
+                    setPage(prev => prev - 1);
+                }
             } else {
                 toast.error('Có lỗi xảy ra khi từ chối bài.');
             }
@@ -108,7 +131,7 @@ export default function AdminApprovals() {
                 <div className="mb-6 flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold uppercase tracking-wide">Duyệt bài đăng</h1>
-                        <p className="text-sm text-gray-500">Danh sách các bài đăng chờ duyệt (3 bài đầu tiên của thành viên mới)</p>
+                        <p className="text-sm text-gray-500">Danh sách các bài đăng chờ duyệt (Ai đăng trước hiện trước)</p>
                     </div>
                     <Link href="/admin" className="text-sm font-bold uppercase hover:text-[var(--jdm-red)] transition-colors">
                         ← Quay lại Dashboard
@@ -122,81 +145,89 @@ export default function AdminApprovals() {
                                 Không có bài đăng nào cần duyệt.
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Hình ảnh
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Thông tin xe
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Giá bán
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Người bán
-                                            </th>
-                                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                                Thời gian
-                                            </th>
-                                            <th scope="col" className="relative px-6 py-3 text-right">
-                                                <span className="sr-only">Actions</span>
-                                                Hành động
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
-                                        {cars.map((car) => (
-                                            <tr key={car.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="h-16 w-24 flex-shrink-0">
-                                                        <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm font-bold text-gray-900 uppercase">
-                                                        {car.year} {car.make} {car.model} {car.trim}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500">
-                                                        {car.location}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--jdm-red)] font-bold">
-                                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(car.price))}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    <div className="font-bold">{car.seller?.name || 'Unknown'}</div>
-                                                    <div className="text-xs">{car.seller?.email}</div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {new Date(car.createdAt).toLocaleString('vi-VN')}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Link href={`/cars/${car.id}`} target="_blank" className="flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-800 text-xs font-bold uppercase hover:bg-gray-300 transition-colors">
-                                                            <Eye className="w-3 h-3" /> Xem
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => handleApprove(car.id)}
-                                                            className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white text-xs font-bold uppercase hover:bg-green-700 transition-colors"
-                                                        >
-                                                            <Check className="w-3 h-3" /> Duyệt
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReject(car.id)}
-                                                            className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-xs font-bold uppercase hover:bg-red-700 transition-colors"
-                                                        >
-                                                            <X className="w-3 h-3" /> Từ chối
-                                                        </button>
-                                                    </div>
-                                                </td>
+                            <>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                    Hình ảnh
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                    Thông tin xe
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                    Giá bán
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                    Người bán
+                                                </th>
+                                                <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                                    Thời gian
+                                                </th>
+                                                <th scope="col" className="relative px-6 py-3 text-right">
+                                                    <span className="sr-only">Actions</span>
+                                                    Hành động
+                                                </th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {cars.map((car) => (
+                                                <tr key={car.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="h-16 w-24 flex-shrink-0">
+                                                            <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="text-sm font-bold text-gray-900 uppercase">
+                                                            {car.year} {car.make} {car.model} {car.trim}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {car.location}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--jdm-red)] font-bold">
+                                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(car.price))}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        <div className="font-bold">{car.seller?.name || 'Unknown'}</div>
+                                                        <div className="text-xs">{car.seller?.email}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {new Date(car.createdAt).toLocaleString('vi-VN')}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Link href={`/cars/${car.id}`} target="_blank" className="flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-800 text-xs font-bold uppercase hover:bg-gray-300 transition-colors">
+                                                                <Eye className="w-3 h-3" /> Xem
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => handleApprove(car.id)}
+                                                                className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white text-xs font-bold uppercase hover:bg-green-700 transition-colors"
+                                                            >
+                                                                <Check className="w-3 h-3" /> Duyệt
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleReject(car.id)}
+                                                                className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-xs font-bold uppercase hover:bg-red-700 transition-colors"
+                                                            >
+                                                                <X className="w-3 h-3" /> Từ chối
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <Pagination
+                                    currentPage={page}
+                                    totalPages={totalPages}
+                                    onPageChange={setPage}
+                                />
+                            </>
                         )}
                     </div>
                 )}

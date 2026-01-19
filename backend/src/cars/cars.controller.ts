@@ -33,8 +33,8 @@ export class CarsController {
 
     @Get('admin/pending')
     // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
-    async getPendingCars() {
-        return this.carsService.getPendingCars();
+    async getPendingCars(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
+        return this.carsService.getPendingCars(Number(page), Number(limit));
     }
 
     @Patch('admin/cars/:id/approve')
