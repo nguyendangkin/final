@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CarSpecs } from '../types';
 import { Plus, X, Box, Armchair, Hammer, Disc } from 'lucide-react';
+import AutocompleteInput from './AutocompleteInput';
 
 interface StepModsProps {
     data: CarSpecs;
@@ -13,7 +14,8 @@ const ModSection = ({
     items,
     onAdd,
     onRemove,
-    placeholder
+    placeholder,
+    suggestions = []
 }: {
     title: string;
     icon: React.ElementType;
@@ -21,6 +23,7 @@ const ModSection = ({
     onAdd: (item: string) => void;
     onRemove: (index: number) => void;
     placeholder: string;
+    suggestions?: string[];
 }) => {
     const [input, setInput] = useState('');
 
@@ -50,18 +53,23 @@ const ModSection = ({
                 <h4 className="font-bold text-black uppercase tracking-wide">{title}</h4>
             </div>
 
-            <div className="flex gap-2">
-                <input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={placeholder}
-                    className="flex-1 bg-gray-50 border border-gray-200 text-black rounded-none px-4 py-3 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400 uppercase"
-                />
+            <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                    <AutocompleteInput
+                        label=""
+                        name={`mod-${title}`}
+                        value={input}
+                        onChange={setInput}
+                        suggestions={suggestions}
+                        placeholder={placeholder}
+                        maxLength={100}
+                        onKeyDown={handleKeyDown}
+                    />
+                </div>
                 <button
                     onClick={handleAdd}
                     type="button"
-                    className="bg-black hover:bg-[var(--jdm-red)] text-white p-3 rounded-none transition-colors"
+                    className="bg-black hover:bg-[var(--jdm-red)] text-white p-4 h-[58px] rounded-none transition-colors mb-2"
                 >
                     <Plus className="w-5 h-5" />
                 </button>
@@ -88,6 +96,27 @@ const ModSection = ({
 };
 
 export default function StepMods({ data, updateData }: StepModsProps) {
+    const [suggestedMods, setSuggestedMods] = useState<string[]>([]);
+
+    useEffect(() => {
+        let active = true;
+        if (data.make || data.model) {
+            let url = 'http://localhost:3000/cars/filters/details?';
+            if (data.make) url += `make=${encodeURIComponent(data.make)}&`;
+            if (data.model) url += `model=${encodeURIComponent(data.model)}&`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(resData => {
+                    if (active && Array.isArray(resData.mods)) {
+                        setSuggestedMods(resData.mods);
+                    }
+                })
+                .catch(err => console.error('Failed to fetch mods', err));
+        }
+        return () => { active = false; };
+    }, [data.make, data.model]);
+
     const updateMods = (category: keyof typeof data.mods, newItems: string[]) => {
         updateData({
             mods: {
@@ -108,7 +137,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-sm text-gray-500 italic mb-4">
-                *Mẹo: Nhập tên món đồ và nhấn <strong>Enter</strong> (hoặc nút '+') để thêm nhanh. Chia nhỏ giúp người mua dễ so sánh.
+                *Mẹo: Nhập tên món đồ và nhấn <strong>Enter</strong> (hoặc nút &apos;+&apos;) để thêm nhanh. Chia nhỏ giúp người mua dễ so sánh.
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <ModSection
@@ -118,6 +147,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('exterior', item)}
                     onRemove={(idx) => removeItem('exterior', idx)}
                     placeholder="Bodykit..."
+                    suggestions={suggestedMods}
                 />
                 <ModSection
                     title="Nội thất"
@@ -126,6 +156,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('interior', item)}
                     onRemove={(idx) => removeItem('interior', idx)}
                     placeholder="Ghế Recaro..."
+                    suggestions={suggestedMods}
                 />
                 <ModSection
                     title="Máy móc & Hiệu suất"
@@ -134,6 +165,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('engine', item)}
                     onRemove={(idx) => removeItem('engine', idx)}
                     placeholder="Turbo Garrett..."
+                    suggestions={suggestedMods}
                 />
                 <ModSection
                     title="Gầm & Bánh"
@@ -142,6 +174,7 @@ export default function StepMods({ data, updateData }: StepModsProps) {
                     onAdd={(item) => addItem('footwork', item)}
                     onRemove={(idx) => removeItem('footwork', idx)}
                     placeholder="Phuộc Tein..."
+                    suggestions={suggestedMods}
                 />
             </div>
         </div>

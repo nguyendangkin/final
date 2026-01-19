@@ -76,6 +76,7 @@ export default function StepLegal({ data, updateData, errors = {} }: StepLegalPr
                                 value={data.registryExpiry || ''}
                                 onChange={handleRegistryExpiryChange}
                                 placeholder={data.noRegistry ? "Xe không có đăng kiểm" : "MM/YYYY"}
+                                maxLength={20}
                                 className={`w-full bg-white border ${errors.registryExpiry ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 uppercase disabled:bg-gray-100 disabled:text-gray-400`}
                             />
                             <CalendarDays className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

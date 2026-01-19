@@ -252,6 +252,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                                 if (val.length <= 10) updateData({ phoneNumber: val });
                             }}
                             placeholder="0912345678"
+                            maxLength={15}
                             className={`w-full bg-white border ${errors.phoneNumber ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-300'} text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50`}
                         />
                         {errors.phoneNumber && <p className="text-red-500 text-xs">{errors.phoneNumber}</p>}
@@ -267,6 +268,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                             value={data.facebookLink}
                             onChange={(e) => updateData({ facebookLink: e.target.value })}
                             placeholder="https://facebook.com/..."
+                            maxLength={255}
                             className="w-full bg-white border border-gray-300 text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50"
                         />
                     </div>
@@ -281,6 +283,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                             value={data.zaloLink}
                             onChange={(e) => updateData({ zaloLink: e.target.value })}
                             placeholder="0912345678"
+                            maxLength={255}
                             className="w-full bg-white border border-gray-300 text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50"
                         />
                     </div>
@@ -295,6 +298,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                             value={data.videoLink}
                             onChange={(e) => updateData({ videoLink: e.target.value })}
                             placeholder="Đường dẫn tới video"
+                            maxLength={255}
                             className="w-full bg-white border border-gray-300 text-gray-900 rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50"
                         />
                     </div>

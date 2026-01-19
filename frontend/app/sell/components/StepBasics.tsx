@@ -1,6 +1,7 @@
 import { CarSpecs } from '../types';
 import { ChevronDown, DollarSign, Gauge, Calendar, CarFront } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import AutocompleteInput from './AutocompleteInput';
 
 interface StepBasicsProps {
     data: CarSpecs;
@@ -8,20 +9,108 @@ interface StepBasicsProps {
     errors?: Record<string, string>;
 }
 
-const MAKE_MODELS: Record<string, string[]> = {
-    'Toyota': ['Supra', 'Celica', 'MR2', 'Chaser', 'AE86', 'GT86', 'GR86', 'Soarer', 'Crown'],
-    'Nissan': ['Skyline GT-R', 'Silvia', '180SX', '300ZX', '350Z', '370Z', 'Laurel', 'Cefiro'],
-    'Honda': ['Civic', 'Integra', 'S2000', 'NSX', 'Prelude', 'Accord', 'CR-X'],
-    'Mitsubishi': ['Lancer Evolution', 'Eclipse', 'GTO', 'FTO', 'Galant VR-4'],
-    'Mazda': ['RX-7', 'RX-8', 'MX-5 Miata', 'Mazda3', 'Mazda6'],
-    'Subaru': ['Impreza WRX STI', 'Legacy', 'BRZ', 'Forester'],
-};
+
 
 export default function StepBasics({ data, updateData, errors = {} }: StepBasicsProps) {
     const brands = [
         'Toyota', 'Honda', 'Nissan', 'Mazda', 'Mitsubishi',
         'Subaru', 'Suzuki', 'Daihatsu', 'Lexus', 'Acura', 'Infiniti'
     ];
+
+    const [suggestedModels, setSuggestedModels] = useState<string[]>([]);
+    const [suggestedTrims, setSuggestedTrims] = useState<string[]>([]);
+    const [suggestedYears, setSuggestedYears] = useState<string[]>([]);
+    const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
+
+    // Fetch smart suggestions based on current context (Make, Model)
+    useEffect(() => {
+        let active = true;
+
+        const fetchSmartSuggestions = async () => {
+            try {
+                const params = new URLSearchParams();
+                if (data.make) params.append('make', data.make);
+                if (data.model) params.append('model', data.model);
+
+                // Fetch Smart Filter Data for Year and Location
+                const res = await fetch(`http://localhost:3000/cars/filters/smart?${params.toString()}`);
+                const resData = await res.json();
+
+                if (active) {
+                    // Update Location Suggestions
+                    if (resData.options && Array.isArray(resData.options.location)) {
+                        setSuggestedLocations(resData.options.location);
+                    } else {
+                        setSuggestedLocations([]);
+                    }
+
+                    // Update Year Suggestions from Range
+                    if (resData.ranges && resData.ranges.year) {
+                        const { min, max } = resData.ranges.year;
+                        if (min > 0 && max > 0 && min !== Infinity) {
+                            const years = [];
+                            for (let y = max; y >= min; y--) {
+                                years.push(y.toString());
+                            }
+                            setSuggestedYears(years);
+                        } else {
+                            setSuggestedYears([]);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch smart suggestions', err);
+            }
+        };
+
+        fetchSmartSuggestions();
+
+        return () => { active = false; };
+    }, [data.make, data.model]);
+
+    // Fetch Models (Keep specific endpoint for precision if needed, or could migrate to smart)
+    useEffect(() => {
+        let active = true;
+        if (data.make) {
+            const fetchModels = async () => {
+                try {
+                    const res = await fetch(`http://localhost:3000/cars/filters/models?make=${encodeURIComponent(data.make)}`);
+                    const resData = await res.json();
+                    if (active && Array.isArray(resData)) {
+                        setSuggestedModels(resData);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch models', err);
+                }
+            };
+            fetchModels();
+        } else {
+            setSuggestedModels([]);
+        }
+        return () => { active = false; };
+    }, [data.make]);
+
+    // Fetch Trims
+    useEffect(() => {
+        let active = true;
+        if (data.make && data.model) {
+            const fetchTrims = async () => {
+                try {
+                    const res = await fetch(`http://localhost:3000/cars/filters/trims?make=${encodeURIComponent(data.make)}&model=${encodeURIComponent(data.model)}`);
+                    const resData = await res.json();
+                    if (active && Array.isArray(resData)) {
+                        setSuggestedTrims(resData);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch trims', err);
+                }
+            };
+            fetchTrims();
+        } else {
+            setSuggestedTrims([]);
+        }
+        return () => { active = false; };
+    }, [data.make, data.model]);
 
     const priceInputRef = useRef<HTMLInputElement>(null);
     const cursorPositionRef = useRef<number | null>(null);
@@ -99,8 +188,6 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         }
     }, [data.odo]);
 
-    const inputClass = (field: string) =>
-        `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
 
     const inputClassWithIcon = (field: string) =>
         `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
@@ -132,48 +219,50 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                 </div>
 
                 {/* Model */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">Dòng xe <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={data.model}
-                            onChange={(e) => updateData({ model: e.target.value.toUpperCase() })}
-                            placeholder="Ví dụ: Civic, Supra..."
-                            className={inputClassWithIcon('model')}
-                        />
-                        <CarFront className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-                    {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
+                <div className="space-y-0">
+                    <AutocompleteInput
+                        label="Dòng xe"
+                        name="model"
+                        value={data.model}
+                        onChange={(val) => updateData({ model: val })}
+                        suggestions={suggestedModels}
+                        placeholder="Ví dụ: Civic, Supra..."
+                        error={errors.model}
+                        required
+                        maxLength={50}
+                        icon={<CarFront className="w-5 h-5" />}
+                    />
                 </div>
 
                 {/* Year */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">Năm sản xuất <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                        <input
-                            type="number"
-                            value={data.year || ''}
-                            onChange={(e) => updateData({ year: parseInt(e.target.value) || 0 })}
-                            placeholder="YYYY"
-                            className={inputClassWithIcon('year')}
-                        />
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-                    {errors.year && <p className="text-red-500 text-xs mt-1">{errors.year}</p>}
+                <div className="space-y-0">
+                    <AutocompleteInput
+                        label="Năm sản xuất"
+                        name="year"
+                        value={data.year === 0 ? '' : data.year.toString()}
+                        onChange={(val) => updateData({ year: parseInt(val) || 0 })}
+                        suggestions={suggestedYears}
+                        placeholder="YYYY"
+                        error={errors.year}
+                        required
+                        maxLength={4}
+                        icon={<Calendar className="w-5 h-5" />}
+                    />
                 </div>
 
                 {/* Trim */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">Phiên bản (Trim) <span className="text-red-500">*</span></label>
-                    <input
-                        type="text"
+                <div className="space-y-0">
+                    <AutocompleteInput
+                        label="Phiên bản (Trim)"
+                        name="trim"
                         value={data.trim}
-                        onChange={(e) => updateData({ trim: e.target.value.toUpperCase() })}
+                        onChange={(val) => updateData({ trim: val })}
+                        suggestions={suggestedTrims}
                         placeholder="Ví dụ: Type R, Spec-R..."
-                        className={inputClass('trim')}
+                        error={errors.trim}
+                        maxLength={50}
+                        required
                     />
-                    {errors.trim && <p className="text-red-500 text-xs mt-1">{errors.trim}</p>}
                 </div>
 
                 {/* Price */}
@@ -198,6 +287,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                             value={formatNumber(data.price)}
                             onChange={handlePriceChange}
                             placeholder="Nhập giá bán (VND)"
+                            maxLength={15}
                             className={inputClassWithIcon('price')}
                         />
                         <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -207,16 +297,18 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                 </div>
 
                 {/* Location */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">Khu vực <span className="text-red-500">*</span></label>
-                    <input
-                        type="text"
+                <div className="space-y-0">
+                    <AutocompleteInput
+                        label="Khu vực"
+                        name="location"
                         value={data.location}
-                        onChange={(e) => updateData({ location: e.target.value.toUpperCase() })}
+                        onChange={(val) => updateData({ location: val })}
+                        suggestions={suggestedLocations}
                         placeholder="Ví dụ: TP.HCM, Hà Nội..."
-                        className={inputClass('location')}
+                        error={errors.location}
+                        maxLength={100}
+                        required
                     />
-                    {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
                 </div>
 
                 {/* Odo */}
@@ -229,6 +321,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                             value={formatNumber(data.odo || 0)}
                             onChange={handleOdoChange}
                             placeholder="0"
+                            maxLength={9}
                             className={inputClassWithIconAndSuffix('odo')}
                         />
                         <Gauge className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsEnum, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsEnum, IsBoolean, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CarStatus } from '../entities/car.entity';
 
@@ -46,6 +46,7 @@ export class CreateCarDto {
 
     @IsNumber()
     @Type(() => Number)
+    @Max(2000000000, { message: 'Số km quá lớn (tối đa 2 tỷ)' })
     mileage: number;
 
     @IsString()

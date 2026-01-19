@@ -46,10 +46,10 @@ export interface CarSpecs {
 export const initialCarSpecs: CarSpecs = {
     make: '',
     model: '',
-    year: new Date().getFullYear(),
+    year: 0,
     trim: '',
     price: 0,
-    isNegotiable: true,
+    isNegotiable: false,
     odo: 0,
     odoUnit: 'km',
     location: '',

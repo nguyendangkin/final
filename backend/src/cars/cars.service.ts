@@ -357,6 +357,8 @@ export class CarsService {
             condition: Array.from(filters.condition).sort(),
             paperwork: Array.from(filters.paperwork).sort(),
             mods: Array.from(filters.mods).sort(),
+            year: Array.from(filters.year).sort((a, b) => b.localeCompare(a)), // Sort years descending
+            location: Array.from(filters.location).sort(),
         };
     }
 
@@ -415,6 +417,8 @@ export class CarsService {
             condition: new Set(),
             paperwork: new Set(),
             mods: new Set(),
+            year: new Set(),
+            location: new Set(),
         };
 
         let minPrice = Infinity;
@@ -427,6 +431,8 @@ export class CarsService {
             if (car.drivetrain) filters.drivetrain.add(car.drivetrain.toUpperCase());
             if (car.condition) filters.condition.add(car.condition.toUpperCase());
             if (car.paperwork) filters.paperwork.add(car.paperwork.toUpperCase());
+            if (car.year) filters.year.add(car.year.toString());
+            if (car.location) filters.location.add(car.location.toUpperCase());
 
             // Track price range
             const price = parseInt(car.price);

@@ -1,5 +1,7 @@
 import { CarSpecs } from '../types';
 import { Cpu, Settings, Activity, Zap, PenTool } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import AutocompleteInput from './AutocompleteInput';
 
 interface StepSoulProps {
     data: CarSpecs;
@@ -7,58 +9,77 @@ interface StepSoulProps {
     errors?: Record<string, string>;
 }
 
-const CHASSIS_SUGGESTIONS = [
-    'S13', 'S14', 'S15', 'R32', 'R33', 'R34', 'R35', // Nissan
-    'AE86', 'JZA80', 'ZN6', 'SW20', // Toyota
-    'EK9', 'EG6', 'DC2', 'DC5', 'NA1', 'NA2', 'FK8', // Honda
-    'CN9A', 'CP9A', 'CT9A', 'CZ4A', // Mitsu Evo
-    'FD3S', 'FC3S', 'NA6CE', 'NB8C', // Mazda
-    'GC8', 'GDB', 'GRB', 'VAB' // Subaru
-];
+// Unused suggestions removed
 
-const ENGINE_SUGGESTIONS = [
-    'SR20DET', 'RB26DETT', '2JZ-GTE', '1JZ-GTE', '4G63T',
-    'B16A', 'B16B', 'B18C', 'K20A', 'F20C', 'C30A',
-    '13B-REW', 'EJ20', 'EJ25'
-];
 
 export default function StepSoul({ data, updateData, errors = {} }: StepSoulProps) {
     const inputClassWithIcon = (field: string) =>
         `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
 
+    const [suggestions, setSuggestions] = useState<{
+        chassisCode: string[];
+        engineCode: string[];
+    }>({ chassisCode: [], engineCode: [] });
+
+    useEffect(() => {
+        let active = true;
+
+        if (data.make || data.model) {
+            let url = 'http://localhost:3000/cars/filters/details?';
+            if (data.make) url += `make=${encodeURIComponent(data.make)}&`;
+            if (data.model) url += `model=${encodeURIComponent(data.model)}&`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(resData => {
+                    if (active) {
+                        setSuggestions({
+                            chassisCode: Array.isArray(resData.chassisCode) ? resData.chassisCode : [],
+                            engineCode: Array.isArray(resData.engineCode) ? resData.engineCode : [],
+                        });
+                    }
+                })
+                .catch(err => console.error('Failed to fetch details', err));
+        } else {
+            setSuggestions({ chassisCode: [], engineCode: [] });
+        }
+
+        return () => { active = false; };
+    }, [data.make, data.model]);
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Chassis Code */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">Mã khung gầm (Chassis Code) <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={data.chassisCode}
-                            onChange={(e) => updateData({ chassisCode: e.target.value.toUpperCase() })}
-                            placeholder="S15, R34, EK9..."
-                            className={inputClassWithIcon('chassisCode')}
-                        />
-                        <Settings className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-                    {errors.chassisCode && <p className="text-red-500 text-xs mt-1">{errors.chassisCode}</p>}
+                <div className="space-y-0">
+                    <AutocompleteInput
+                        label="Mã khung gầm (Chassis Code)"
+                        name="chassisCode"
+                        value={data.chassisCode}
+                        onChange={(val) => updateData({ chassisCode: val })}
+                        suggestions={suggestions.chassisCode}
+                        placeholder="S15, R34, EK9..."
+                        error={errors.chassisCode}
+                        required
+                        maxLength={50}
+                        icon={<Settings className="w-5 h-5" />}
+                    />
                 </div>
 
                 {/* Engine Code */}
-                <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-600">Mã động cơ (Engine Code) <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={data.engineCode}
-                            onChange={(e) => updateData({ engineCode: e.target.value.toUpperCase() })}
-                            placeholder="SR20DET, 2JZ-GTE..."
-                            className={inputClassWithIcon('engineCode')}
-                        />
-                        <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    </div>
-                    {errors.engineCode && <p className="text-red-500 text-xs mt-1">{errors.engineCode}</p>}
+                <div className="space-y-0">
+                    <AutocompleteInput
+                        label="Mã động cơ (Engine Code)"
+                        name="engineCode"
+                        value={data.engineCode}
+                        onChange={(val) => updateData({ engineCode: val })}
+                        suggestions={suggestions.engineCode}
+                        placeholder="SR20DET, 2JZ-GTE..."
+                        error={errors.engineCode}
+                        required
+                        maxLength={50}
+                        icon={<Cpu className="w-5 h-5" />}
+                    />
                 </div>
             </div>
 

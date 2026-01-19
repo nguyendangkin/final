@@ -353,8 +353,8 @@ export default function SellPage() {
                             <h1 className="text-4xl font-black italic uppercase tracking-tighter text-black">
                                 Đăng Bán Xe
                             </h1>
-                            <p className="text-gray-500 mt-2 font-medium">
-                                Hãy kể câu chuyện về chiếc xe của bạn. Cộng đồng JDM đang chờ đợi.
+                            <p className="text-gray-500 mt-2 font-medium text-sm">
+                                Tin sai sự thật hoặc không liên quan sẽ bị khóa tài khoản nếu bị người khác tố cáo hoặc phát hiện. Nếu không có gợi ý phù hợp, bạn có thể tự nhập.
                             </p>
                         </div>
                         <button
