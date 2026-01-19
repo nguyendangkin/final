@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, User as UserIcon, Megaphone, Check, CheckCheck, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface UserNotification {
     id: string;
@@ -254,8 +256,10 @@ export default function NotificationsPage() {
                             </p>
                         </div>
                         <div className="px-6 py-6">
-                            <div className="prose max-w-none whitespace-pre-wrap">
-                                {selectedAnnouncement.content}
+                            <div className="prose max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {selectedAnnouncement.content}
+                                </ReactMarkdown>
                             </div>
                         </div>
                     </div>

@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft, Plus, Edit, Trash2, Clock, Save, X } from 'lucide-react';
+import { ChevronLeft, Plus, Edit, Trash2, Clock, Save, X, Eye, FileText } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Announcement {
     id: string;
@@ -26,6 +28,7 @@ export default function AdminAnnouncementsPage() {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [previewMode, setPreviewMode] = useState(false);
 
     // Edit mode
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -267,18 +270,52 @@ export default function AdminAnnouncementsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2 uppercase">
-                                    Nội dung
-                                </label>
-                                <textarea
-                                    value={content}
-                                    onChange={(e) => setContent(e.target.value)}
-                                    placeholder="Nhập nội dung thông báo..."
-                                    rows={10}
-                                    className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-[var(--jdm-red)] transition-colors resize-none"
-                                    maxLength={5000}
-                                />
-                                <p className="text-xs text-gray-400 mt-1 text-right">{content.length}/5000</p>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-sm font-bold text-gray-700 uppercase">
+                                        Nội dung (Markdown)
+                                    </label>
+                                    <div className="flex bg-gray-100 rounded p-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewMode(false)}
+                                            className={`px-3 py-1 text-xs font-bold rounded uppercase transition-colors flex items-center gap-1 ${!previewMode ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
+                                        >
+                                            <FileText className="w-3 h-3" />
+                                            Soạn thảo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewMode(true)}
+                                            className={`px-3 py-1 text-xs font-bold rounded uppercase transition-colors flex items-center gap-1 ${previewMode ? 'bg-white shadow text-black' : 'text-gray-500 hover:text-black'}`}
+                                        >
+                                            <Eye className="w-3 h-3" />
+                                            Xem trước
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {previewMode ? (
+                                    <div className="w-full px-4 py-3 border border-gray-200 min-h-[300px] bg-gray-50 prose max-w-none">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {content || '*Chưa có nội dung*'}
+                                        </ReactMarkdown>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <textarea
+                                            value={content}
+                                            onChange={(e) => setContent(e.target.value)}
+                                            placeholder="Nhập nội dung thông báo (hỗ trợ Markdown)..."
+                                            rows={12}
+                                            className="w-full px-4 py-3 border border-gray-200 focus:outline-none focus:border-[var(--jdm-red)] transition-colors resize-y font-mono text-sm"
+                                            maxLength={5000}
+                                        />
+                                        <div className="flex justify-between items-center mt-1">
+                                            <p className="text-xs text-gray-400">Hỗ trợ Markdown: **Đậm**, *Nghiêng*, [Link](url), - List</p>
+                                            <p className="text-xs text-gray-400">{content.length}/5000</p>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <button
