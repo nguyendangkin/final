@@ -221,31 +221,25 @@ export class CarsService {
         return this.carsRepository.save(car);
     }
 
-    async toggleHide(id: string): Promise<Car> {
-        const car = await this.carsRepository.findOne({ where: { id } });
-        if (!car) throw new NotFoundException('Car not found');
 
-        if (car.status === CarStatus.HIDDEN) {
-            car.status = CarStatus.AVAILABLE; // Default back to available
-        } else {
-            car.status = CarStatus.HIDDEN;
-        }
-
-        return this.carsRepository.save(car);
-    }
-
-    async forceHide(id: string): Promise<Car> {
-        const car = await this.carsRepository.findOne({ where: { id } });
-        if (!car) throw new NotFoundException('Car not found');
-        car.status = CarStatus.HIDDEN;
-        return this.carsRepository.save(car);
-    }
 
     async remove(id: string, user: User): Promise<void> {
         const car = await this.findOne(id);
-        if (car.seller.id !== user.id) {
+
+        // Allow if user is admin OR if user is the seller
+        if (!user.isAdmin && car.seller.id !== user.id) {
             throw new BadRequestException('You can only delete your own listings');
         }
+        await this.carsRepository.remove(car);
+    }
+
+    async deleteAllBySeller(sellerId: string): Promise<void> {
+        await this.carsRepository.delete({ seller: { id: sellerId } });
+    }
+
+    async forceDelete(id: string): Promise<void> {
+        const car = await this.carsRepository.findOne({ where: { id } });
+        if (!car) throw new NotFoundException('Car not found');
         await this.carsRepository.remove(car);
     }
 
@@ -647,5 +641,141 @@ export class CarsService {
                 Object.entries(query).filter(([, v]) => v !== undefined && v !== '')
             ),
         };
+    }
+
+    async getTagsStats(): Promise<{ category: string, items: { tag: string, count: number }[] }[]> {
+        const cars = await this.carsRepository.find({
+            select: ['make', 'model', 'chassisCode', 'engineCode', 'transmission', 'drivetrain', 'condition', 'paperwork', 'location', 'mods'],
+        });
+
+        const categories: Record<string, Record<string, number>> = {
+            'Hãng xe (Make)': {},
+            'Dòng xe (Model)': {},
+            'Mã khung (Chassis)': {},
+            'Mã máy (Engine)': {},
+            'Hộp số (Transmission)': {},
+            'Dẫn động (Drivetrain)': {},
+            'Tình trạng (Condition)': {},
+            'Giấy tờ (Paperwork)': {},
+            'Khu vực (Location)': {},
+            'Nâng cấp (Mods)': {},
+        };
+
+        for (const car of cars) {
+            if (car.make) categories['Hãng xe (Make)'][car.make.toUpperCase()] = (categories['Hãng xe (Make)'][car.make.toUpperCase()] || 0) + 1;
+            if (car.model) categories['Dòng xe (Model)'][car.model.toUpperCase()] = (categories['Dòng xe (Model)'][car.model.toUpperCase()] || 0) + 1;
+            if (car.chassisCode) categories['Mã khung (Chassis)'][car.chassisCode.toUpperCase()] = (categories['Mã khung (Chassis)'][car.chassisCode.toUpperCase()] || 0) + 1;
+            if (car.engineCode) categories['Mã máy (Engine)'][car.engineCode.toUpperCase()] = (categories['Mã máy (Engine)'][car.engineCode.toUpperCase()] || 0) + 1;
+            if (car.transmission) categories['Hộp số (Transmission)'][car.transmission.toUpperCase()] = (categories['Hộp số (Transmission)'][car.transmission.toUpperCase()] || 0) + 1;
+            if (car.drivetrain) categories['Dẫn động (Drivetrain)'][car.drivetrain.toUpperCase()] = (categories['Dẫn động (Drivetrain)'][car.drivetrain.toUpperCase()] || 0) + 1;
+            if (car.condition) categories['Tình trạng (Condition)'][car.condition.toUpperCase()] = (categories['Tình trạng (Condition)'][car.condition.toUpperCase()] || 0) + 1;
+            if (car.paperwork) categories['Giấy tờ (Paperwork)'][car.paperwork.toUpperCase()] = (categories['Giấy tờ (Paperwork)'][car.paperwork.toUpperCase()] || 0) + 1;
+            if (car.location) categories['Khu vực (Location)'][car.location.toUpperCase()] = (categories['Khu vực (Location)'][car.location.toUpperCase()] || 0) + 1;
+
+            if (car.mods) {
+                let tags: string[] = [];
+                if (Array.isArray(car.mods)) {
+                    car.mods.forEach((mod: any) => {
+                        if (typeof mod === 'string' && mod.trim()) {
+                            tags.push(mod.trim().toUpperCase());
+                        } else if (mod && mod.name) {
+                            tags.push(mod.name.trim().toUpperCase());
+                        }
+                    });
+                } else if (typeof car.mods === 'object') {
+                    Object.values(car.mods).forEach((values: any) => {
+                        if (Array.isArray(values)) {
+                            values.forEach((v: string) => {
+                                if (v && typeof v === 'string') {
+                                    tags.push(v.trim().toUpperCase());
+                                }
+                            });
+                        }
+                    });
+                }
+
+                tags.forEach(tag => {
+                    categories['Nâng cấp (Mods)'][tag] = (categories['Nâng cấp (Mods)'][tag] || 0) + 1;
+                });
+            }
+        }
+
+        return Object.entries(categories).map(([category, counts]) => ({
+            category,
+            items: Object.entries(counts)
+                .map(([tag, count]) => ({ tag, count }))
+                .sort((a, b) => b.count - a.count)
+        })).filter(cat => cat.items.length > 0);
+    }
+
+    // Circular dependency note: We need UsersService to ban user. 
+    // BUT UsersService imports CarsService. 
+    // To avoid circular dependency issues at module level, we can forwardRef 
+    // OR just handle the logic in the Controller by calling both services.
+    // However, "deleteTagWithPenalty" feels like a business logic unit.
+    // Let's try to inject ModuleRef or keep it simple.
+    // Actually, UsersService already imports CarsService. 
+    // If we import UsersService here, we get Circular Dependency.
+    // 
+    // Better approach: Return the "initiatorUserID" from this method, 
+    // and let the Controller call usersService.banUser(initiatorId).
+    // Or, keep the ban logic in UsersService and deletion logic here.
+    // 
+    // Let's implement `findInitiatorAndCars(tag)` here, and handle the orchestration in the controller or a higher level facade?
+    // Or simply, Since `deleteTagWithPenalty` is complex, let's put it in the service but return the userId to ban.
+
+    async deleteTagWithPenalty(tag: string): Promise<string | null> {
+        // 1. Find all cars (Fetch ALL to ensure we don't miss any due to JSON/SQL quirks)
+        const allCars = await this.carsRepository.find({
+            relations: ['seller'],
+            order: { createdAt: 'ASC' }
+        });
+
+        // Match in memory across ALL fields (same logic as getTagsStats)
+        const verifiedCars = allCars.filter(car => {
+            const targetTag = tag.trim().toUpperCase();
+
+            // Check simple string fields
+            if (car.make && car.make.toUpperCase() === targetTag) return true;
+            if (car.model && car.model.toUpperCase() === targetTag) return true;
+            if (car.chassisCode && car.chassisCode.toUpperCase() === targetTag) return true;
+            if (car.engineCode && car.engineCode.toUpperCase() === targetTag) return true;
+            if (car.transmission && car.transmission.toUpperCase() === targetTag) return true;
+            if (car.drivetrain && car.drivetrain.toUpperCase() === targetTag) return true;
+            if (car.condition && car.condition.toUpperCase() === targetTag) return true;
+            if (car.paperwork && car.paperwork.toUpperCase() === targetTag) return true;
+            if (car.location && car.location.toUpperCase() === targetTag) return true;
+
+            // Check mods (complex JSON structure)
+            if (car.mods) {
+                if (Array.isArray(car.mods)) {
+                    for (const mod of car.mods) {
+                        const t = (typeof mod === 'string') ? mod : (mod?.name || '');
+                        if (t && t.trim().toUpperCase() === targetTag) return true;
+                    }
+                } else if (typeof car.mods === 'object') {
+                    for (const values of Object.values(car.mods)) {
+                        if (Array.isArray(values)) {
+                            for (const v of values as string[]) {
+                                if (v && typeof v === 'string' && v.trim().toUpperCase() === targetTag) return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        });
+
+        if (verifiedCars.length === 0) return null;
+
+        // Find initiator (already sorted by createdAt ASC)
+        const initiator = verifiedCars[0].seller;
+
+        // Delete ALL cars with this tag
+        if (verifiedCars.length > 0) {
+            await this.carsRepository.remove(verifiedCars);
+        }
+
+        return initiator ? initiator.id : null;
     }
 }

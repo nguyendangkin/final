@@ -47,13 +47,7 @@ export class UsersController {
             throw new NotFoundException('Unauthorized');
         }
 
-        const userToBan = await this.usersService.findOne(id);
-        if (!userToBan) {
-            throw new NotFoundException('User not found');
-        }
-
-        userToBan.isSellingBanned = !userToBan.isSellingBanned;
-        return this.usersService.usersRepository.save(userToBan);
+        return this.usersService.toggleBan(id);
     }
 
     @Get(':id/profile')

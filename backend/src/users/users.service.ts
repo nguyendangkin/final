@@ -1,13 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+
+import { CarsService } from '../cars/cars.service';
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectRepository(User)
         public usersRepository: Repository<User>,
+        @Inject(forwardRef(() => CarsService))
+        private carsService: CarsService,
     ) { }
 
     async findByEmail(email: string): Promise<User | null> {
@@ -52,5 +56,30 @@ export class UsersService {
             limit,
             totalPages: Math.ceil(total / limit)
         };
+    }
+
+    async toggleBan(id: string): Promise<User> {
+        const user = await this.findOne(id);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        user.isSellingBanned = !user.isSellingBanned;
+
+        // If banning, delete all cars
+        if (user.isSellingBanned) {
+            await this.carsService.deleteAllBySeller(id);
+        }
+
+        return this.usersRepository.save(user);
+    }
+
+    async banUser(id: string): Promise<void> {
+        const user = await this.findOne(id);
+        if (user && !user.isSellingBanned) {
+            user.isSellingBanned = true;
+            await this.usersRepository.save(user);
+            await this.carsService.deleteAllBySeller(id);
+        }
     }
 }

@@ -28,7 +28,7 @@ export class StatsService {
 
         // Car Stats
         const totalPosts = await this.carsRepository.count();
-        const hiddenPosts = await this.carsRepository.count({ where: { status: CarStatus.HIDDEN } });
+        const soldPosts = await this.carsRepository.count({ where: { status: CarStatus.SOLD } });
 
         return {
             users: {
@@ -39,8 +39,8 @@ export class StatsService {
             },
             cars: {
                 total: totalPosts,
-                hidden: hiddenPosts,
-                available: totalPosts - hiddenPosts // rough estimate as sold is also a status, but request specifically asked for hidden
+                sold: soldPosts,
+                available: totalPosts - soldPosts
             }
         };
     }

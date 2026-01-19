@@ -87,16 +87,9 @@ export class ReportsService {
 
         const carId = report.reportedCar.id;
 
-        // Hide the car
-        await this.carsService.forceHide(carId);
+        // Delete the car
+        await this.carsService.forceDelete(carId);
 
-        // Find ALL pending reports for this car and mark as RESOLVED
-        await this.reportsRepository
-            .createQueryBuilder()
-            .update(Report)
-            .set({ status: ReportStatus.RESOLVED })
-            .where("reportedCarId = :carId", { carId })
-            .andWhere("status = :status", { status: ReportStatus.PENDING })
-            .execute();
+
     }
 }

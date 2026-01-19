@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
-import { Eye, EyeOff } from 'lucide-react';
+import { Trash2, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
 
@@ -39,7 +39,9 @@ export default function AdminCars() {
                     router.push('/');
                     return;
                 }
-                // Fetch cars including hidden ones
+                // Fetch cars including hidden ones (if any left, though we are moving to delete)
+                // We keep 'includeHidden=true' for now if the backend still supports it or just to be safe, 
+                // but effectively we just want all cars.
                 return fetch(`http://localhost:3000/cars?page=${currentPage}&limit=12&includeHidden=true`);
             })
             .then(res => res && res.json())
@@ -90,7 +92,7 @@ export default function AdminCars() {
         }
     };
 
-    const toggleHide = (carId: string, currentStatus: string) => {
+    const handleDelete = (carId: string) => {
         const token = localStorage.getItem('jwt_token');
         if (!token) return;
 
@@ -100,15 +102,15 @@ export default function AdminCars() {
                     <div className="flex items-start">
                         <div className="flex-shrink-0 pt-0.5">
                             <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
-                                {currentStatus === 'HIDDEN' ? <Eye className="h-6 w-6 text-white" /> : <EyeOff className="h-6 w-6 text-white" />}
+                                <Trash2 className="h-6 w-6 text-white" />
                             </div>
                         </div>
                         <div className="ml-4 flex-1">
                             <h3 className="text-lg font-black text-black uppercase tracking-wide">
-                                Xác nhận hành động
+                                Xác nhận xóa
                             </h3>
                             <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
-                                Bạn có chắc chắn muốn <span className="font-bold">{currentStatus === 'HIDDEN' ? 'HIỆN' : 'ẨN'}</span> xe này?
+                                Bạn có chắc chắn muốn <span className="font-bold text-red-600">XÓA VĨNH VIỄN</span> xe này khỏi hệ thống? Hành động này không thể hoàn tác.
                             </p>
                         </div>
                     </div>
@@ -123,34 +125,31 @@ export default function AdminCars() {
                     <button
                         onClick={() => {
                             toast.dismiss(t.id);
-                            executeToggleHide(carId, currentStatus, token);
+                            executeDelete(carId, token);
                         }}
                         className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
                     >
-                        Đồng ý
+                        Xóa ngay
                     </button>
                 </div>
             </div>
         ), { duration: 5000 });
     };
 
-    const executeToggleHide = async (carId: string, currentStatus: string, token: string) => {
+    const executeDelete = async (carId: string, token: string) => {
         try {
-            const res = await fetch(`http://localhost:3000/cars/${carId}/hide`, {
-                method: 'PATCH',
+            const res = await fetch(`http://localhost:3000/cars/${carId}`, {
+                method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
             if (res.ok) {
-                // Update local state to avoid flicker
-                setCars(prev => prev.map(c =>
-                    c.id === carId ? { ...c, status: currentStatus === 'HIDDEN' ? 'AVAILABLE' : 'HIDDEN' } : c
-                ));
-                toast.success(`Đã ${currentStatus === 'HIDDEN' ? 'hiện' : 'ẩn'} xe thành công.`);
+                setCars(prev => prev.filter(c => c.id !== carId));
+                toast.success('Đã xóa xe thành công.');
             } else {
-                toast.error('Có lỗi xảy ra.');
+                toast.error('Có lỗi xảy ra khi xóa xe.');
             }
         } catch (e) {
             console.error(e);
@@ -266,21 +265,10 @@ export default function AdminCars() {
                                                         <Eye className="w-3 h-3" /> Xem
                                                     </Link>
                                                     <button
-                                                        onClick={() => toggleHide(car.id, car.status)}
-                                                        className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${car.status === 'HIDDEN'
-                                                            ? 'bg-green-600 text-white hover:bg-green-700'
-                                                            : 'bg-red-600 text-white hover:bg-red-700'
-                                                            }`}
+                                                        onClick={() => handleDelete(car.id)}
+                                                        className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-xs font-bold uppercase hover:bg-red-700 transition-colors"
                                                     >
-                                                        {car.status === 'HIDDEN' ? (
-                                                            <>
-                                                                <Eye className="w-3 h-3" /> Hiện
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <EyeOff className="w-3 h-3" /> Ẩn
-                                                            </>
-                                                        )}
+                                                        <Trash2 className="w-3 h-3" /> Xóa
                                                     </button>
                                                 </div>
                                             </td>

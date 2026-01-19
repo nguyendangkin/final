@@ -1,15 +1,36 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseUUIDPipe, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseUUIDPipe, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { CarsService } from './cars.service';
+import { UsersService } from '../users/users.service';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('cars')
 export class CarsController {
-    constructor(private readonly carsService: CarsService) { }
+    constructor(
+        private readonly carsService: CarsService,
+        @Inject(forwardRef(() => UsersService))
+        private readonly usersService: UsersService,
+    ) { }
 
     @Get()
     findAll(@Query() query: any) {
         return this.carsService.findAll(query);
+    }
+
+    @Get('admin/tags-stats')
+    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
+    async getTagsStats() {
+        return this.carsService.getTagsStats();
+    }
+
+    @Delete('admin/tags/:tag')
+    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
+    async deleteTagWithPenalty(@Param('tag') tag: string) {
+        const initiatorId = await this.carsService.deleteTagWithPenalty(tag);
+        if (initiatorId) {
+            await this.usersService.banUser(initiatorId);
+        }
+        return { message: 'Tag deleted and penalties applied', initiatorId };
     }
 
     @Get(':id')
@@ -90,16 +111,7 @@ export class CarsController {
         return this.carsService.update(id, updateCarDto, req.user);
     }
 
-    @Patch(':id/hide')
-    @UseGuards(AuthGuard('jwt'))
-    async toggleHide(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
-        // Check if admin
-        const requestingUser = await this.carsService['dataSource'].getRepository('User').findOne({ where: { id: req.user.id } });
-        if (!requestingUser || !requestingUser.isAdmin) {
-            throw new ForbiddenException('Only admin can hide cars');
-        }
-        return this.carsService.toggleHide(id);
-    }
+
 
     @Delete(':id')
     @UseGuards(AuthGuard('jwt'))

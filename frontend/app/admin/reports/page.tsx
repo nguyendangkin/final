@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Pagination from '@/components/Pagination';
-import { Flag, XCircle, CheckCircle, Eye, EyeOff, User, AlertTriangle, Ban } from 'lucide-react';
+import { Flag, XCircle, CheckCircle, Eye, EyeOff, User, AlertTriangle, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug } from '@/lib/utils';
 
@@ -80,7 +80,7 @@ export default function AdminReports() {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                toast.success('Đã ẩn xe và xử lý báo cáo');
+                toast.success('Đã XÓA xe và xử lý báo cáo');
                 fetchReports(page, activeTab);
             } else {
                 toast.error('Có lỗi xảy ra');
@@ -97,7 +97,7 @@ export default function AdminReports() {
                     <div className="flex items-start">
                         <div className="flex-shrink-0 pt-0.5">
                             <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
-                                <EyeOff className="h-6 w-6 text-white" />
+                                <Trash2 className="h-6 w-6 text-white" />
                             </div>
                         </div>
                         <div className="ml-4 flex-1">
@@ -105,8 +105,8 @@ export default function AdminReports() {
                                 Xử lý vi phạm
                             </h3>
                             <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
-                                Bạn có chắc chắn muốn <span className="font-bold text-[var(--jdm-red)]">ẨN XE "{carName}"</span>?
-                                <br />Hành động này sẽ đánh dấu báo cáo là ĐÃ XỬ LÝ.
+                                Bạn có chắc chắn muốn <span className="font-bold text-[var(--jdm-red)]">XÓA XE "{carName}"</span>?
+                                <br />Hành động này sẽ XÓA VĨNH VIỄN xe và đánh dấu báo cáo là ĐÃ XỬ LÝ.
                             </p>
                         </div>
                     </div>
@@ -125,7 +125,7 @@ export default function AdminReports() {
                         }}
                         className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
                     >
-                        Đồng ý Ẩn Xe
+                        Đồng ý Xóa Xe
                     </button>
                 </div>
             </div>
@@ -306,7 +306,7 @@ export default function AdminReports() {
                                                         onClick={() => confirmResolve(report.id, `${report.reportedCar?.year} ${report.reportedCar?.make}`)}
                                                         className="bg-black text-white hover:bg-[var(--jdm-red)] font-bold uppercase text-xs px-3 py-1 transition-all flex items-center gap-1"
                                                     >
-                                                        <EyeOff className="w-3 h-3" /> Ẩn Xe
+                                                        <Trash2 className="w-3 h-3" /> Xóa Xe
                                                     </button>
                                                     {report.reporter && (
                                                         report.reporter.isSellingBanned ? (

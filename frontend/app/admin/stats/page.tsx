@@ -98,11 +98,11 @@ export default function AdminStatsPage() {
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center p-3 bg-white rounded border border-gray-100">
                                             <p className="text-gray-600">Đang hiển thị</p>
-                                            <p className="font-bold text-lg text-green-600">{stats.cars.total - stats.cars.hidden}</p>
+                                            <p className="font-bold text-lg text-green-600">{stats.cars.available}</p>
                                         </div>
                                         <div className="flex justify-between items-center p-3 bg-white rounded border border-gray-100">
-                                            <p className="text-gray-600">Đã bị ẩn</p>
-                                            <p className="font-bold text-lg text-[var(--jdm-red)]">{stats.cars.hidden}</p>
+                                            <p className="text-gray-600">Đã bán</p>
+                                            <p className="font-bold text-lg text-blue-600">{stats.cars.sold}</p>
                                         </div>
                                     </div>
                                 </div>

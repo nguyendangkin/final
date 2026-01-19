@@ -36,7 +36,7 @@ export class Report {
     @ManyToOne(() => User, { eager: true })
     reporter: User;
 
-    @ManyToOne(() => Car, { eager: true })
+    @ManyToOne(() => Car, { eager: true, onDelete: 'CASCADE' })
     reportedCar: Car;
 
     @CreateDateColumn()

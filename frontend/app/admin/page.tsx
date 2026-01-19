@@ -83,6 +83,13 @@ export default function AdminDashboard() {
                                     <p className="text-sm text-gray-500 mt-2">Xem và xử lý các bài đăng bị tố cáo</p>
                                 </div>
                             </Link>
+
+                            <Link href="/admin/tags" className="block">
+                                <div className="border border-gray-200 p-4 hover:border-[var(--jdm-red)] transition cursor-pointer group h-full">
+                                    <h3 className="font-bold uppercase text-gray-900 group-hover:text-[var(--jdm-red)]">Quản lý Tags</h3>
+                                    <p className="text-sm text-gray-500 mt-2">Xóa tags rác và xử phạt người spam</p>
+                                </div>
+                            </Link>
                         </div>
                     </div>
                 </div>
