@@ -18,6 +18,11 @@ import { Report } from './reports/entities/report.entity';
 import { StatsModule } from './stats/stats.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { Favorite } from './favorites/entities/favorite.entity';
+import { NotificationsModule } from './notifications/notifications.module';
+import { Notification } from './notifications/entities/notification.entity';
+import { SystemAnnouncement } from './notifications/entities/system-announcement.entity';
+import { UserAnnouncementRead } from './notifications/entities/user-announcement-read.entity';
+
 
 @Module({
   imports: [
@@ -33,7 +38,7 @@ import { Favorite } from './favorites/entities/favorite.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction, Car, Report, Favorite],
+        entities: [User, Transaction, Car, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],
@@ -50,6 +55,7 @@ import { Favorite } from './favorites/entities/favorite.entity';
     ReportsModule,
     StatsModule,
     FavoritesModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

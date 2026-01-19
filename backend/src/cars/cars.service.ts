@@ -6,6 +6,8 @@ import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
 import { User } from '../users/user.entity';
 import * as fs from 'fs';
 import * as path from 'path';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class CarsService {
@@ -15,6 +17,7 @@ export class CarsService {
         @InjectRepository(Car)
         private carsRepository: Repository<Car>,
         private dataSource: DataSource,
+        private notificationsService: NotificationsService,
     ) { }
 
     /**
@@ -271,7 +274,18 @@ export class CarsService {
         }
 
         // Delete associated images from disk
+        // Delete associated images from disk
         await this.deleteCarImages(car);
+
+        // Send notification if deletion is by Admin and not self
+        if (user.isAdmin && car.seller.id !== user.id) {
+            await this.notificationsService.createNotification(
+                car.seller.id,
+                NotificationType.POST_DELETED,
+                'Bài đăng bị xóa',
+                `Bài đăng "${car.year} ${car.make} ${car.model}" của bạn đã bị quản trị viên xóa do vi phạm quy định.`
+            );
+        }
 
         await this.carsRepository.remove(car);
     }
@@ -833,6 +847,16 @@ export class CarsService {
                 await this.deleteCarImages(car);
             }
             await this.carsRepository.remove(verifiedCars);
+
+            // Send notification to the initiator (seller of the first car found)
+            if (initiator) {
+                await this.notificationsService.createNotification(
+                    initiator.id,
+                    NotificationType.POST_DELETED,
+                    'Bài đăng bị xóa hàng loạt',
+                    `Hệ thống phát hiện spam tag "${tag}". Các bài đăng liên quan đã bị xóa và tài khoản có thể bị xử lý.`
+                );
+            }
         }
 
         return initiator ? initiator.id : null;

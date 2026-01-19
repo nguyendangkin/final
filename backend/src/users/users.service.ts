@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 
 import { CarsService } from '../cars/cars.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class UsersService {
@@ -12,6 +14,7 @@ export class UsersService {
         public usersRepository: Repository<User>,
         @Inject(forwardRef(() => CarsService))
         private carsService: CarsService,
+        private notificationsService: NotificationsService,
     ) { }
 
     async findByEmail(email: string): Promise<User | null> {
@@ -69,6 +72,19 @@ export class UsersService {
         // If banning, delete all cars
         if (user.isSellingBanned) {
             await this.carsService.deleteAllBySeller(id);
+            await this.notificationsService.createNotification(
+                id,
+                NotificationType.ACCOUNT_BAN,
+                'Tài khoản bị cấm bán',
+                'Tài khoản của bạn đã bị cấm đăng bán xe do vi phạm chính sách của chúng tôi. Tất cả bài đăng hiện tại đã bị xóa.'
+            );
+        } else {
+            await this.notificationsService.createNotification(
+                id,
+                NotificationType.ACCOUNT_UNBAN,
+                'Tài khoản được bỏ cấm',
+                'Tài khoản của bạn đã được khôi phục quyền đăng bán xe.'
+            );
         }
 
         return this.usersRepository.save(user);
@@ -80,6 +96,12 @@ export class UsersService {
             user.isSellingBanned = true;
             await this.usersRepository.save(user);
             await this.carsService.deleteAllBySeller(id);
+            await this.notificationsService.createNotification(
+                id,
+                NotificationType.ACCOUNT_BAN,
+                'Tài khoản bị cấm bán',
+                'Tài khoản của bạn đã bị cấm đăng bán xe do vi phạm chính sách của chúng tôi. Tất cả bài đăng hiện tại đã bị xóa.'
+            );
         }
     }
 }

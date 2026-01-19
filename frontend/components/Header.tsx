@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info, Heart } from 'lucide-react';
+import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info, Heart, Bell } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
 import SmartFilter from './SmartFilter';
 
@@ -28,6 +28,7 @@ export default function Header() {
 
     const [user, setUser] = useState<any>(null);
     const [balance, setBalance] = useState<number | null>(null);
+    const [notificationCount, setNotificationCount] = useState<number>(0);
     const [isAuthChecking, setIsAuthChecking] = useState(true);
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -134,6 +135,8 @@ export default function Header() {
                 const data = await res.json();
                 setUser(data);
                 setBalance(data.balance ? Number(data.balance) : 0);
+                // Fetch notification count
+                fetchNotificationCount(token);
             } else {
                 // Token might be expired
                 localStorage.removeItem('jwt_token');
@@ -155,9 +158,24 @@ export default function Header() {
         localStorage.removeItem('jwt_token');
         setUser(null);
         setBalance(null);
+        setNotificationCount(0);
         setIsMenuOpen(false);
         setIsUserMenuOpen(false);
         router.push('/');
+    };
+
+    const fetchNotificationCount = async (token: string) => {
+        try {
+            const res = await fetch('http://localhost:3000/notifications/unread-count', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setNotificationCount(data.total || 0);
+            }
+        } catch (e) {
+            console.error('Failed to fetch notification count', e);
+        }
     };
 
     return (
@@ -281,11 +299,16 @@ export default function Header() {
                             <div className="relative">
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                    className="flex items-center justify-center p-1 hover:bg-gray-100 transition focus:outline-none rounded-none"
+                                    className="relative flex items-center justify-center p-1 hover:bg-gray-100 transition focus:outline-none rounded-none"
                                 >
                                     <div className="w-9 h-9 rounded-none bg-black flex items-center justify-center text-sm font-bold text-white border border-gray-200">
                                         {user.name?.[0] || 'U'}
                                     </div>
+                                    {notificationCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 bg-[var(--jdm-red)] text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                                            {notificationCount > 99 ? '99+' : notificationCount}
+                                        </span>
+                                    )}
                                 </button>
 
                                 {isUserMenuOpen && (
@@ -357,6 +380,29 @@ export default function Header() {
                                                         <p className="text-xs text-gray-500 uppercase font-bold">Yêu thích</p>
                                                         <p className="text-xs font-bold text-black">
                                                             Xe đã lưu
+                                                        </p>
+                                                    </div>
+                                                </Link>
+                                            </div>
+
+                                            <div className="px-4 py-3 pt-0">
+                                                <Link
+                                                    href="/notifications"
+                                                    className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 p-2 rounded-none transition group border border-transparent hover:border-gray-200"
+                                                    onClick={() => setIsUserMenuOpen(false)}
+                                                >
+                                                    <div className="relative w-8 h-8 rounded-none bg-black flex items-center justify-center group-hover:bg-[var(--jdm-red)] transition">
+                                                        <Bell className="w-4 h-4 text-white" />
+                                                        {notificationCount > 0 && (
+                                                            <span className="absolute -top-1 -right-1 bg-[var(--jdm-red)] group-hover:bg-black text-white text-[10px] font-bold rounded-full min-w-[14px] h-[14px] flex items-center justify-center px-0.5">
+                                                                {notificationCount > 99 ? '99+' : notificationCount}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 uppercase font-bold">Thông báo</p>
+                                                        <p className="text-xs font-bold text-black">
+                                                            {notificationCount > 0 ? `${notificationCount > 99 ? '99+' : notificationCount} tin mới` : 'Không có tin mới'}
                                                         </p>
                                                     </div>
                                                 </Link>
