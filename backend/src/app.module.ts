@@ -15,6 +15,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ReportsModule } from './reports/reports.module';
 import { Report } from './reports/entities/report.entity';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { Report } from './reports/entities/report.entity';
     CarsModule,
     UploadModule,
     ReportsModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

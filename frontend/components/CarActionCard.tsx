@@ -154,12 +154,14 @@ export default function CarActionCard({
                     {isOwner && (
                         <>
                             <div className="flex gap-2">
-                                <Link
-                                    href={`/cars/${generateCarSlug(car)}/edit`}
-                                    className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
-                                >
-                                    <Pencil className="w-5 h-5" /> Chỉnh sửa
-                                </Link>
+                                {car.status !== 'SOLD' && (
+                                    <Link
+                                        href={`/cars/${generateCarSlug(car)}/edit`}
+                                        className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
+                                    >
+                                        <Pencil className="w-5 h-5" /> Chỉnh sửa
+                                    </Link>
+                                )}
 
                                 <button
                                     onClick={async () => {
@@ -227,7 +229,7 @@ export default function CarActionCard({
                                             </div>
                                         ), { duration: 5000 });
                                     }}
-                                    className={`flex-shrink-0 font-bold px-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
+                                    className={`${car.status === 'SOLD' ? 'w-full' : 'flex-shrink-0'} font-bold px-4 py-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
                                         ? 'bg-emerald-600 text-white hover:bg-emerald-700'
                                         : 'bg-red-600 text-white hover:bg-red-700'
                                         }`}
@@ -237,15 +239,17 @@ export default function CarActionCard({
                                 </button>
                             </div>
 
-                            {/* Generate Poster Button */}
-                            <button
-                                onClick={onGeneratePoster}
-                                disabled={isGeneratingPoster}
-                                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Camera className="w-5 h-5" />
-                                {isGeneratingPoster ? 'Đang tạo...' : 'Tạo Poster Bán Xe'}
-                            </button>
+                            {/* Generate Poster Button - Hidden if Sold */}
+                            {car.status !== 'SOLD' && (
+                                <button
+                                    onClick={onGeneratePoster}
+                                    disabled={isGeneratingPoster}
+                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <Camera className="w-5 h-5" />
+                                    {isGeneratingPoster ? 'Đang tạo...' : 'Tạo Poster Bán Xe'}
+                                </button>
+                            )}
                         </>
                     )}
                 </div>

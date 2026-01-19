@@ -25,8 +25,8 @@ export default function CarCard({ car }: CarCardProps) {
 
                 {/* Status Overlays */}
                 {car.status === 'SOLD' && (
-                    <div className="absolute inset-0 z-20 bg-black/50 backdrop-blur-[2px] flex items-center justify-center">
-                        <div className="border-4 border-[var(--jdm-red)] px-6 py-2 transform -rotate-12 bg-black shadow-2xl">
+                    <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                        <div className="border-4 border-[var(--jdm-red)] px-6 py-2 transform -rotate-12 bg-black shadow-2xl pointer-events-auto">
                             <span className="text-[var(--jdm-red)] font-black text-2xl uppercase tracking-[0.2em]">ĐÃ BÁN</span>
                         </div>
                     </div>

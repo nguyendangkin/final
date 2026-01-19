@@ -208,17 +208,14 @@ export default function AdminReports() {
     return (
         <div className="min-h-screen bg-gray-50 pt-20 pb-12 font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="mb-6 flex items-center justify-between">
                     <div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                            <Link href="/admin" className="hover:text-black transition-colors">Admin</Link>
-                            <span className="text-gray-300">/</span>
-                            <span className="font-semibold text-gray-900">Báo cáo vi phạm</span>
-                        </div>
-                        <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">
-                            Danh sách báo cáo
-                        </h1>
+                        <h1 className="text-2xl font-bold uppercase tracking-wide">Quản lý Báo cáo</h1>
+                        <p className="text-sm text-gray-500">Danh sách các báo cáo vi phạm cần xử lý</p>
                     </div>
+                    <Link href="/admin" className="text-sm font-bold uppercase hover:text-[var(--jdm-red)] transition-colors">
+                        ← Quay lại Dashboard
+                    </Link>
                 </div>
 
                 <div className="flex gap-4 mb-6 border-b border-gray-200">
