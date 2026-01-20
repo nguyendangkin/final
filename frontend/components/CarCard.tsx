@@ -78,7 +78,7 @@ export default function CarCard({ car }: CarCardProps) {
                 </div>
 
                 {/* Specs Grid */}
-                <div className="grid grid-cols-[1.5fr_1fr] gap-y-2 gap-x-4 text-xs text-gray-600 mb-4 flex-1">
+                <div className="grid grid-cols-[1.5fr_1fr] gap-y-2 gap-x-4 text-[10px] text-gray-600 mb-4 flex-1">
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
                         <span className="font-semibold truncate">
