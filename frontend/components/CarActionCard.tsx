@@ -213,9 +213,9 @@ export default function CarActionCard({
                                 {car.status !== 'SOLD' && (
                                     <Link
                                         href={`/cars/${generateCarSlug(car)}/edit`}
-                                        className="flex-1 bg-black text-white font-bold py-3 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs"
+                                        className="flex-1 bg-black text-white font-bold py-3 px-1 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wider text-[10px] whitespace-nowrap"
                                     >
-                                        <Pencil className="w-4 h-4" /> Chỉnh sửa
+                                        Chỉnh sửa
                                     </Link>
                                 )}
 
@@ -284,7 +284,7 @@ export default function CarActionCard({
                                             </div>
                                         ), { duration: 5000 });
                                     }}
-                                    className="px-4 py-3 bg-emerald-600 text-white font-bold text-[10px] uppercase tracking-widest transition-all rounded-none hover:bg-emerald-700"
+                                    className="flex-1 px-1 py-3 bg-emerald-600 text-white font-bold text-[10px] uppercase tracking-wider transition-all rounded-none hover:bg-emerald-700 whitespace-nowrap"
                                     title="Đánh dấu đã bán"
                                 >
                                     Đã bán
@@ -353,7 +353,7 @@ export default function CarActionCard({
                                             </div>
                                         ), { duration: 5000 });
                                     }}
-                                    className="px-4 py-3 bg-[var(--jdm-red)] text-white font-bold text-[10px] uppercase tracking-widest transition-all rounded-none hover:bg-red-700"
+                                    className="flex-1 px-1 py-3 bg-[var(--jdm-red)] text-white font-bold text-[10px] uppercase tracking-wider transition-all rounded-none hover:bg-red-700 whitespace-nowrap"
                                     title="Xóa bài đăng"
                                 >
                                     Xóa
