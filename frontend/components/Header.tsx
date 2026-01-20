@@ -15,6 +15,7 @@ const BRANDS = [
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isBrandsOpen, setIsBrandsOpen] = useState(false);
     const [isSearchOptionsOpen, setIsSearchOptionsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -192,15 +193,23 @@ export default function Header() {
                     </div>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex space-x-8">
-                        <div className="relative group">
-                            <button className="flex items-center gap-1 text-sm font-bold uppercase tracking-wider hover:text-[var(--jdm-red)] transition-colors h-16 text-gray-700">
+                    <nav className="hidden xl:flex space-x-8">
+                        <div
+                            className="relative"
+                            onMouseEnter={() => setIsBrandsOpen(true)}
+                            onMouseLeave={() => setIsBrandsOpen(false)}
+                        >
+                            <button
+                                onClick={() => setIsBrandsOpen(!isBrandsOpen)}
+                                className="flex items-center gap-1 text-sm font-bold uppercase tracking-wider hover:text-[var(--jdm-red)] transition-colors h-16 text-gray-700"
+                            >
                                 Hãng xe
-                                <ChevronDown className="w-4 h-4 ml-1" />
+                                <ChevronDown className={`w-4 h-4 ml-1 transition-transform duration-200 ${isBrandsOpen ? 'rotate-180' : ''}`} />
                             </button>
-                            <div className="absolute top-full left-0 w-48 bg-white border border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
+                            <div className={`absolute top-full left-0 w-48 bg-white border border-gray-200 shadow-xl transition-all duration-200 transform z-50 ${isBrandsOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible translate-y-2'}`}>
                                 <Link
                                     href="/"
+                                    onClick={() => setIsBrandsOpen(false)}
                                     className={`block px-4 py-3 text-sm font-bold uppercase border-b border-gray-100 transition-colors ${!currentMake ? 'text-[var(--jdm-red)]' : 'text-gray-700 hover:text-[var(--jdm-red)]'}`}
                                 >
                                     Tất cả
@@ -209,6 +218,7 @@ export default function Header() {
                                     <Link
                                         key={brand}
                                         href={`/?make=${brand.toLowerCase()}`}
+                                        onClick={() => setIsBrandsOpen(false)}
                                         className={`block px-4 py-3 text-sm font-bold uppercase border-b border-gray-100 last:border-0 transition-colors ${currentMake?.toLowerCase() === brand.toLowerCase() ? 'text-[var(--jdm-red)]' : 'text-gray-700 hover:text-[var(--jdm-red)]'}`}
                                     >
                                         {brand}
@@ -231,7 +241,7 @@ export default function Header() {
                     </nav>
 
                     {/* Search Bar */}
-                    <div className="hidden md:flex items-center flex-1 max-w-md mx-6 relative">
+                    <div className="hidden xl:flex items-center flex-1 max-w-md mx-6 relative">
                         <div className="relative w-full flex items-center">
                             <Search className="absolute left-3 w-4 h-4 text-gray-400" />
                             <input
@@ -290,7 +300,7 @@ export default function Header() {
                     </div>
 
                     {/* User / Login */}
-                    <div className="hidden md:flex items-center space-x-4">
+                    <div className="flex items-center space-x-4 ml-auto xl:ml-0">
                         {isAuthChecking ? (
                             <div className="flex items-center justify-center p-1">
                                 <div className="w-9 h-9 rounded-none bg-gray-200 animate-pulse border border-gray-200" />
@@ -424,7 +434,7 @@ export default function Header() {
                         ) : (
                             <button
                                 onClick={handleLogin}
-                                className="bg-black hover:bg-[var(--jdm-red)] text-white px-6 py-2 rounded-none text-sm font-bold uppercase tracking-wider transition-colors duration-300"
+                                className="hidden xl:block bg-black hover:bg-[var(--jdm-red)] text-white px-6 py-2 rounded-none text-sm font-bold uppercase tracking-wider transition-colors duration-300"
                             >
                                 Đăng nhập
                             </button>
@@ -432,7 +442,7 @@ export default function Header() {
                     </div>
 
                     {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center">
+                    <div className="xl:hidden flex items-center ml-4">
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                             className="text-gray-600 hover:text-black p-2"
@@ -444,139 +454,123 @@ export default function Header() {
             </div>
 
             {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div className="md:hidden bg-white/95 backdrop-blur-xl border-b border-gray-200 max-h-[calc(100vh-4rem)] overflow-y-auto">
-                    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        {/* Mobile Search & Filter */}
-                        <div className="mb-4 px-2">
-                            <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                router.push(searchQuery ? `/?q=${encodeURIComponent(searchQuery)}` : '/');
-                                                setIsMenuOpen(false);
+            {
+                isMenuOpen && (
+                    <div className="xl:hidden bg-white/95 backdrop-blur-xl border-b border-gray-200 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                            {/* Mobile Search & Filter */}
+                            <div className="mb-4 px-2">
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    router.push(searchQuery ? `/?q=${encodeURIComponent(searchQuery)}` : '/');
+                                                    setIsMenuOpen(false);
+                                                }
+                                            }}
+                                            placeholder="Tìm kiếm xe..."
+                                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 text-sm font-medium focus:outline-none focus:border-[var(--jdm-red)] transition-colors"
+                                        />
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            if (!isMobileFilterOpen && !smartFilters) {
+                                                fetchSmartFilters(selectedFilters, priceRange);
                                             }
+                                            setIsMobileFilterOpen(!isMobileFilterOpen);
                                         }}
-                                        placeholder="Tìm kiếm xe..."
-                                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 text-sm font-medium focus:outline-none focus:border-[var(--jdm-red)] transition-colors"
-                                    />
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        className={`p-2.5 border transition-colors flex items-center justify-center ${isMobileFilterOpen || Object.keys(selectedFilters).length > 0
+                                            ? 'bg-[var(--jdm-red)] border-[var(--jdm-red)] text-white'
+                                            : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <SlidersHorizontal className="w-5 h-5" />
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        if (!isMobileFilterOpen && !smartFilters) {
-                                            fetchSmartFilters(selectedFilters, priceRange);
-                                        }
-                                        setIsMobileFilterOpen(!isMobileFilterOpen);
-                                    }}
-                                    className={`p-2.5 border transition-colors flex items-center justify-center ${isMobileFilterOpen || Object.keys(selectedFilters).length > 0
-                                        ? 'bg-[var(--jdm-red)] border-[var(--jdm-red)] text-white'
-                                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gray-300'
-                                        }`}
-                                >
-                                    <SlidersHorizontal className="w-5 h-5" />
-                                </button>
+
+                                {/* Mobile Smart Filters */}
+                                {isMobileFilterOpen && (
+                                    <div className="mt-4 p-4 bg-gray-50 border border-gray-200 shadow-inner">
+                                        <SmartFilter
+                                            isLoading={isLoading}
+                                            smartFilters={smartFilters}
+                                            selectedFilters={selectedFilters}
+                                            priceRange={priceRange}
+                                            onSelectFilter={selectFilter}
+                                            onClearFilters={clearFilters}
+                                            onPriceChange={(min: string, max: string) => setPriceRange({ min, max })}
+                                            onSearch={() => {
+                                                performSearch();
+                                                setIsMenuOpen(false);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="border-b border-gray-200 pb-2 mb-2">
+                                <p className="px-3 py-2 text-sm font-black text-[var(--jdm-red)] uppercase tracking-wider">Hãng xe</p>
+                                <div className="grid grid-cols-2 gap-1 px-3">
+                                    <Link
+                                        href="/"
+                                        onClick={() => setIsMenuOpen(false)}
+                                        className={`block p-2 text-sm font-bold uppercase ${!currentMake ? 'text-[var(--jdm-red)]' : 'text-gray-800 hover:text-[var(--jdm-red)]'}`}
+                                    >
+                                        Tất cả
+                                    </Link>
+                                    {BRANDS.map(brand => (
+                                        <Link
+                                            key={brand}
+                                            href={`/?make=${brand.toLowerCase()}`}
+                                            onClick={() => setIsMenuOpen(false)}
+                                            className={`block p-2 text-sm font-bold uppercase ${currentMake?.toLowerCase() === brand.toLowerCase() ? 'text-[var(--jdm-red)]' : 'text-gray-800 hover:text-[var(--jdm-red)]'}`}
+                                        >
+                                            {brand}
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
 
-                            {/* Mobile Smart Filters */}
-                            {isMobileFilterOpen && (
-                                <div className="mt-4 p-4 bg-gray-50 border border-gray-200 shadow-inner">
-                                    <SmartFilter
-                                        isLoading={isLoading}
-                                        smartFilters={smartFilters}
-                                        selectedFilters={selectedFilters}
-                                        priceRange={priceRange}
-                                        onSelectFilter={selectFilter}
-                                        onClearFilters={clearFilters}
-                                        onPriceChange={(min: string, max: string) => setPriceRange({ min, max })}
-                                        onSearch={() => {
-                                            performSearch();
-                                            setIsMenuOpen(false);
-                                        }}
-                                    />
+                            {/* Info Link */}
+                            <Link
+                                href="/info"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="block px-3 py-3 text-sm font-bold uppercase text-gray-800 hover:text-[var(--jdm-red)] border-b border-gray-200"
+                            >
+                                Thông tin
+                            </Link>
+
+                            {/* Sell Button */}
+                            <Link
+                                href="/sell"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="block mx-3 mt-3 px-4 py-3 bg-[var(--jdm-red)] hover:bg-red-700 text-white text-sm font-bold uppercase tracking-wide text-center transition-colors"
+                            >
+                                Đăng bán xe
+                            </Link>
+
+                            {isAuthChecking ? (
+                                <div className="px-3 py-4 text-center">
+                                    <div className="inline-block w-6 h-6 border-2 border-[var(--jdm-red)] border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            ) : !user && (
+                                <div className="mx-3 mt-3">
+                                    <button
+                                        onClick={handleLogin}
+                                        className="block w-full px-4 py-3 bg-black hover:bg-[var(--jdm-red)] text-white text-sm font-bold uppercase tracking-wide text-center transition-colors"
+                                    >
+                                        Đăng nhập
+                                    </button>
                                 </div>
                             )}
                         </div>
-                        <div className="border-b border-gray-200 pb-2 mb-2">
-                            <p className="px-3 py-2 text-sm font-black text-[var(--jdm-red)] uppercase tracking-wider">Hãng xe</p>
-                            <div className="grid grid-cols-2 gap-1 px-3">
-                                <Link
-                                    href="/"
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className={`block p-2 text-sm font-bold uppercase ${!currentMake ? 'text-[var(--jdm-red)]' : 'text-gray-800 hover:text-[var(--jdm-red)]'}`}
-                                >
-                                    Tất cả
-                                </Link>
-                                {BRANDS.map(brand => (
-                                    <Link
-                                        key={brand}
-                                        href={`/?make=${brand.toLowerCase()}`}
-                                        onClick={() => setIsMenuOpen(false)}
-                                        className={`block p-2 text-sm font-bold uppercase ${currentMake?.toLowerCase() === brand.toLowerCase() ? 'text-[var(--jdm-red)]' : 'text-gray-800 hover:text-[var(--jdm-red)]'}`}
-                                    >
-                                        {brand}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Info Link */}
-                        <Link
-                            href="/info"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="block px-3 py-3 text-sm font-bold uppercase text-gray-800 hover:text-[var(--jdm-red)] border-b border-gray-200"
-                        >
-                            Thông tin
-                        </Link>
-
-                        {/* Sell Button */}
-                        <Link
-                            href="/sell"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="block mx-3 mt-3 px-4 py-3 bg-[var(--jdm-red)] hover:bg-red-700 text-white text-sm font-bold uppercase tracking-wide text-center transition-colors"
-                        >
-                            Đăng bán xe
-                        </Link>
-
-                        {isAuthChecking ? (
-                            <div className="px-3 py-4 text-center">
-                                <div className="inline-block w-6 h-6 border-2 border-[var(--jdm-red)] border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                        ) : user ? (
-                            <div className="border-t border-gray-200 mt-4 pt-4 px-3">
-                                <div className="flex items-center gap-3 mb-3">
-                                    <div className="w-8 h-8 rounded-none bg-black flex items-center justify-center text-white font-bold border border-gray-200">
-                                        {user.name?.[0] || 'U'}
-                                    </div>
-                                    <div>
-                                        <p className="text-black font-bold uppercase">{user.name}</p>
-                                        <p className="text-[var(--jdm-red)] text-sm font-black">
-                                            {balance !== null ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(balance) : '...'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full text-left text-red-500 font-medium py-2"
-                                >
-                                    Đăng xuất
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={handleLogin}
-                                className="w-full text-left text-white bg-black hover:bg-[var(--jdm-red)] px-4 py-3 rounded-none text-base font-bold mt-4 uppercase tracking-wider transition-colors"
-                            >
-                                Đăng nhập
-                            </button>
-                        )}
                     </div>
-                </div>
-            )}
-        </header>
+                )
+            }
+        </header >
     );
 }

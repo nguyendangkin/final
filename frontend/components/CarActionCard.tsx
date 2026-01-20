@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Phone, MessageCircle, Facebook, ShieldCheck, Pencil, CheckCircle2, Camera, Flag, ChevronRight, AlertTriangle, Heart } from 'lucide-react';
+import { Phone, MessageCircle, Facebook, ShieldCheck, Pencil, CheckCircle2, Camera, Flag, ChevronRight, AlertTriangle, Heart, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
 import { MapPin, User, TrendingDown } from 'lucide-react';
@@ -288,6 +288,75 @@ export default function CarActionCard({
                                     title="Đánh dấu đã bán"
                                 >
                                     Đã bán
+                                </button>
+
+                                <button
+                                    onClick={async () => {
+                                        const confirmMsg = 'Hành động này sẽ XÓA VĨNH VIỄN bài đăng và dữ liệu liên quan khỏi hệ thống. Bạn KHÔNG THỂ hoàn tác. Bạn có chắc chắn không?';
+
+                                        toast.custom((t) => (
+                                            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                                                <div className="p-6">
+                                                    <div className="flex items-start">
+                                                        <div className="flex-shrink-0 pt-0.5">
+                                                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                                                <Trash2 className="h-6 w-6 text-white" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="ml-4 flex-1">
+                                                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                                                Xóa bài đăng
+                                                            </h3>
+                                                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                                                {confirmMsg}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex bg-gray-50 mt-4">
+                                                    <button
+                                                        onClick={() => toast.dismiss(t.id)}
+                                                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                                                    >
+                                                        Hủy
+                                                    </button>
+                                                    <button
+                                                        onClick={async () => {
+                                                            toast.dismiss(t.id);
+                                                            const toastId = toast.loading('Đang xóa...');
+                                                            try {
+                                                                const token = localStorage.getItem('jwt_token');
+                                                                const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
+                                                                    method: 'DELETE',
+                                                                    headers: {
+                                                                        'Authorization': `Bearer ${token}`
+                                                                    }
+                                                                });
+
+                                                                if (res.ok) {
+                                                                    toast.success('Đã xóa bài đăng thành công!', { id: toastId });
+                                                                    router.push(`/seller/${generateSellerSlug(car.seller)}`);
+                                                                } else {
+                                                                    const err = await res.json();
+                                                                    toast.error(err.message || 'Có lỗi xảy ra, vui lòng thử lại.', { id: toastId });
+                                                                }
+                                                            } catch (error) {
+                                                                console.error(error);
+                                                                toast.error('Có lỗi xảy ra.', { id: toastId });
+                                                            }
+                                                        }}
+                                                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-[var(--jdm-red)] hover:bg-red-700 focus:outline-none uppercase transition-all"
+                                                    >
+                                                        Xóa vĩnh viễn
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ), { duration: 5000 });
+                                    }}
+                                    className="px-4 py-3 bg-[var(--jdm-red)] text-white font-bold text-[10px] uppercase tracking-widest transition-all rounded-none hover:bg-red-700"
+                                    title="Xóa bài đăng"
+                                >
+                                    Xóa
                                 </button>
                             </div>
 

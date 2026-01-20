@@ -147,14 +147,14 @@ function SoldCarsList({ sellerId }: { sellerId: string }) {
     if (soldCars.length === 0) return <div className="text-center py-12 text-gray-500">Người bán này chưa bán được xe nào.</div>;
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col">
             {soldCars.map((car, index) => {
                 const nextCar = soldCars[index + 1];
                 const timeGap = nextCar ? formatTimeDistance(car.soldAt, nextCar.soldAt) : null;
 
                 return (
-                    <div key={car.id} className="relative">
-                        <div className="flex flex-col md:flex-row bg-white border border-black hover:border-[var(--jdm-red)] transition-all group relative overflow-hidden">
+                    <div key={car.id} className="relative group">
+                        <div className="flex flex-col md:flex-row bg-white border border-gray-200 hover:border-[var(--jdm-red)] transition-all relative overflow-hidden">
                             {/* Accent Bar */}
                             <div className="absolute top-0 left-0 w-1 h-full bg-black group-hover:bg-[var(--jdm-red)] transition-colors"></div>
 
@@ -176,7 +176,7 @@ function SoldCarsList({ sellerId }: { sellerId: string }) {
                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(car.price))}
                                     </p>
                                     <div className="flex items-center gap-2">
-                                        <span className="bg-black text-white text-[9px] font-black px-2 py-0.5 uppercase tracking-[0.2em] transform -skew-x-12">
+                                        <span className="bg-black text-white text-[9px] font-black px-2 py-0.5 uppercase tracking-[0.2em]">
                                             ĐÃ BÁN
                                         </span>
                                     </div>
@@ -185,13 +185,15 @@ function SoldCarsList({ sellerId }: { sellerId: string }) {
                         </div>
 
                         {/* Timeline Connector */}
-                        {timeGap && (
-                            <div className="flex items-center justify-center py-4 relative">
+                        {timeGap ? (
+                            <div className="flex items-center justify-center py-6 relative">
                                 <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-px border-r border-dashed border-gray-200 -z-10"></div>
                                 <div className="bg-white text-gray-400 text-[9px] font-black px-3 py-1 rounded-none border border-gray-100 uppercase tracking-[0.1em]">
                                     + {timeGap} TRƯỚC ĐÓ
                                 </div>
                             </div>
+                        ) : (
+                            <div className="mb-6"></div>
                         )}
                     </div>
                 );
