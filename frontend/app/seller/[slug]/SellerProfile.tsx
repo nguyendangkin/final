@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { User, Calendar, ShieldCheck, Car as CarIcon } from 'lucide-react';
 import CarFeed from '@/components/CarFeed';
@@ -100,17 +100,102 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
 
                 {/* Cars Listings */}
                 <div className="mb-6">
-                    <CarFeed
-                        key={activeTab} // Force remount when tab changes
-                        // We do NOT pass initialCars anymore. CarFeed will fetch data itself.
-                        filter={{
-                            sellerId: seller.id,
-                            status: activeTab === 'selling' ? 'AVAILABLE' : 'SOLD'
-                        }}
-                    />
+                    {activeTab === 'selling' ? (
+                        <CarFeed
+                            key="selling"
+                            filter={{
+                                sellerId: seller.id,
+                                status: 'AVAILABLE'
+                            }}
+                        />
+                    ) : (
+                        <SoldCarsList sellerId={seller.id} />
+                    )}
                 </div>
-
             </div>
+        </div>
+    );
+}
+
+function SoldCarsList({ sellerId }: { sellerId: string }) {
+    const [soldCars, setSoldCars] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch(`http://localhost:3000/sold-cars/seller/${sellerId}`)
+            .then(res => res.json())
+            .then(data => {
+                setSoldCars(data);
+                setLoading(false);
+            })
+            .catch(() => setLoading(false));
+    }, [sellerId]);
+
+    const formatTimeDistance = (date1: string, date2: string) => {
+        const d1 = new Date(date1).getTime();
+        const d2 = new Date(date2).getTime();
+        const diff = Math.abs(d1 - d2);
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+        if (days > 0) return `${days} ngày ${hours > 0 ? `${hours} giờ` : ''}`;
+        return `${hours} giờ`;
+    };
+
+    if (loading) return <div className="text-center py-12">Đang tải lịch sử bán xe...</div>;
+    if (soldCars.length === 0) return <div className="text-center py-12 text-gray-500">Người bán này chưa bán được xe nào.</div>;
+
+    return (
+        <div className="space-y-6">
+            {soldCars.map((car, index) => {
+                const nextCar = soldCars[index + 1];
+                const timeGap = nextCar ? formatTimeDistance(car.soldAt, nextCar.soldAt) : null;
+
+                return (
+                    <div key={car.id} className="relative">
+                        <div className="flex flex-col md:flex-row bg-white border border-black hover:border-[var(--jdm-red)] transition-all group relative overflow-hidden">
+                            {/* Accent Bar */}
+                            <div className="absolute top-0 left-0 w-1 h-full bg-black group-hover:bg-[var(--jdm-red)] transition-colors"></div>
+
+                            <div className="p-4 md:p-5 flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 ml-1">
+                                <div className="space-y-1">
+                                    <div className="inline-flex items-center gap-2 px-1.5 py-0.5 bg-gray-100 text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">
+                                        LƯU TRỮ: {new Date(car.soldAt).toLocaleDateString('vi-VN')}
+                                    </div>
+                                    <h3 className="text-xl md:text-2xl font-black text-black uppercase italic tracking-tight leading-none">
+                                        {car.year} {car.make} {car.model}
+                                    </h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                        Bán lúc {new Date(car.soldAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-col md:items-end gap-1">
+                                    <p className="text-[var(--jdm-red)] font-black text-2xl md:text-3xl tracking-tighter italic">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(car.price))}
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-black text-white text-[9px] font-black px-2 py-0.5 uppercase tracking-[0.2em] transform -skew-x-12">
+                                            ĐÃ BÁN
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Timeline Connector */}
+                        {timeGap && (
+                            <div className="flex items-center justify-center py-4 relative">
+                                <div className="absolute left-1/2 transform -translate-x-1/2 h-full w-px border-r border-dashed border-gray-200 -z-10"></div>
+                                <div className="bg-white text-gray-400 text-[9px] font-black px-3 py-1 rounded-none border border-gray-100 uppercase tracking-[0.1em]">
+                                    + {timeGap} TRƯỚC ĐÓ
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 }

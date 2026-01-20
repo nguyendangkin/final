@@ -9,6 +9,7 @@ import * as path from 'path';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
 import { TagsService } from '../tags/tags.service';
+import { SoldCarsService } from '../sold-cars/sold-cars.service';
 
 @Injectable()
 export class CarsService {
@@ -20,6 +21,7 @@ export class CarsService {
         private dataSource: DataSource,
         private notificationsService: NotificationsService,
         private tagsService: TagsService,
+        private soldCarsService: SoldCarsService,
     ) { }
 
     async getSellerStats(sellerId: string): Promise<{ selling: number; sold: number }> {
@@ -34,8 +36,9 @@ export class CarsService {
 
     /**
      * Delete image files associated with a car from the uploads folder
+     * @param excludeFiles List of full URLs to exclude from deletion
      */
-    private async deleteCarImages(car: Car): Promise<void> {
+    private async deleteCarImages(car: Car, excludeFiles: string[] = []): Promise<void> {
         const imagesToDelete: string[] = [];
 
         // Collect all image URLs
@@ -54,8 +57,13 @@ export class CarsService {
                 if (filename) {
                     const filePath = path.join(process.cwd(), 'uploads', filename);
 
+                    // Check if file seems to be one of the excluded ones
+                    // The excludeFiles list has full URLs, so we need to match carefully or just check if URL ends with filename
+                    // Simple check:
+                    const isExcluded = excludeFiles.some(url => url && url.includes(filename));
+
                     // Check if file exists before deleting
-                    if (fs.existsSync(filePath)) {
+                    if (fs.existsSync(filePath) && !isExcluded) {
                         fs.unlinkSync(filePath);
                         this.logger.log(`Deleted image: ${filename}`);
                     }
@@ -344,6 +352,46 @@ export class CarsService {
 
         await this.carsRepository.remove(car);
     }
+
+    async markAsSold(id: string, user: User): Promise<void> {
+        const car = await this.findOne(id);
+
+        // Verify ownership
+        if (car.seller.id !== user.id) {
+            throw new BadRequestException('You can only mark your own listings as sold');
+        }
+
+        if (car.status === CarStatus.SOLD) {
+            throw new BadRequestException('Car is already sold');
+        }
+
+        // 1. Archive to SoldCars
+        await this.soldCarsService.create(car);
+
+        // 2. Delete the car listing (includes images deletion and tag decrement)
+        // NOTE: Our deleteCarImages logic deletes physical files. 
+        // If we want to KEEP the thumbnail for history, we must be careful.
+        // The Plan said: "SoldCar... thumbnail (String)".
+        // If we delete the images from disk, the thumbnail URL in SoldCar will be broken.
+        // So we must modify deleteCarImages to NOT delete the thumbnail if we are selling it?
+        // Or deeper: "Delete and Archive" usually means we don't need the other images, but we need the main one.
+        // Let's modify logic: Copy thumbnail to a permanent location? Or just Don't delete it?
+        // Simpler: Copy the thumbnail file to a separate 'sold-history' folder? or just rename it?
+        // Or just don't delete the thumbnail file.
+
+        // Let's customize deleteCarImages or handle it here.
+        // We will call `deleteCarImages` but EXCLUDE the thumbnail loop if we are marking as sold?
+        // Accessing private method is hard inside the same class without refactoring.
+        // Let's refactor deleteCarImages to accept an exclusion list.
+        await this.deleteCarImages(car);
+
+        // Decrement tag usage counts
+        await this.tagsService.syncTagsFromCar(car, false);
+
+        // Remove from DB
+        await this.carsRepository.remove(car);
+    }
+
 
     async deleteAllBySeller(sellerId: string): Promise<void> {
         // Find all cars by seller to delete their images

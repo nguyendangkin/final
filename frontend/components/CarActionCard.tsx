@@ -208,23 +208,20 @@ export default function CarActionCard({
                     {/* Edit & Mark Sold Buttons - Only visible to owner */}
                     {isOwner && (
                         <>
-                            <div className="flex gap-2">
+                            <div className="flex items-stretch gap-2">
                                 {car.status !== 'SOLD' && (
                                     <Link
                                         href={`/cars/${generateCarSlug(car)}/edit`}
-                                        className="flex-1 bg-black text-white font-bold py-4 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide"
+                                        className="flex-1 bg-black text-white font-bold py-3 rounded-none hover:bg-gray-800 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs"
                                     >
-                                        <Pencil className="w-5 h-5" /> Chỉnh sửa
+                                        <Pencil className="w-4 h-4" /> Chỉnh sửa
                                     </Link>
                                 )}
 
                                 <button
                                     onClick={async () => {
-                                        const isSold = car.status === 'SOLD';
-                                        const newStatus = isSold ? 'AVAILABLE' : 'SOLD';
-                                        const confirmMsg = isSold
-                                            ? 'Bạn muốn đăng bán lại xe này?'
-                                            : 'Bạn có chắc chắn muốn đánh dấu xe này là ĐÃ BÁN?';
+                                        // ... existing logic ...
+                                        const confirmMsg = 'Hành động này sẽ XÓA VĨNH VIỄN bài đăng khỏi hệ thống và lưu vào lịch sử "Xe đã bán". Bạn KHÔNG THỂ khôi phục trạng thái "Đang bán". Bạn có chắc chắn không?';
 
                                         toast.custom((t) => (
                                             <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
@@ -255,25 +252,27 @@ export default function CarActionCard({
                                                     <button
                                                         onClick={async () => {
                                                             toast.dismiss(t.id);
+                                                            const toastId = toast.loading('Đang xử lý...');
                                                             try {
                                                                 const token = localStorage.getItem('jwt_token');
-                                                                const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
-                                                                    method: 'PATCH',
+                                                                const res = await fetch(`http://localhost:3000/cars/${car.id}/sold`, {
+                                                                    method: 'POST',
                                                                     headers: {
                                                                         'Content-Type': 'application/json',
                                                                         'Authorization': `Bearer ${token}`
-                                                                    },
-                                                                    body: JSON.stringify({ status: newStatus })
+                                                                    }
                                                                 });
+
                                                                 if (res.ok) {
-                                                                    toast.success(`Đã đánh dấu xe là ${newStatus === 'SOLD' ? 'ĐÃ BÁN' : 'CÓ SẴN'}`);
-                                                                    router.refresh();
+                                                                    toast.success('Đã đánh dấu ĐÃ BÁN và lưu trữ thành công!', { id: toastId });
+                                                                    router.push(`/seller/${generateSellerSlug(car.seller)}`);
                                                                 } else {
-                                                                    toast.error('Có lỗi xảy ra, vui lòng thử lại.');
+                                                                    const err = await res.json();
+                                                                    toast.error(err.message || 'Có lỗi xảy ra, vui lòng thử lại.', { id: toastId });
                                                                 }
                                                             } catch (error) {
                                                                 console.error(error);
-                                                                toast.error('Có lỗi xảy ra.');
+                                                                toast.error('Có lỗi xảy ra.', { id: toastId });
                                                             }
                                                         }}
                                                         className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
@@ -284,13 +283,10 @@ export default function CarActionCard({
                                             </div>
                                         ), { duration: 5000 });
                                     }}
-                                    className={`${car.status === 'SOLD' ? 'w-full' : 'flex-shrink-0'} font-bold px-4 py-4 rounded-none transition-all flex items-center justify-center gap-2 ${car.status === 'SOLD'
-                                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                        : 'bg-red-600 text-white hover:bg-red-700'
-                                        }`}
-                                    title={car.status === 'SOLD' ? 'Đăng bán lại' : 'Đánh dấu đã bán'}
+                                    className="px-4 py-3 bg-emerald-600 text-white font-bold text-[10px] uppercase tracking-widest transition-all rounded-none hover:bg-emerald-700"
+                                    title="Đánh dấu đã bán"
                                 >
-                                    {car.status === 'SOLD' ? 'Đăng lại' : 'Đã bán'}
+                                    Đã bán
                                 </button>
                             </div>
 
@@ -299,7 +295,7 @@ export default function CarActionCard({
                                 <button
                                     onClick={onGeneratePoster}
                                     disabled={isGeneratingPoster}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-4 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2.5 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Camera className="w-5 h-5" />
                                     {isGeneratingPoster ? 'Đang tạo...' : 'Tạo Poster Bán Xe'}

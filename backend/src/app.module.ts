@@ -24,6 +24,8 @@ import { SystemAnnouncement } from './notifications/entities/system-announcement
 import { UserAnnouncementRead } from './notifications/entities/user-announcement-read.entity';
 import { TagsModule } from './tags/tags.module';
 import { Tag } from './tags/entities/tag.entity';
+import { SoldCarsModule } from './sold-cars/sold-cars.module';
+import { SoldCar } from './sold-cars/entities/sold-car.entity';
 
 
 @Module({
@@ -40,7 +42,7 @@ import { Tag } from './tags/entities/tag.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction, Car, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead, Tag],
+        entities: [User, Transaction, Car, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead, Tag, SoldCar],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],
@@ -59,6 +61,7 @@ import { Tag } from './tags/entities/tag.entity';
     FavoritesModule,
     NotificationsModule,
     TagsModule,
+    SoldCarsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -141,6 +141,12 @@ export class CarsController {
         return this.carsService.buy(id, req.user.id);
     }
 
+    @Post(':id/sold')
+    @UseGuards(AuthGuard('jwt'))
+    markAsSold(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+        return this.carsService.markAsSold(id, req.user);
+    }
+
     @Get('brands/all')
     getBrands() {
         return this.carsService.getBrands();
