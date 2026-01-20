@@ -23,6 +23,13 @@ export class CarsController {
         return this.carsService.getTagsStats();
     }
 
+    @Patch('admin/tags')
+    // @UseGuards(AuthGuard('jwt')) // TODO: Add Admin Guard
+    async editTag(@Body() body: { category: string; oldTag: string; newTag: string }) {
+        await this.carsService.editTag(body.category, body.oldTag, body.newTag);
+        return { message: 'Tag updated successfully' };
+    }
+
     async deleteTagWithPenalty(@Param('tag') tag: string) {
         const initiatorId = await this.carsService.deleteTagWithPenalty(tag);
         if (initiatorId) {

@@ -1080,4 +1080,106 @@ export class CarsService {
             }
         };
     }
+
+    async editTag(category: string, oldTag: string, newTag: string): Promise<void> {
+        this.logger.log(`Editing tag: category=${category}, old=${oldTag}, new=${newTag}`);
+
+        // Find all cars to check for this tag
+        const allCars = await this.carsRepository.find();
+        const targetTag = oldTag.trim().toUpperCase();
+        let updatedCount = 0;
+
+        for (const car of allCars) {
+            let matches = false;
+
+            // Check if car matches the tag in the specific category
+            if (category === 'make' && car.make?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'model' && car.model?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'trim' && car.trim?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'chassisCode' && car.chassisCode?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'engineCode' && car.engineCode?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'transmission' && car.transmission?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'drivetrain' && car.drivetrain?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'condition' && car.condition?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'paperwork' && car.paperwork?.trim().toUpperCase() === targetTag) matches = true;
+            else if (category === 'location' && car.location?.trim().toUpperCase() === targetTag) matches = true;
+
+            else if (category === 'feature' && car.notableFeatures) {
+                if (car.notableFeatures.some(f => f.trim().toUpperCase() === targetTag)) matches = true;
+            }
+
+            else if (category.startsWith('mods') && car.mods) {
+                if (Array.isArray(car.mods)) {
+                    if (car.mods.some((m: any) => {
+                        const val = typeof m === 'string' ? m : m?.name;
+                        return val && val.trim().toUpperCase() === targetTag;
+                    })) matches = true;
+                } else if (typeof car.mods === 'object') {
+                    const modType = category.replace('mods_', '');
+                    if (car.mods[modType] && Array.isArray(car.mods[modType])) {
+                        if (car.mods[modType].some((m: string) => m.trim().toUpperCase() === targetTag)) matches = true;
+                    }
+                }
+            }
+
+            if (matches) {
+                this.logger.log(`Found match in car ${car.id}`);
+
+                // 1. Decrement OLD tag usage
+                await this.tagsService.syncTagsFromCar(car, false);
+
+                // 2. Apply Change
+                if (category === 'make') car.make = newTag;
+                else if (category === 'model') car.model = newTag;
+                else if (category === 'trim') car.trim = newTag;
+                else if (category === 'chassisCode') car.chassisCode = newTag;
+                else if (category === 'engineCode') car.engineCode = newTag;
+                else if (category === 'transmission') car.transmission = newTag;
+                else if (category === 'drivetrain') car.drivetrain = newTag;
+                else if (category === 'condition') car.condition = newTag;
+                else if (category === 'paperwork') car.paperwork = newTag;
+                else if (category === 'location') car.location = newTag;
+
+                else if (category === 'feature' && car.notableFeatures) {
+                    car.notableFeatures = car.notableFeatures.map(f =>
+                        f.trim().toUpperCase() === targetTag ? newTag : f
+                    );
+                }
+
+                else if (category.startsWith('mods') && car.mods) {
+                    // Clone mods object to ensure TypeORM detects change
+                    const modsClone = JSON.parse(JSON.stringify(car.mods));
+
+                    if (Array.isArray(modsClone)) {
+                        car.mods = modsClone.map((m: any) => {
+                            if (typeof m === 'string') {
+                                return m.trim().toUpperCase() === targetTag ? newTag : m;
+                            } else if (m && m.name) {
+                                if (m.name.trim().toUpperCase() === targetTag) m.name = newTag;
+                                return m;
+                            }
+                            return m;
+                        });
+                    } else if (typeof modsClone === 'object') {
+                        const modType = category.replace('mods_', '');
+                        if (modsClone[modType] && Array.isArray(modsClone[modType])) {
+                            modsClone[modType] = modsClone[modType].map((m: string) =>
+                                m.trim().toUpperCase() === targetTag ? newTag : m
+                            );
+                            // Reassign to trigger update
+                            car.mods = modsClone;
+                        }
+                    }
+                }
+
+                // 3. Save Car
+                await this.carsRepository.save(car);
+                updatedCount++;
+
+                // 4. Increment NEW tag usage
+                await this.tagsService.syncTagsFromCar(car, true);
+            }
+        }
+        this.logger.log(`Updated ${updatedCount} cars with new tag "${newTag}"`);
+    }
 }

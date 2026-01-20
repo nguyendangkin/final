@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getTagsStats, deleteTagWithPenalty } from '@/services/cars.service';
-import { Trash2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { getTagsStats, deleteTagWithPenalty, editTag } from '@/services/cars.service';
+import { Trash2, AlertTriangle, ArrowLeft, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 import { Toaster, toast } from 'react-hot-toast';
 import TagsSkeleton from '@/components/TagsSkeleton';
@@ -16,6 +16,27 @@ export default function TagsManagementPage() {
     const [categories, setCategories] = useState<TagCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    const [editing, setEditing] = useState<{ category: string, tag: string } | null>(null);
+    const [newTagVal, setNewTagVal] = useState('');
+
+    const categoryMap: Record<string, string> = {
+        'make': 'Hãng xe (Make)',
+        'model': 'Dòng xe (Model)',
+        'trim': 'Phiên bản (Trim)',
+        'chassisCode': 'Mã khung (Chassis)',
+        'engineCode': 'Mã máy (Engine)',
+        'transmission': 'Hộp số (Transmission)',
+        'drivetrain': 'Dẫn động (Drivetrain)',
+        'condition': 'Tình trạng (Condition)',
+        'paperwork': 'Giấy tờ (Paperwork)',
+        'location': 'Khu vực (Location)',
+        'feature': 'Ngoại hình chú ý (Features)',
+        'mods_exterior': 'Nâng cấp Ngoại thất',
+        'mods_interior': 'Nâng cấp Nội thất',
+        'mods_engine': 'Nâng cấp Động cơ/Hiệu suất',
+        'mods_footwork': 'Nâng cấp Gầm/Bánh',
+    };
 
     const fetchTags = async (showLoading = true) => {
         if (showLoading) setLoading(true);
@@ -85,7 +106,6 @@ export default function TagsManagementPage() {
     const executeDelete = async (tag: string) => {
         try {
             await deleteTagWithPenalty(tag);
-            // Refetch silently (without loading spinner) to get all cascading deletions
             fetchTags(false);
             toast.success(`Đã xóa tag "${tag}" và thi hành án phạt.`, {
                 style: {
@@ -110,8 +130,31 @@ export default function TagsManagementPage() {
         }
     };
 
+    const openEdit = (category: string, tag: string) => {
+        setEditing({ category, tag });
+        setNewTagVal(tag);
+    };
+
+    const saveEdit = async () => {
+        if (!editing || !newTagVal.trim()) return;
+        if (newTagVal === editing.tag) {
+            setEditing(null);
+            return; // No change
+        }
+
+        try {
+            await editTag(editing.category, editing.tag, newTagVal);
+            toast.success('Cập nhật tag thành công!');
+            setEditing(null);
+            fetchTags(false);
+        } catch (err) {
+            console.error(err);
+            toast.error('Lỗi khi cập nhật tag');
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-white pt-20 pb-12 font-sans text-black">
+        <div className="min-h-screen bg-white pt-20 pb-12 font-sans text-black relative">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Link href="/admin" className="inline-flex items-center text-gray-500 hover:text-[var(--jdm-red)] mb-6 transition-colors uppercase font-bold tracking-wider text-sm group">
                     <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -147,7 +190,9 @@ export default function TagsManagementPage() {
                         {categories.map((cat) => (
                             <div key={cat.category}>
                                 <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="font-bold uppercase tracking-wide text-sm">{cat.category}</h3>
+                                    <h3 className="font-bold uppercase tracking-wide text-sm">
+                                        {categoryMap[cat.category] || cat.category}
+                                    </h3>
                                     <span className="bg-black text-white text-xs px-2 py-0.5 font-mono">
                                         {cat.items.length}
                                     </span>
@@ -164,13 +209,22 @@ export default function TagsManagementPage() {
                                             <span className="text-xs text-gray-400 font-mono">
                                                 x{item.count}
                                             </span>
-                                            <button
-                                                onClick={() => handleDeleteClick(item.tag)}
-                                                className="text-gray-300 hover:text-red-600 transition-colors ml-1"
-                                                title="Xóa & Phạt"
-                                            >
-                                                <Trash2 size={14} />
-                                            </button>
+                                            <div className="flex items-center ml-2 border-l border-gray-300 pl-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => openEdit(cat.category, item.tag)}
+                                                    className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                                                    title="Sửa Tag"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClick(item.tag)}
+                                                    className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                                    title="Xóa & Phạt"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -179,6 +233,54 @@ export default function TagsManagementPage() {
                     </div>
                 )}
             </div>
+
+            {/* Edit Modal */}
+            {editing && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white border-2 border-black w-full max-w-md shadow-2xl animate-enter">
+                        <div className="bg-black text-white p-4 flex justify-between items-center">
+                            <h3 className="font-black uppercase tracking-wider">Chỉnh sửa Tag</h3>
+                            <button onClick={() => setEditing(null)} className="text-gray-400 hover:text-white">✕</button>
+                        </div>
+                        <div className="p-6">
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                                Tag hiện tại
+                            </label>
+                            <div className="text-lg font-bold mb-4">{editing.tag}</div>
+
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">
+                                Tag mới
+                            </label>
+                            <input
+                                type="text"
+                                value={newTagVal}
+                                onChange={(e) => setNewTagVal(e.target.value.toUpperCase())}
+                                className="w-full border-2 border-gray-200 p-3 font-bold focus:border-black focus:outline-none transition-colors placeholder:normal-case"
+                                placeholder="Nhập tên tag mới..."
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-400 mt-2">
+                                Lưu ý: Thay đổi sẽ áp dụng cho toàn bộ <span className="font-bold text-black">{categoryMap[editing.category] || editing.category}</span> đang sử dụng tag này.
+                            </p>
+                        </div>
+                        <div className="flex border-t-2 border-gray-100">
+                            <button
+                                onClick={() => setEditing(null)}
+                                className="w-1/2 p-4 font-bold uppercase text-gray-500 hover:bg-gray-50 hover:text-black transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={saveEdit}
+                                disabled={!newTagVal.trim() || newTagVal === editing.tag}
+                                className="w-1/2 p-4 font-bold uppercase text-white bg-black hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

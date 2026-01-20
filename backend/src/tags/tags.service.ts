@@ -182,17 +182,19 @@ export class TagsService {
             // Explicitly hide generic 'mods' category as requested
             if (tag.category === 'mods') continue;
 
-            const categoryName = categoryMap[tag.category] || tag.category;
-            if (!grouped[categoryName]) {
-                grouped[categoryName] = [];
+            // Use internal category key
+            const categoryKey = tag.category;
+
+            if (!grouped[categoryKey]) {
+                grouped[categoryKey] = [];
             }
 
             // Check if tag already exists in this category
-            const existingItem = grouped[categoryName].find(item => item.tag === tag.value);
+            const existingItem = grouped[categoryKey].find(item => item.tag === tag.value);
             if (existingItem) {
                 existingItem.count += tag.usageCount;
             } else {
-                grouped[categoryName].push({ tag: tag.value, count: tag.usageCount });
+                grouped[categoryKey].push({ tag: tag.value, count: tag.usageCount });
             }
         }
 
