@@ -112,7 +112,7 @@ export default function ListingRanking({ carId }: ListingRankingProps) {
                     <BarChart3 className="w-3 h-3" />
                     Bài đăng của bạn đang ở trang {Math.ceil(ranking.global.rank / 12)} trong trang chủ
                 </div>
-                <div className="flex items-center gap-2 text-[var(--jdm-red)]">
+                <div className="flex items-center gap-2">
                     <BarChart3 className="w-3 h-3" />
                     Bài đăng của bạn đang ở trang {Math.ceil(ranking.make.rank / 12)} trong trang hãng
                 </div>

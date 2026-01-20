@@ -69,7 +69,7 @@ const ModSection = ({
                 <button
                     onClick={handleAdd}
                     type="button"
-                    className="bg-black hover:bg-[var(--jdm-red)] text-white p-4 h-[58px] rounded-none transition-colors mb-2"
+                    className="bg-black hover:bg-[var(--jdm-red)] text-white p-4 h-[58px] rounded-none transition-colors"
                 >
                     <Plus className="w-5 h-5" />
                 </button>

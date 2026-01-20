@@ -230,7 +230,7 @@ export default function Header() {
                             href="/info"
                             className="text-sm font-bold uppercase tracking-wider hover:text-[var(--jdm-red)] transition-colors h-16 flex items-center text-gray-700"
                         >
-                            Thông tin
+                            Về 4Gach
                         </Link>
                         <Link
                             href="/sell"

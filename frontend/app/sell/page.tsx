@@ -384,7 +384,7 @@ export default function SellPage() {
                     {/* Header */}
                     <div className="border-b border-gray-200 pb-6">
                         <div className="flex justify-between items-center mb-2">
-                            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-black">
+                            <h1 className="text-2xl sm:text-4xl font-black italic uppercase tracking-tighter text-black">
                                 Đăng Bán Xe
                             </h1>
                             <button
