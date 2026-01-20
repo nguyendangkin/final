@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, Ban } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
 import Pagination from '@/components/Pagination';
@@ -125,6 +125,74 @@ export default function AdminApprovals() {
         }
     };
 
+    const toggleBan = (userId: string, currentStatus: boolean) => {
+        const token = localStorage.getItem('jwt_token');
+        if (!token) return;
+
+        toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                <div className="p-6">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                <Ban className="h-6 w-6 text-white" />
+                            </div>
+                        </div>
+                        <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                Xác nhận hành động
+                            </h3>
+                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                Bạn có chắc chắn muốn <span className="font-bold">{currentStatus ? 'BỎ CẤM' : 'CẤM'}</span> người dùng này bán xe?
+                                {!currentStatus && <span className="block mt-1 text-red-600">Hành động này sẽ xóa tất cả bài đăng của họ.</span>}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex bg-gray-50 mt-4">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            executeBan(userId, currentStatus, token);
+                        }}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                    >
+                        Đồng ý
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
+    };
+
+    const executeBan = async (userId: string, currentStatus: boolean, token: string) => {
+        try {
+            const res = await fetch(`http://localhost:3000/users/${userId}/ban`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                toast.success(`Đã ${!currentStatus ? 'cấm' : 'bỏ cấm'} người dùng thành công.`);
+                // Refresh list as banning deletes cars
+                fetchPendingCars(page);
+            } else {
+                toast.error('Có lỗi xảy ra khi cập nhật trạng thái.');
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('Lỗi kết nối.');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 pt-20 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -213,6 +281,13 @@ export default function AdminApprovals() {
                                                                 className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white text-xs font-bold uppercase hover:bg-red-700 transition-colors"
                                                             >
                                                                 <X className="w-3 h-3" /> Từ chối
+                                                            </button>
+                                                            <button
+                                                                onClick={() => toggleBan(car.seller.id, car.seller.isSellingBanned)}
+                                                                className="flex items-center gap-1 px-3 py-1 bg-black text-white text-xs font-bold uppercase hover:bg-gray-800 transition-colors"
+                                                                title="Cấm người dùng và xóa tất cả bài đăng"
+                                                            >
+                                                                <Ban className="w-3 h-3" /> Cấm
                                                             </button>
                                                         </div>
                                                     </td>
