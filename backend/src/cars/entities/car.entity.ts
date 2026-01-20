@@ -115,6 +115,9 @@ export class Car {
     @Column({ nullable: true })
     sellerId: string;
 
+    @Column({ default: 0 })
+    views: number;
+
     @CreateDateColumn()
     createdAt: Date;
 

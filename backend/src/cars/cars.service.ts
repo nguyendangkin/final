@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Car, CarStatus } from './entities/car.entity';
+import { CarView } from './entities/car-view.entity';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
 import { User } from '../users/user.entity';
 import * as fs from 'fs';
@@ -18,6 +19,8 @@ export class CarsService {
     constructor(
         @InjectRepository(Car)
         private carsRepository: Repository<Car>,
+        @InjectRepository(CarView)
+        private carViewRepository: Repository<CarView>,
         private dataSource: DataSource,
         private notificationsService: NotificationsService,
         private tagsService: TagsService,
@@ -980,5 +983,48 @@ export class CarsService {
         }
 
         return initiator ? initiator.id : null;
+    }
+
+    async incrementView(
+        carId: string,
+        clientInfo: { userId?: string; ipAddress: string; userAgent: string }
+    ): Promise<void> {
+        const { userId, ipAddress, userAgent } = clientInfo;
+
+        try {
+            const twentyFourHoursAgo = new Date();
+            twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+
+            const queryBuilder = this.carViewRepository.createQueryBuilder('cv')
+                .where('cv.carId = :carId', { carId })
+                .andWhere('cv.viewedAt > :since', { since: twentyFourHoursAgo });
+
+            if (userId) {
+                queryBuilder.andWhere('cv.userId = :userId', { userId });
+            } else if (ipAddress && userAgent) {
+                queryBuilder.andWhere('cv.ipAddress = :ipAddress', { ipAddress })
+                    .andWhere('cv.userAgent = :userAgent', { userAgent });
+            }
+
+            const existingView = await queryBuilder.getOne();
+
+            if (!existingView) {
+                await this.dataSource.transaction(async manager => {
+                    const view = new CarView();
+                    view.carId = carId;
+                    view.userId = userId || null;
+                    view.ipAddress = ipAddress || null;
+                    view.userAgent = userAgent || null;
+                    await manager.save(view);
+
+                    await manager.update(Car, carId, {
+                        views: () => 'views + 1'
+                    });
+                });
+            }
+        } catch (error) {
+            this.logger.error(`Error in incrementView: ${error.message}`, error.stack);
+            throw error;
+        }
     }
 }

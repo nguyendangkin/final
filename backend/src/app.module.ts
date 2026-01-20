@@ -10,6 +10,7 @@ import { PaymentModule } from './payment/payment.module';
 import { Transaction } from './payment/transaction.entity';
 import { CarsModule } from './cars/cars.module';
 import { Car } from './cars/entities/car.entity';
+import { CarView } from './cars/entities/car-view.entity';
 import { UploadModule } from './upload/upload.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -42,7 +43,7 @@ import { SoldCar } from './sold-cars/entities/sold-car.entity';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction, Car, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead, Tag, SoldCar],
+        entities: [User, Transaction, Car, CarView, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead, Tag, SoldCar],
         synchronize: true, // Auto-create tables (dev only)
       }),
       inject: [ConfigService],

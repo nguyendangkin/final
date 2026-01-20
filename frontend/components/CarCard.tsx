@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { GitFork, FileText, CheckCircle2, AlertTriangle, Calendar, Disc } from 'lucide-react';
+import { GitFork, FileText, CheckCircle2, AlertTriangle, Calendar, Disc, Eye } from 'lucide-react';
 import { generateCarSlug } from '@/lib/utils';
 
 interface CarCardProps {
@@ -104,6 +104,11 @@ export default function CarCard({ car }: CarCardProps) {
                     <span className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
                         {car.createdAt ? new Date(car.createdAt).toLocaleDateString('vi-VN') : 'Mới đăng'}
                     </span>
+                    {/* View Count */}
+                    <div className="flex items-center gap-1.5 text-gray-400 group-hover:text-[var(--jdm-red)] transition-colors">
+                        <Eye className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-bold tracking-wider">{car.views || 0}</span>
+                    </div>
                 </div>
             </div>
         </Link>

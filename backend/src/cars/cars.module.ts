@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CarsService } from './cars.service';
 import { CarsController } from './cars.controller';
 import { Car } from './entities/car.entity';
+import { CarView } from './entities/car-view.entity';
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -11,7 +12,7 @@ import { SoldCarsModule } from '../sold-cars/sold-cars.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Car]),
+        TypeOrmModule.forFeature([Car, CarView]),
         forwardRef(() => AuthModule),
         forwardRef(() => UsersModule),
         NotificationsModule,

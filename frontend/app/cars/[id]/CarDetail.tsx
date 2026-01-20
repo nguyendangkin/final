@@ -33,6 +33,26 @@ export default function CarDetail({ car }: CarDetailProps) {
         }
     }, []);
 
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+    const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
+    const [qrUrl, setQrUrl] = useState('');
+    const posterRef = useRef<HTMLDivElement>(null);
+    const hasIncremented = useRef(false);
+
+    useEffect(() => {
+        if (hasIncremented.current) return;
+        hasIncremented.current = true;
+
+        const token = localStorage.getItem('jwt_token');
+        fetch(`http://localhost:3000/cars/${car.id}/view`, {
+            method: 'POST',
+            headers: {
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            }
+        }).catch(err => console.error('Failed to increment view:', err));
+    }, [car.id]);
+
     // MERGE: Ensure thumbnail is the first image if it exists
     const rawImages = Array.isArray(car.images) && car.images.length > 0 ? car.images : [];
 
@@ -43,12 +63,6 @@ export default function CarDetail({ car }: CarDetailProps) {
     if (images.length === 0) {
         images = ["https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image"];
     }
-
-    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-    const [lightboxIndex, setLightboxIndex] = useState(0);
-    const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
-    const [qrUrl, setQrUrl] = useState('');
-    const posterRef = useRef<HTMLDivElement>(null);
 
     // Set QR URL on client-side to avoid hydration mismatch
     useEffect(() => {

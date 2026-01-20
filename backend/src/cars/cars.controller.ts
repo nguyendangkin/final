@@ -147,6 +147,40 @@ export class CarsController {
         return this.carsService.markAsSold(id, req.user);
     }
 
+    @Post(':id/view')
+    async incrementView(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Req() req
+    ) {
+        // Extract client info
+        const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'] || 'unknown';
+
+        // Try to get userId from token if present
+        let userId: string | undefined;
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.split(' ')[0] === 'Bearer') {
+            const token = authHeader.split(' ')[1];
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const user = JSON.parse(jsonPayload);
+                userId = user.id || user.sub;
+            } catch (e) {
+                // Ignore invalid token
+            }
+        }
+
+        return this.carsService.incrementView(id, {
+            userId,
+            ipAddress: Array.isArray(ipAddress) ? ipAddress[0] : ipAddress,
+            userAgent
+        });
+    }
+
     @Get('brands/all')
     getBrands() {
         return this.carsService.getBrands();
