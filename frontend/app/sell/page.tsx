@@ -382,21 +382,21 @@ export default function SellPage() {
                 <div className="space-y-8">
 
                     {/* Header */}
-                    <div className="flex justify-between items-end border-b border-gray-200 pb-6">
-                        <div>
+                    <div className="border-b border-gray-200 pb-6">
+                        <div className="flex justify-between items-center mb-2">
                             <h1 className="text-4xl font-black italic uppercase tracking-tighter text-black">
                                 Đăng Bán Xe
                             </h1>
-                            <p className="text-gray-500 mt-2 font-medium text-sm">
-                                Tin sai sự thật hoặc không liên quan sẽ bị khóa tài khoản nếu bị người khác tố cáo hoặc phát hiện. Nếu không có gợi ý phù hợp, bạn có thể tự nhập.
-                            </p>
+                            <button
+                                onClick={clearDraft}
+                                className="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-3 py-2 rounded-none text-xs font-bold uppercase transition-colors"
+                            >
+                                Xóa nháp
+                            </button>
                         </div>
-                        <button
-                            onClick={clearDraft}
-                            className="text-gray-500 hover:text-red-600 text-sm flex items-center gap-2 transition-colors"
-                        >
-                            <Trash2 className="w-4 h-4" /> Xóa nháp
-                        </button>
+                        <p className="text-gray-500 font-medium text-sm">
+                            Vui lòng cung cấp thông tin chính xác để tin đăng của bạn được duyệt nhanh chóng. Các thông tin đồi trụy, spam hoặc không liên quan có thể dẫn đến khóa tài khoản.
+                        </p>
                     </div>
 
                     {/* Stepper Content */}

@@ -73,7 +73,7 @@ const ModSection = ({
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-none p-6 space-y-4 hover:border-[var(--jdm-red)] hover:shadow-lg transition-all group">
+        <div className="bg-white border border-gray-200 rounded-none p-4 sm:p-6 space-y-4 hover:border-[var(--jdm-red)] hover:shadow-lg transition-all group">
             <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-black rounded-none group-hover:bg-[var(--jdm-red)] transition-colors">
                     <Icon className="w-5 h-5 text-white" />
@@ -87,7 +87,7 @@ const ModSection = ({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
-                    className="flex-1 bg-gray-50 border border-gray-200 text-black rounded-none px-4 py-3 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400 uppercase"
+                    className="flex-1 min-w-0 bg-gray-50 border border-gray-200 text-black rounded-none px-4 py-3 text-sm focus:ring-1 focus:ring-black outline-none transition-all placeholder:text-gray-400 uppercase"
                 />
                 <button
                     onClick={handleAdd}
