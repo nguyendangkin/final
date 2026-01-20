@@ -3,10 +3,12 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Check, X, Eye, Ban } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
 import Pagination from '@/components/Pagination';
+import { shouldOptimizeImage } from '@/lib/utils';
 
 export default function AdminApprovals() {
     const [cars, setCars] = useState<any[]>([]);
@@ -281,8 +283,14 @@ export default function AdminApprovals() {
                                             {cars.map((car) => (
                                                 <tr key={car.id} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="h-16 w-24 flex-shrink-0">
-                                                            <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
+                                                        <div className="h-16 w-24 flex-shrink-0 relative">
+                                                            <Image
+                                                                className="object-cover rounded-sm"
+                                                                src={car.images?.[0] || '/placeholder-car.png'}
+                                                                alt="Car Thumbnail"
+                                                                fill
+                                                                unoptimized={!shouldOptimizeImage(car.images?.[0] || '/placeholder-car.png')}
+                                                            />
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 min-w-[200px]">

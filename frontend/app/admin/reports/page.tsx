@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import Pagination from '@/components/Pagination';
 import { Flag, XCircle, CheckCircle, Eye, EyeOff, User, AlertTriangle, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { generateCarSlug } from '@/lib/utils';
+import { generateCarSlug, shouldOptimizeImage } from '@/lib/utils';
 import ReportsSkeleton from '@/components/ReportsSkeleton';
 
 export default function AdminReports() {
@@ -247,7 +248,13 @@ export default function AdminReports() {
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-16 w-24 relative bg-gray-100 border border-gray-200">
                                                         {report.reportedCar?.thumbnail ? (
-                                                            <img className="h-full w-full object-cover" src={report.reportedCar.thumbnail} alt="" />
+                                                            <Image
+                                                                className="object-cover"
+                                                                src={report.reportedCar.thumbnail}
+                                                                alt="Reported Car"
+                                                                fill
+                                                                unoptimized={!shouldOptimizeImage(report.reportedCar.thumbnail)}
+                                                            />
                                                         ) : (
                                                             <div className="flex items-center justify-center h-full text-xs text-gray-400 font-bold">NO IMG</div>
                                                         )}

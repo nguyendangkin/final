@@ -1,34 +1,39 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class Transaction {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({ type: 'bigint', unique: true })
-    orderCode: number; // PayOS order code
+  @Column({ type: 'bigint', unique: true })
+  orderCode: number; // PayOS order code
 
-    @Column()
-    userId: string;
+  @Column()
+  userId: string;
 
-    @Column({ type: 'int' })
-    amount: number; // The amount user gets
+  @Column({ type: 'int' })
+  amount: number; // The amount user gets
 
-    @Column({ default: 'PENDING' })
-    status: string;
+  @Column({ default: 'PENDING' })
+  status: string;
 
-    @Column({ default: 'DEPOSIT' })
-    type: string; // DEPOSIT | WITHDRAW
+  @Column({ default: 'DEPOSIT' })
+  type: string; // DEPOSIT | WITHDRAW
 
-    @Column({ nullable: true })
-    bankBin: string;
+  @Column({ nullable: true })
+  bankBin: string;
 
-    @Column({ nullable: true })
-    accountNumber: string;
+  @Column({ nullable: true })
+  accountNumber: string;
 
-    @Column({ nullable: true })
-    accountName: string;
+  @Column({ nullable: true })
+  accountName: string;
 
-    @CreateDateColumn()
-    createdAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
 }

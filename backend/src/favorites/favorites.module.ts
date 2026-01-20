@@ -6,8 +6,8 @@ import { Favorite } from './entities/favorite.entity';
 import { Car } from '../cars/entities/car.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Favorite, Car])],
-    controllers: [FavoritesController],
-    providers: [FavoritesService],
+  imports: [TypeOrmModule.forFeature([Favorite, Car])],
+  controllers: [FavoritesController],
+  providers: [FavoritesService],
 })
-export class FavoritesModule { }
+export class FavoritesModule {}

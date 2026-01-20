@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { User, Calendar, ShieldCheck, Car as CarIcon } from 'lucide-react';
 import CarFeed from '@/components/CarFeed';
+import { shouldOptimizeImage } from '@/lib/utils';
 
 interface SellerProfileProps {
     seller: {
@@ -39,12 +41,17 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-none bg-black flex items-center justify-center text-white font-bold text-2xl border border-gray-200 shadow-sm overflow-hidden">
                             {seller.avatar ? (
-                                <img
-                                    src={seller.avatar}
-                                    alt={displayName}
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
-                                />
+                                <div className="relative w-full h-full">
+                                    <Image
+                                        src={seller.avatar}
+                                        alt={displayName}
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                        referrerPolicy="no-referrer"
+                                        unoptimized={!shouldOptimizeImage(seller.avatar)}
+                                    />
+                                </div>
                             ) : (
                                 displayName[0]?.toUpperCase() || 'U'
                             )}

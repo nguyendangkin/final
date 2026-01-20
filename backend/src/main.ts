@@ -8,25 +8,29 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security Headers
-  app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow images to be loaded by frontend
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        defaultSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:", "http:"], // Allow external images
-        scriptSrc: ["'self'", "'unsafe-inline'"], // Needed for some inline scripts if necessary, tighten if possible
-        styleSrc: ["'self'", "'unsafe-inline'"], // Common for CSS-in-JS
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow images to be loaded by frontend
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          defaultSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:', 'http:'], // Allow external images
+          scriptSrc: ["'self'", "'unsafe-inline'"], // Needed for some inline scripts if necessary, tighten if possible
+          styleSrc: ["'self'", "'unsafe-inline'"], // Common for CSS-in-JS
+        },
       },
-    },
-  }));
+    }),
+  );
 
   // Global Validation Pipe - Critical for security
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true, // Strip properties not in DTO
-    forbidNonWhitelisted: true, // Throw error if extra properties are sent
-    transform: true, // Auto-transform payloads to DTO instances
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip properties not in DTO
+      forbidNonWhitelisted: true, // Throw error if extra properties are sent
+      transform: true, // Auto-transform payloads to DTO instances
+    }),
+  );
 
   // Gzip Compression
   app.use(compression());

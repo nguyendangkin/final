@@ -5,9 +5,9 @@ import { TagsService } from './tags.service';
 import { TagsController } from './tags.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Tag])],
-    controllers: [TagsController],
-    providers: [TagsService],
-    exports: [TagsService],
+  imports: [TypeOrmModule.forFeature([Tag])],
+  controllers: [TagsController],
+  providers: [TagsService],
+  exports: [TagsService],
 })
-export class TagsModule { }
+export class TagsModule {}

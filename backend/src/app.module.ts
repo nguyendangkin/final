@@ -31,7 +31,6 @@ import { SoldCar } from './sold-cars/entities/sold-car.entity';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -41,10 +40,12 @@ import { APP_GUARD } from '@nestjs/core';
       isGlobal: true,
       ttl: 60000, // 1 minute cache
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100, // 100 requests per minute per IP
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100, // 100 requests per minute per IP
+      },
+    ]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -54,7 +55,19 @@ import { APP_GUARD } from '@nestjs/core';
         username: configService.get<string>('DB_USERNAME', 'postgres'),
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
-        entities: [User, Transaction, Car, CarView, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead, Tag, SoldCar],
+        entities: [
+          User,
+          Transaction,
+          Car,
+          CarView,
+          Report,
+          Favorite,
+          Notification,
+          SystemAnnouncement,
+          UserAnnouncementRead,
+          Tag,
+          SoldCar,
+        ],
         // synchronize: true, // Auto-create tables (dev only)
         synchronize: configService.get<string>('NODE_ENV') !== 'production', // Only auto-sync in dev
       }),
@@ -85,4 +98,4 @@ import { APP_GUARD } from '@nestjs/core';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

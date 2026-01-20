@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Pagination from '@/components/Pagination';
 import TableSkeleton from '@/components/TableSkeleton';
+import { shouldOptimizeImage } from '@/lib/utils';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
@@ -257,7 +259,14 @@ export default function AdminUsers() {
                                                 <div className="flex items-center">
                                                     <div className="flex-shrink-0 h-10 w-10">
                                                         {user.avatar ? (
-                                                            <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
+                                                            <Image
+                                                                className="rounded-full object-cover"
+                                                                src={user.avatar}
+                                                                alt="User Avatar"
+                                                                width={40}
+                                                                height={40}
+                                                                unoptimized={!shouldOptimizeImage(user.avatar)}
+                                                            />
                                                         ) : (
                                                             <div className="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold">
                                                                 {user.name?.[0] || 'U'}

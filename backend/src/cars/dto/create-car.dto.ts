@@ -1,241 +1,251 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsEnum, IsBoolean, Max, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsBoolean,
+  Max,
+  MaxLength,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CarStatus } from '../entities/car.entity';
 
 export class CreateCarDto {
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(100)
-    make: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  make: string;
 
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(100)
-    model: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  model: string;
 
-    @IsNumber()
-    @Type(() => Number)
-    year: number;
+  @IsNumber()
+  @Type(() => Number)
+  year: number;
 
-    @IsString()
-    @IsOptional()
-    trim?: string;
+  @IsString()
+  @IsOptional()
+  trim?: string;
 
-    @IsNumber()
-    @Type(() => Number)
-    price: number;
+  @IsNumber()
+  @Type(() => Number)
+  price: number;
 
-    @IsBoolean()
-    @IsOptional()
-    isNegotiable?: boolean;
+  @IsBoolean()
+  @IsOptional()
+  isNegotiable?: boolean;
 
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(5000, { message: 'Mô tả quá dài (tối đa 5000 ký tự)' })
-    description: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(5000, { message: 'Mô tả quá dài (tối đa 5000 ký tự)' })
+  description: string;
 
-    @IsArray()
-    @IsString({ each: true })
-    @IsOptional()
-    images?: string[];
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  images?: string[];
 
-    @IsString()
-    @IsOptional()
-    thumbnail?: string;
+  @IsString()
+  @IsOptional()
+  thumbnail?: string;
 
-    @IsString()
-    @IsOptional()
-    videoLink?: string;
+  @IsString()
+  @IsOptional()
+  videoLink?: string;
 
-    @IsNumber()
-    @Type(() => Number)
-    @Max(2000000000, { message: 'Số km quá lớn (tối đa 2 tỷ)' })
-    mileage: number;
+  @IsNumber()
+  @Type(() => Number)
+  @Max(2000000000, { message: 'Số km quá lớn (tối đa 2 tỷ)' })
+  mileage: number;
 
-    @IsString()
-    @IsNotEmpty()
-    @MaxLength(200)
-    location: string;
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
+  location: string;
 
-    // JDM Specs
-    @IsString()
-    @IsOptional()
-    chassisCode?: string;
+  // JDM Specs
+  @IsString()
+  @IsOptional()
+  chassisCode?: string;
 
-    @IsString()
-    @IsOptional()
-    engineCode?: string;
+  @IsString()
+  @IsOptional()
+  engineCode?: string;
 
-    @IsString()
-    @IsOptional()
-    transmission?: string;
+  @IsString()
+  @IsOptional()
+  transmission?: string;
 
-    @IsString()
-    @IsOptional()
-    drivetrain?: string;
+  @IsString()
+  @IsOptional()
+  drivetrain?: string;
 
-    @IsString()
-    @IsOptional()
-    condition?: string;
+  @IsString()
+  @IsOptional()
+  condition?: string;
 
-    // Legal
-    @IsString()
-    @IsOptional()
-    paperwork?: string;
+  // Legal
+  @IsString()
+  @IsOptional()
+  paperwork?: string;
 
-    @IsString()
-    @IsOptional()
-    registryExpiry?: string;
+  @IsString()
+  @IsOptional()
+  registryExpiry?: string;
 
-    @IsBoolean()
-    @IsOptional()
-    noRegistry?: boolean;
+  @IsBoolean()
+  @IsOptional()
+  noRegistry?: boolean;
 
-    @IsString()
-    @IsOptional()
-    plateNumber?: string;
+  @IsString()
+  @IsOptional()
+  plateNumber?: string;
 
-    // Mods can be complex object, allow any for now or specific structure
-    @IsOptional()
-    mods?: any;
+  // Mods can be complex object, allow any for now or specific structure
+  @IsOptional()
+  mods?: any;
 
-    @IsArray()
-    @IsString({ each: true })
-    @IsOptional()
-    notableFeatures?: string[];
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  notableFeatures?: string[];
 
-    // Contact & Details
-    @IsString()
-    @IsNotEmpty()
-    phoneNumber: string;
+  // Contact & Details
+  @IsString()
+  @IsNotEmpty()
+  phoneNumber: string;
 
-    @IsString()
-    @IsOptional()
-    facebookLink?: string;
+  @IsString()
+  @IsOptional()
+  facebookLink?: string;
 
-    @IsString()
-    @IsOptional()
-    zaloLink?: string;
+  @IsString()
+  @IsOptional()
+  zaloLink?: string;
 
-    @IsString()
-    @IsOptional()
-    additionalInfo?: string;
+  @IsString()
+  @IsOptional()
+  additionalInfo?: string;
 }
 
 export class UpdateCarDto {
-    @IsOptional()
-    @IsString()
-    make?: string;
+  @IsOptional()
+  @IsString()
+  make?: string;
 
-    @IsOptional()
-    @IsString()
-    model?: string;
+  @IsOptional()
+  @IsString()
+  model?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Type(() => Number)
-    year?: number;
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  year?: number;
 
-    @IsOptional()
-    @IsString()
-    trim?: string;
+  @IsOptional()
+  @IsString()
+  trim?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Type(() => Number)
-    price?: number;
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  price?: number;
 
-    @IsOptional()
-    @IsBoolean()
-    isNegotiable?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  isNegotiable?: boolean;
 
-    @IsOptional()
-    @IsString()
-    description?: string;
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    images?: string[];
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
 
-    @IsOptional()
-    @IsString()
-    thumbnail?: string;
+  @IsOptional()
+  @IsString()
+  thumbnail?: string;
 
-    @IsOptional()
-    @IsString()
-    videoLink?: string;
+  @IsOptional()
+  @IsString()
+  videoLink?: string;
 
-    @IsOptional()
-    @IsNumber()
-    @Type(() => Number)
-    mileage?: number;
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  mileage?: number;
 
-    @IsOptional()
-    @IsString()
-    location?: string;
+  @IsOptional()
+  @IsString()
+  location?: string;
 
-    @IsOptional()
-    @IsString()
-    chassisCode?: string;
+  @IsOptional()
+  @IsString()
+  chassisCode?: string;
 
-    @IsOptional()
-    @IsString()
-    engineCode?: string;
+  @IsOptional()
+  @IsString()
+  engineCode?: string;
 
-    @IsOptional()
-    @IsString()
-    transmission?: string;
+  @IsOptional()
+  @IsString()
+  transmission?: string;
 
-    @IsOptional()
-    @IsString()
-    drivetrain?: string;
+  @IsOptional()
+  @IsString()
+  drivetrain?: string;
 
-    @IsOptional()
-    @IsString()
-    condition?: string;
+  @IsOptional()
+  @IsString()
+  condition?: string;
 
-    @IsOptional()
-    @IsString()
-    paperwork?: string;
+  @IsOptional()
+  @IsString()
+  paperwork?: string;
 
-    @IsOptional()
-    @IsString()
-    registryExpiry?: string;
+  @IsOptional()
+  @IsString()
+  registryExpiry?: string;
 
-    @IsOptional()
-    @IsBoolean()
-    noRegistry?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  noRegistry?: boolean;
 
-    @IsOptional()
-    @IsString()
-    plateNumber?: string;
+  @IsOptional()
+  @IsString()
+  plateNumber?: string;
 
-    @IsOptional()
-    mods?: any;
+  @IsOptional()
+  mods?: any;
 
-    @IsOptional()
-    @IsArray()
-    @IsString({ each: true })
-    notableFeatures?: string[];
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  notableFeatures?: string[];
 
-    @IsOptional()
-    @IsString()
-    phoneNumber?: string;
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
 
-    @IsOptional()
-    @IsString()
-    facebookLink?: string;
+  @IsOptional()
+  @IsString()
+  facebookLink?: string;
 
-    @IsOptional()
-    @IsString()
-    zaloLink?: string;
+  @IsOptional()
+  @IsString()
+  zaloLink?: string;
 
-    @IsOptional()
-    @IsString()
-    additionalInfo?: string;
+  @IsOptional()
+  @IsString()
+  additionalInfo?: string;
 
-    @IsOptional()
-    @IsEnum(CarStatus)
-    status?: CarStatus;
+  @IsOptional()
+  @IsEnum(CarStatus)
+  status?: CarStatus;
 }

@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box, Armchair, Hammer, Disc } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getCarIdFromSlug } from '@/lib/utils';
+import { getCarIdFromSlug, shouldOptimizeImage } from '@/lib/utils';
 import EditCarSkeleton from '@/components/EditCarSkeleton';
 
 const BRANDS = [
@@ -478,7 +479,7 @@ export default function EditCarPage() {
                             <div className="relative group">
                                 {formData.thumbnail ? (
                                     <div className="relative w-full h-64 rounded-none overflow-hidden border border-gray-200 bg-gray-50 shadow-sm group-hover:border-[var(--jdm-red)] transition-all">
-                                        <img src={formData.thumbnail} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                                        <Image src={formData.thumbnail} alt="Thumbnail Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(formData.thumbnail)} />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <label className="cursor-pointer px-4 py-2 bg-[var(--jdm-red)] text-white rounded-none font-bold hover:bg-red-700 transition-all shadow-lg flex items-center gap-2">
                                                 <UploadCloud className="w-5 h-5" /> Thay ảnh
@@ -520,7 +521,7 @@ export default function EditCarPage() {
                                         key={idx}
                                         className="relative aspect-square rounded-none overflow-hidden border border-gray-200 group hover:border-[var(--jdm-red)] transition-all bg-white"
                                     >
-                                        <img src={img} alt={`Album ${idx}`} className="w-full h-full object-cover" />
+                                        <Image src={img} alt={`Album ${idx}`} fill className="object-cover" unoptimized={!shouldOptimizeImage(img)} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveImage(idx)}

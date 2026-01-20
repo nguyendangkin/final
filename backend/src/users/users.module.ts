@@ -7,13 +7,13 @@ import { CarsModule } from '../cars/cars.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([User]),
-        forwardRef(() => CarsModule),
-        NotificationsModule
-    ],
-    controllers: [UsersController],
-    providers: [UsersService],
-    exports: [UsersService],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => CarsModule),
+    NotificationsModule,
+  ],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

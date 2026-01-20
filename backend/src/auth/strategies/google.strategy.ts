@@ -6,33 +6,33 @@ import { AuthService } from '../auth.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-    constructor(
-        configService: ConfigService,
-        private authService: AuthService,
-    ) {
-        super({
-            clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
-            clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
-            callbackURL: configService.get<string>('CALLBACK_URL') || '',
-            scope: ['email', 'profile'],
-        });
-    }
+  constructor(
+    configService: ConfigService,
+    private authService: AuthService,
+  ) {
+    super({
+      clientID: configService.get<string>('GOOGLE_CLIENT_ID') || '',
+      clientSecret: configService.get<string>('GOOGLE_CLIENT_SECRET') || '',
+      callbackURL: configService.get<string>('CALLBACK_URL') || '',
+      scope: ['email', 'profile'],
+    });
+  }
 
-    async validate(
-        accessToken: string,
-        refreshToken: string,
-        profile: any,
-        done: VerifyCallback,
-    ): Promise<any> {
-        const { name, emails, photos, id } = profile;
-        const user = await this.authService.validateGoogleUser({
-            email: emails[0].value,
-            firstName: name.givenName,
-            lastName: name.familyName,
-            picture: photos[0].value,
-            googleId: id,
-            accessToken,
-        });
-        done(null, user);
-    }
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: VerifyCallback,
+  ): Promise<any> {
+    const { name, emails, photos, id } = profile;
+    const user = await this.authService.validateGoogleUser({
+      email: emails[0].value,
+      firstName: name.givenName,
+      lastName: name.familyName,
+      picture: photos[0].value,
+      googleId: id,
+      accessToken,
+    });
+    done(null, user);
+  }
 }

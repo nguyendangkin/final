@@ -9,15 +9,15 @@ import { SystemAnnouncement } from './entities/system-announcement.entity';
 import { UserAnnouncementRead } from './entities/user-announcement-read.entity';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([
-            Notification,
-            SystemAnnouncement,
-            UserAnnouncementRead,
-        ]),
-    ],
-    controllers: [NotificationsController, AnnouncementsController],
-    providers: [NotificationsService, AnnouncementsService],
-    exports: [NotificationsService],
+  imports: [
+    TypeOrmModule.forFeature([
+      Notification,
+      SystemAnnouncement,
+      UserAnnouncementRead,
+    ]),
+  ],
+  controllers: [NotificationsController, AnnouncementsController],
+  providers: [NotificationsService, AnnouncementsService],
+  exports: [NotificationsService],
 })
-export class NotificationsModule { }
+export class NotificationsModule {}

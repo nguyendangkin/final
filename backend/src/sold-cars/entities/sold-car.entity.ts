@@ -1,33 +1,40 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 import { User } from '../../users/user.entity';
 
 @Entity()
 export class SoldCar {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({ nullable: true })
-    originalCarId: string; // The ID of the original car listing (for reference)
+  @Column({ nullable: true })
+  originalCarId: string; // The ID of the original car listing (for reference)
 
-    @Column()
-    make: string;
+  @Column()
+  make: string;
 
-    @Column()
-    model: string;
+  @Column()
+  model: string;
 
-    @Column()
-    year: number;
+  @Column()
+  year: number;
 
-    @Column()
-    price: string;
+  @Column()
+  price: string;
 
-    @Column({ nullable: true })
-    thumbnail: string;
+  @Column({ nullable: true })
+  thumbnail: string;
 
-    @ManyToOne(() => User, (user) => user.soldCars, { eager: true })
-    seller: User;
+  @ManyToOne(() => User, (user) => user.soldCars, { eager: true })
+  seller: User;
 
-    @CreateDateColumn()
-    @Index()
-    soldAt: Date;
+  @CreateDateColumn()
+  @Index()
+  soldAt: Date;
 }

@@ -11,16 +11,16 @@ import { TagsModule } from '../tags/tags.module';
 import { SoldCarsModule } from '../sold-cars/sold-cars.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Car, CarView]),
-        forwardRef(() => AuthModule),
-        forwardRef(() => UsersModule),
-        NotificationsModule,
-        TagsModule,
-        SoldCarsModule,
-    ],
-    controllers: [CarsController],
-    providers: [CarsService],
-    exports: [CarsService],
+  imports: [
+    TypeOrmModule.forFeature([Car, CarView]),
+    forwardRef(() => AuthModule),
+    forwardRef(() => UsersModule),
+    NotificationsModule,
+    TagsModule,
+    SoldCarsModule,
+  ],
+  controllers: [CarsController],
+  providers: [CarsService],
+  exports: [CarsService],
 })
-export class CarsModule { }
+export class CarsModule {}

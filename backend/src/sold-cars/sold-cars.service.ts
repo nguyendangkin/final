@@ -7,35 +7,35 @@ import { Car } from '../cars/entities/car.entity';
 
 @Injectable()
 export class SoldCarsService {
-    constructor(
-        @InjectRepository(SoldCar)
-        private soldCarsRepository: Repository<SoldCar>,
-    ) { }
+  constructor(
+    @InjectRepository(SoldCar)
+    private soldCarsRepository: Repository<SoldCar>,
+  ) {}
 
-    async create(car: Car): Promise<SoldCar> {
-        const soldCar = this.soldCarsRepository.create({
-            originalCarId: car.id,
-            make: car.make,
-            model: car.model,
-            year: car.year,
-            price: car.price,
-            thumbnail: car.thumbnail,
-            seller: car.seller,
-            // soldAt will be auto-generated
-        });
-        return this.soldCarsRepository.save(soldCar);
-    }
+  async create(car: Car): Promise<SoldCar> {
+    const soldCar = this.soldCarsRepository.create({
+      originalCarId: car.id,
+      make: car.make,
+      model: car.model,
+      year: car.year,
+      price: car.price,
+      thumbnail: car.thumbnail,
+      seller: car.seller,
+      // soldAt will be auto-generated
+    });
+    return this.soldCarsRepository.save(soldCar);
+  }
 
-    async findAllBySeller(sellerId: string): Promise<SoldCar[]> {
-        return this.soldCarsRepository.find({
-            where: { seller: { id: sellerId } },
-            order: { soldAt: 'DESC' },
-        });
-    }
+  async findAllBySeller(sellerId: string): Promise<SoldCar[]> {
+    return this.soldCarsRepository.find({
+      where: { seller: { id: sellerId } },
+      order: { soldAt: 'DESC' },
+    });
+  }
 
-    async countBySeller(sellerId: string): Promise<number> {
-        return this.soldCarsRepository.count({
-            where: { seller: { id: sellerId } }
-        });
-    }
+  async countBySeller(sellerId: string): Promise<number> {
+    return this.soldCarsRepository.count({
+      where: { seller: { id: sellerId } },
+    });
+  }
 }

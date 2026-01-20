@@ -1,7 +1,9 @@
 import { CarSpecs } from '../types';
+import Image from 'next/image';
 import { Image as ImageIcon, Video, Plus, X, Link as LinkIcon, AlertCircle, UploadCloud, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useState, useEffect } from 'react';
+import { shouldOptimizeImage } from '@/lib/utils';
 
 interface StepMediaProps {
     data: CarSpecs;
@@ -141,7 +143,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                 <div className="relative group">
                     {data.thumbnail ? (
                         <div className="relative w-full h-64 rounded-none overflow-hidden border border-gray-200 bg-gray-50 shadow-sm group-hover:border-[var(--jdm-red)] transition-all">
-                            <img src={data.thumbnail} alt="Thumbnail Preview" className="w-full h-full object-cover" />
+                            <Image src={data.thumbnail} alt="Thumbnail Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(data.thumbnail)} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <label className="cursor-pointer px-4 py-2 bg-[var(--jdm-red)] text-white rounded-none font-bold hover:bg-red-700 transition-all shadow-lg flex items-center gap-2">
                                     <UploadCloud className="w-5 h-5" /> Thay ảnh
@@ -207,7 +209,7 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                                 }`}
                         >
                             {img ? (
-                                <img src={img} alt={`Album ${idx}`} className="w-full h-full object-cover" />
+                                <Image src={img} alt={`Album ${idx}`} fill className="object-cover" unoptimized={!shouldOptimizeImage(img)} />
                             ) : (
                                 <div className="w-full h-full bg-gray-50 flex items-center justify-center">
                                     <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
