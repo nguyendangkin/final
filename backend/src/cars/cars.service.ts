@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, MoreThan } from 'typeorm';
+import { Repository, DataSource, MoreThan, In } from 'typeorm';
 import { Car, CarStatus } from './entities/car.entity';
 import { CarView } from './entities/car-view.entity';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
@@ -257,6 +257,25 @@ export class CarsService {
     }
 
     async create(createCarDto: CreateCarDto, seller: User): Promise<Car> {
+        // Check for duplicate listings from the same seller
+        // Criteria: Same make, model, year, price, mileage AND (AVAILABLE or PENDING_APPROVAL)
+        const duplicateCar = await this.carsRepository.findOne({
+            where: {
+                seller: { id: seller.id },
+                make: createCarDto.make,
+                model: createCarDto.model,
+                year: createCarDto.year,
+                price: createCarDto.price.toString(),
+                mileage: createCarDto.mileage,
+                status: In([CarStatus.AVAILABLE, CarStatus.PENDING_APPROVAL])
+            },
+            relations: ['seller']
+        });
+
+        if (duplicateCar) {
+            throw new BadRequestException('Bạn đã có một bài đăng tương tự cho xe này. Vui lòng kiểm tra lại danh sách xe của bạn.');
+        }
+
         // Check how many approved posts this user has
         const approvedCount = await this.carsRepository.count({
             where: [

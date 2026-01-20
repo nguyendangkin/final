@@ -328,7 +328,10 @@ export default function SellPage() {
             localStorage.removeItem('sell_draft');
             router.push('/');
         } catch (error: any) {
-            console.error('Error submitting:', error);
+            // Only log actual unexpected errors to console, hide known validation errors
+            if (error.message !== 'Bạn đã có một bài đăng tương tự cho xe này. Vui lòng kiểm tra lại danh sách xe của bạn.') {
+                console.error('Error submitting:', error);
+            }
             toast.error(`Lỗi: ${error.message}`);
         } finally {
             setLoading(false);
