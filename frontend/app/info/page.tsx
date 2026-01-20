@@ -1,7 +1,17 @@
-'use client';
+
 
 import Link from 'next/link';
 import { ArrowLeft, Shield, FileText, Mail, Phone, MapPin, Clock, Users, Car, Heart } from 'lucide-react';
+
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: "Giới Thiệu & Chính Sách | 4Gach",
+    description: "Tìm hiểu về 4Gach, quy định đăng tin, chính sách bảo mật và cộng đồng xe JDM Việt Nam.",
+    alternates: {
+        canonical: "/info",
+    },
+};
 
 export default function InfoPage() {
     return (

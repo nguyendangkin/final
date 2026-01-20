@@ -29,6 +29,16 @@ async function getCars(searchParams: any) {
   }
 }
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: "Trang Chủ | Chợ Xe JDM Số 1 Việt Nam",
+  description: "Duyệt hàng trăm tin đăng bán xe JDM, xe thể thao Nhật Bản. Tìm kiếm các mẫu xe huyền thoại như Supra, GTR, Civic Type R, RX-7.",
+  alternates: {
+    canonical: "/",
+  },
+};
+
 export default async function Home({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const resolvedSearchParams = await searchParams;
   const cars = await getCars(resolvedSearchParams);

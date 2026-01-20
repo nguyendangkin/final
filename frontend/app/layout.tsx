@@ -10,8 +10,41 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "4Gach - JDM - Chợ xe JDM Đỉnh Cao",
-  description: "Nơi mua bán xe JDM uy tín nhất Việt Nam",
+  title: {
+    default: "4Gach - Sàn Mua Bán Xe JDM & Thể Thao Tại Việt Nam",
+    template: "%s | 4Gach - JDM Market",
+  },
+  description: "4Gach là nền tảng chuyên biệt số 1 Việt Nam để mua bán các dòng xe JDM và xe thể thao Nhật Bản (Toyota, Nissan, Honda, Mazda, Mitsubishi, Subaru). Kết nối đam mê, giao dịch uy tín.",
+  keywords: ["JDM", "xe JDM", "mua bán xe JDM", "xe thể thao Nhật", "chợ xe JDM", "Nissan GTR", "Toyota Supra", "Honda Civic Type R", "Mazda RX7", "Subaru WRX STI", "Mitsubishi Evo", "xe độ", "xe cũ"],
+  authors: [{ name: "4Gach Team" }],
+  creator: "4Gach Team",
+  publisher: "4Gach Team",
+  openGraph: {
+    title: "4Gach - Sàn Mua Bán Xe JDM Đỉnh Cao",
+    description: "Nơi mua bán xe JDM và xe thể thao Nhật Bản uy tín nhất Việt Nam. Tham gia cộng đồng ngay hôm nay.",
+    url: "http://localhost:3001",
+    siteName: "4Gach JDM Market",
+    locale: "vi_VN",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.jpg", // Make sure to serve a default OG image if possible, or user needs to add one
+        width: 1200,
+        height: 630,
+        alt: "4Gach JDM Market",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "4Gach - Sàn Mua Bán Xe JDM Đỉnh Cao",
+    description: "Mua bán xe JDM uy tín tại Việt Nam.",
+    creator: "@4gach_jdm",
+  },
+  metadataBase: new URL("http://localhost:3001"),
+  alternates: {
+    canonical: "/",
+  },
 };
 
 import { Toaster } from 'react-hot-toast';
@@ -28,6 +61,22 @@ export default function RootLayout({
       >
         <Header />
         {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: '4Gach JDM',
+              url: 'http://localhost:3001',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'http://localhost:3001/search?q={search_term_string}',
+                'query-input': 'required name=search_term_string'
+              }
+            })
+          }}
+        />
         <Toaster
           position="top-center"
           reverseOrder={false}
