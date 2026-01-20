@@ -49,6 +49,11 @@ export class CarsController {
         return this.carsService.rejectCar(id);
     }
 
+    @Get(':id/ranking')
+    async getCarRanking(@Param('id', ParseUUIDPipe) id: string) {
+        return this.carsService.getCarRanking(id);
+    }
+
     @Get(':id')
     async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
         // Optimistically try to get user if token exists

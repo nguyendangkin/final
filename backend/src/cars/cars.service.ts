@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, MoreThan } from 'typeorm';
 import { Car, CarStatus } from './entities/car.entity';
 import { CarView } from './entities/car-view.entity';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
@@ -1024,7 +1024,36 @@ export class CarsService {
             }
         } catch (error) {
             this.logger.error(`Error in incrementView: ${error.message}`, error.stack);
-            throw error;
         }
+    }
+
+    async getCarRanking(id: string) {
+        const car = await this.carsRepository.findOne({ where: { id } });
+        if (!car) throw new NotFoundException('Car not found');
+
+        // Fetch all available cars to calculate ranking in memory (safest for small/medium datasets)
+        const allAvailable = await this.carsRepository.find({
+            where: { status: CarStatus.AVAILABLE },
+            order: { createdAt: 'DESC' }
+        });
+
+        const globalRank = allAvailable.findIndex(c => c.id === id) + 1;
+        const globalTotal = allAvailable.length;
+
+        const sameMake = allAvailable.filter(c => c.make === car.make);
+        const makeRank = sameMake.findIndex(c => c.id === id) + 1;
+        const makeTotal = sameMake.length;
+
+        return {
+            global: {
+                rank: globalRank > 0 ? globalRank : globalTotal + 1, // Fallback if car is not AVAILABLE
+                total: globalTotal
+            },
+            make: {
+                rank: makeRank > 0 ? makeRank : makeTotal + 1,
+                total: makeTotal,
+                name: car.make
+            }
+        };
     }
 }

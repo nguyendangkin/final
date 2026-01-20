@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Phone, MessageCircle, Facebook, ShieldCheck, Pencil, CheckCircle2, Camera, Flag, ChevronRight, AlertTriangle, Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
-import { MapPin, User } from 'lucide-react';
+import { MapPin, User, TrendingDown } from 'lucide-react';
+import ListingRanking from './ListingRanking';
 
 interface CarActionCardProps {
     car: any;
@@ -292,14 +293,20 @@ export default function CarActionCard({
 
                             {/* Generate Poster Button - Hidden if Sold */}
                             {car.status !== 'SOLD' && (
-                                <button
-                                    onClick={onGeneratePoster}
-                                    disabled={isGeneratingPoster}
-                                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2.5 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <Camera className="w-5 h-5" />
-                                    {isGeneratingPoster ? 'Đang tạo...' : 'Tạo Poster Bán Xe'}
-                                </button>
+                                <>
+                                    <button
+                                        onClick={onGeneratePoster}
+                                        disabled={isGeneratingPoster}
+                                        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2.5 rounded-none hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Camera className="w-5 h-5" />
+                                        {isGeneratingPoster ? 'Đang tạo...' : 'Tạo Poster Bán Xe'}
+                                    </button>
+
+                                    <div className="pt-4 border-t border-gray-100 mt-4">
+                                        <ListingRanking carId={car.id} />
+                                    </div>
+                                </>
                             )}
                         </>
                     )}
