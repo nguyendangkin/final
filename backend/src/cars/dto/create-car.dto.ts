@@ -95,6 +95,11 @@ export class CreateCarDto {
     @IsOptional()
     mods?: any;
 
+    @IsArray()
+    @IsString({ each: true })
+    @IsOptional()
+    notableFeatures?: string[];
+
     // Contact & Details
     @IsString()
     @IsNotEmpty()
@@ -204,6 +209,11 @@ export class UpdateCarDto {
 
     @IsOptional()
     mods?: any;
+
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    notableFeatures?: string[];
 
     @IsOptional()
     @IsString()

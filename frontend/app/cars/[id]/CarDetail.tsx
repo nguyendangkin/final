@@ -176,18 +176,18 @@ export default function CarDetail({ car }: CarDetailProps) {
                     <div className="lg:col-span-8 space-y-8">
 
                         {/* NEW MODERN IMAGE GALLERY */}
-<div className="mb-8"><CarGallery images={images} status={car.status} onOpenLightbox={openLightbox} /></div>
+                        <div className="mb-8"><CarGallery images={images} status={car.status} onOpenLightbox={openLightbox} /></div>
 
 
                         {/* Title & Price Card (Mobile) - Duplicated from Sidebar */}
-<CarActionCard 
-            car={car} 
-            currentUser={currentUser} 
-            isOwner={isOwner} 
-            isGeneratingPoster={isGeneratingPoster} 
-            onGeneratePoster={generatePoster}
-            className="lg:hidden mt-4"
-        />
+                        <CarActionCard
+                            car={car}
+                            currentUser={currentUser}
+                            isOwner={isOwner}
+                            isGeneratingPoster={isGeneratingPoster}
+                            onGeneratePoster={generatePoster}
+                            className="lg:hidden mt-4"
+                        />
 
                         {/* Thông số Kỹ thuật */}
                         <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
@@ -221,6 +221,24 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 </div>
                             </div>
                         </div>
+
+
+                        {/* Notable Features Display */}
+                        {car.notableFeatures && car.notableFeatures.length > 0 && (
+                            <div className="bg-white p-6 md:p-8 rounded-none shadow-sm border border-gray-100">
+                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2 uppercase">
+                                    <CheckCircle2 className="w-6 h-6 text-[var(--jdm-red)]" /> Điểm Nhấn Ngoại Hình
+                                </h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {car.notableFeatures.map((feature: string) => (
+                                        <span key={feature} className="px-4 py-2 bg-red-50 border border-[var(--jdm-red)] text-[var(--jdm-red)] font-bold text-sm uppercase tracking-wide">
+                                            {feature}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
 
                         {/* Mod List */}
                         {car.mods && (
@@ -331,356 +349,356 @@ export default function CarDetail({ car }: CarDetailProps) {
 
                     {/* RIGHT COLUMN: Sidebar (Sticky) - Hidden on Mobile */}
                     <div className="hidden lg:block lg:col-span-4 space-y-6">
-<div className="sticky top-24 space-y-6">
-        <CarActionCard 
-            car={car} 
-            currentUser={currentUser} 
-            isOwner={isOwner} 
-            isGeneratingPoster={isGeneratingPoster} 
-            onGeneratePoster={generatePoster}
-        />
-        </div>
+                        <div className="sticky top-24 space-y-6">
+                            <CarActionCard
+                                car={car}
+                                currentUser={currentUser}
+                                isOwner={isOwner}
+                                isGeneratingPoster={isGeneratingPoster}
+                                onGeneratePoster={generatePoster}
+                            />
+                        </div>
                     </div>
 
                 </div>
-            </div>
 
-            {/* Hidden Poster for Screenshot - Website Style */}
-            <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-                <div
-                    ref={posterRef}
-                    style={{
-                        width: '1080px',
-                        height: '1350px',
-                        background: '#ffffff',
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                        color: '#111111',
-                        position: 'relative',
-                        overflow: 'hidden',
-                    }}
-                >
-                    {/* Red Header Bar */}
-                    <div style={{
-                        background: '#DC2626',
-                        padding: '24px 40px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                    }}>
+                {/* Hidden Poster for Screenshot - Website Style */}
+                <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+                    <div
+                        ref={posterRef}
+                        style={{
+                            width: '1080px',
+                            height: '1350px',
+                            background: '#ffffff',
+                            fontFamily: 'system-ui, -apple-system, sans-serif',
+                            color: '#111111',
+                            position: 'relative',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {/* Red Header Bar */}
                         <div style={{
-                            fontSize: '28px',
-                            fontWeight: 900,
-                            color: 'white',
-                            letterSpacing: '4px',
-                            textTransform: 'uppercase',
-                        }}>
-                            CẦN BÁN
-                        </div>
-                        <div style={{
-                            background: 'white',
-                            color: '#DC2626',
-                            padding: '8px 20px',
-                            fontWeight: 900,
-                            fontSize: '14px',
-                            letterSpacing: '1px',
-                        }}>
-                            {car.condition || 'ĐÃ QUA SỬ DỤNG'}
-                        </div>
-                    </div>
-
-                    {/* Main Image - Large */}
-                    <div style={{
-                        position: 'relative',
-                        height: '540px',
-                        overflow: 'hidden',
-                    }}>
-                        <img
-                            src={images[0]}
-                            alt={`${car.make} ${car.model}`}
-                            style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                            }}
-                            crossOrigin="anonymous"
-                        />
-                        {/* Price Overlay */}
-                        <div style={{
-                            position: 'absolute',
-                            bottom: '20px',
-                            left: '20px',
                             background: '#DC2626',
-                            padding: '16px 32px',
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                            padding: '24px 40px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
                         }}>
-                            <span style={{ fontSize: '42px', fontWeight: 900, color: 'white' }}>
-                                {formatMoney(Number(car.price))}
-                            </span>
-                            {car.isNegotiable && (
-                                <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.9)', marginLeft: '12px', fontWeight: 600 }}>
-                                    (Thương lượng)
-                                </span>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Car Title Section */}
-                    <div style={{
-                        background: '#111111',
-                        padding: '28px 40px',
-                    }}>
-                        <h1 style={{
-                            fontSize: '48px',
-                            fontWeight: 900,
-                            fontStyle: 'italic',
-                            textTransform: 'uppercase',
-                            margin: 0,
-                            color: 'white',
-                            lineHeight: 1.1,
-                        }}>
-                            {car.year} {car.make} {car.model}
-                        </h1>
-                        {car.trim && (
-                            <p style={{
-                                fontSize: '24px',
-                                fontWeight: 600,
-                                color: '#DC2626',
-                                margin: '8px 0 0 0',
+                            <div style={{
+                                fontSize: '28px',
+                                fontWeight: 900,
+                                color: 'white',
+                                letterSpacing: '4px',
                                 textTransform: 'uppercase',
                             }}>
-                                {car.trim}
-                            </p>
-                        )}
-                    </div>
+                                CẦN BÁN
+                            </div>
+                            <div style={{
+                                background: 'white',
+                                color: '#DC2626',
+                                padding: '8px 20px',
+                                fontWeight: 900,
+                                fontSize: '14px',
+                                letterSpacing: '1px',
+                            }}>
+                                {car.condition || 'ĐÃ QUA SỬ DỤNG'}
+                            </div>
+                        </div>
 
-                    {/* Specs Grid - 2 rows */}
-                    <div style={{
-                        padding: '24px 40px',
-                        background: '#f3f3f3',
-                    }}>
+                        {/* Main Image - Large */}
                         <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
-                            gap: '16px',
+                            position: 'relative',
+                            height: '540px',
+                            overflow: 'hidden',
                         }}>
-                            {[
-                                { label: 'Mã khung', value: car.chassisCode || '---' },
-                                { label: 'Động cơ', value: car.engineCode || '---' },
-                                { label: 'Hộp số', value: car.transmission || '---' },
-                                { label: 'Dẫn động', value: car.drivetrain || '---' },
-                                { label: 'ODO', value: `${Number(car.mileage).toLocaleString('vi-VN')} km` },
-                                { label: 'Năm SX', value: String(car.year) },
-                                { label: 'Giấy tờ', value: car.paperwork === 'SANG TÊN ĐƯỢC' || car.paperwork === 'CHÍNH CHỦ' ? 'CHÍNH CHỦ' : (car.paperwork ? car.paperwork.toUpperCase() : 'KHÔNG CHÍNH CHỦ') },
-                                { label: 'Khu vực', value: car.location || 'Toàn quốc' },
-                            ].map((spec, idx) => (
-                                <div key={idx} style={{
+                            <img
+                                src={images[0]}
+                                alt={`${car.make} ${car.model}`}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                }}
+                                crossOrigin="anonymous"
+                            />
+                            {/* Price Overlay */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '20px',
+                                left: '20px',
+                                background: '#DC2626',
+                                padding: '16px 32px',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                            }}>
+                                <span style={{ fontSize: '42px', fontWeight: 900, color: 'white' }}>
+                                    {formatMoney(Number(car.price))}
+                                </span>
+                                {car.isNegotiable && (
+                                    <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.9)', marginLeft: '12px', fontWeight: 600 }}>
+                                        (Thương lượng)
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Car Title Section */}
+                        <div style={{
+                            background: '#111111',
+                            padding: '28px 40px',
+                        }}>
+                            <h1 style={{
+                                fontSize: '48px',
+                                fontWeight: 900,
+                                fontStyle: 'italic',
+                                textTransform: 'uppercase',
+                                margin: 0,
+                                color: 'white',
+                                lineHeight: 1.1,
+                            }}>
+                                {car.year} {car.make} {car.model}
+                            </h1>
+                            {car.trim && (
+                                <p style={{
+                                    fontSize: '24px',
+                                    fontWeight: 600,
+                                    color: '#DC2626',
+                                    margin: '8px 0 0 0',
+                                    textTransform: 'uppercase',
+                                }}>
+                                    {car.trim}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Specs Grid - 2 rows */}
+                        <div style={{
+                            padding: '24px 40px',
+                            background: '#f3f3f3',
+                        }}>
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: '16px',
+                            }}>
+                                {[
+                                    { label: 'Mã khung', value: car.chassisCode || '---' },
+                                    { label: 'Động cơ', value: car.engineCode || '---' },
+                                    { label: 'Hộp số', value: car.transmission || '---' },
+                                    { label: 'Dẫn động', value: car.drivetrain || '---' },
+                                    { label: 'ODO', value: `${Number(car.mileage).toLocaleString('vi-VN')} km` },
+                                    { label: 'Năm SX', value: String(car.year) },
+                                    { label: 'Giấy tờ', value: car.paperwork === 'SANG TÊN ĐƯỢC' || car.paperwork === 'CHÍNH CHỦ' ? 'CHÍNH CHỦ' : (car.paperwork ? car.paperwork.toUpperCase() : 'KHÔNG CHÍNH CHỦ') },
+                                    { label: 'Khu vực', value: car.location || 'Toàn quốc' },
+                                ].map((spec, idx) => (
+                                    <div key={idx} style={{
+                                        background: 'white',
+                                        border: '2px solid #e5e5e5',
+                                        padding: '12px 10px',
+                                        textAlign: 'center',
+                                    }}>
+                                        <div style={{
+                                            fontSize: '10px',
+                                            color: '#666',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '1px',
+                                            marginBottom: '4px',
+                                            fontWeight: 700
+                                        }}>
+                                            {spec.label}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '14px',
+                                            fontWeight: 800,
+                                            color: '#111'
+                                        }}>
+                                            {spec.value}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Mods Section - If exists */}
+                        {car.mods && (() => {
+                            const parsedMods = typeof car.mods === 'string' ? JSON.parse(car.mods) : car.mods;
+                            const allMods: string[] = [
+                                ...(parsedMods.engine || []),
+                                ...(parsedMods.footwork || []),
+                                ...(parsedMods.exterior || []),
+                                ...(parsedMods.interior || []),
+                            ];
+                            if (allMods.length === 0) return null;
+                            return (
+                                <div style={{
+                                    padding: '20px 40px',
                                     background: 'white',
-                                    border: '2px solid #e5e5e5',
-                                    padding: '12px 10px',
-                                    textAlign: 'center',
+                                    borderTop: '2px solid #e5e5e5',
                                 }}>
                                     <div style={{
-                                        fontSize: '10px',
-                                        color: '#666',
+                                        fontSize: '12px',
+                                        fontWeight: 800,
+                                        color: '#DC2626',
                                         textTransform: 'uppercase',
-                                        letterSpacing: '1px',
-                                        marginBottom: '4px',
-                                        fontWeight: 700
+                                        letterSpacing: '2px',
+                                        marginBottom: '12px',
                                     }}>
-                                        {spec.label}
+                                        ĐỒ CHƠI ĐÃ ĐỘ
                                     </div>
                                     <div style={{
-                                        fontSize: '14px',
-                                        fontWeight: 800,
-                                        color: '#111'
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '8px',
                                     }}>
-                                        {spec.value}
+                                        {allMods.slice(0, 8).map((mod: string, idx: number) => (
+                                            <span key={idx} style={{
+                                                background: '#111',
+                                                color: 'white',
+                                                padding: '6px 14px',
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                            }}>
+                                                {mod}
+                                            </span>
+                                        ))}
+                                        {allMods.length > 8 && (
+                                            <span style={{
+                                                background: '#DC2626',
+                                                color: 'white',
+                                                padding: '6px 14px',
+                                                fontSize: '12px',
+                                                fontWeight: 700,
+                                            }}>
+                                                +{allMods.length - 8} khác
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
+                            );
+                        })()}
 
-                    {/* Mods Section - If exists */}
-                    {car.mods && (() => {
-                        const parsedMods = typeof car.mods === 'string' ? JSON.parse(car.mods) : car.mods;
-                        const allMods: string[] = [
-                            ...(parsedMods.engine || []),
-                            ...(parsedMods.footwork || []),
-                            ...(parsedMods.exterior || []),
-                            ...(parsedMods.interior || []),
-                        ];
-                        if (allMods.length === 0) return null;
-                        return (
-                            <div style={{
-                                padding: '20px 40px',
-                                background: 'white',
-                                borderTop: '2px solid #e5e5e5',
-                            }}>
+                        {/* Footer - Contact & QR */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            background: '#111111',
+                            padding: '24px 40px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                        }}>
+                            <div>
+                                {/* Seller Name */}
                                 <div style={{
-                                    fontSize: '12px',
+                                    fontSize: '18px',
                                     fontWeight: 800,
+                                    marginBottom: '8px',
+                                    color: 'white',
+                                }}>
+                                    {car.seller?.name || car.seller?.email || 'Người bán'}
+                                </div>
+                                <div style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    marginBottom: '10px',
                                     color: '#DC2626',
                                     textTransform: 'uppercase',
-                                    letterSpacing: '2px',
-                                    marginBottom: '12px',
+                                    letterSpacing: '2px'
                                 }}>
-                                    ĐỒ CHƠI ĐÃ ĐỘ
+                                    Liên hệ ngay
                                 </div>
-                                <div style={{
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: '8px',
-                                }}>
-                                    {allMods.slice(0, 8).map((mod: string, idx: number) => (
-                                        <span key={idx} style={{
-                                            background: '#111',
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {car.phoneNumber && (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            fontSize: '24px',
+                                            fontWeight: 900,
                                             color: 'white',
-                                            padding: '6px 14px',
-                                            fontSize: '12px',
-                                            fontWeight: 600,
                                         }}>
-                                            {mod}
-                                        </span>
-                                    ))}
-                                    {allMods.length > 8 && (
-                                        <span style={{
-                                            background: '#DC2626',
-                                            color: 'white',
-                                            padding: '6px 14px',
-                                            fontSize: '12px',
+                                            <span style={{
+                                                background: '#DC2626',
+                                                width: '40px',
+                                                height: '40px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                                                </svg>
+                                            </span>
+                                            {car.phoneNumber}
+                                        </div>
+                                    )}
+                                    {car.zaloLink && (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            fontSize: '18px',
                                             fontWeight: 700,
+                                            color: '#999',
                                         }}>
-                                            +{allMods.length - 8} khác
-                                        </span>
+                                            <span style={{
+                                                background: '#0068FF',
+                                                width: '40px',
+                                                height: '40px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                            }}>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                                </svg>
+                                            </span>
+                                            Zalo: {car.zaloLink}
+                                        </div>
                                     )}
                                 </div>
                             </div>
-                        );
-                    })()}
 
-                    {/* Footer - Contact & QR */}
-                    <div style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        background: '#111111',
-                        padding: '24px 40px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                    }}>
-                        <div>
-                            {/* Seller Name */}
+                            {/* QR Code Section */}
                             <div style={{
-                                fontSize: '18px',
-                                fontWeight: 800,
-                                marginBottom: '8px',
-                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '20px',
                             }}>
-                                {car.seller?.name || car.seller?.email || 'Người bán'}
-                            </div>
-                            <div style={{
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                marginBottom: '10px',
-                                color: '#DC2626',
-                                textTransform: 'uppercase',
-                                letterSpacing: '2px'
-                            }}>
-                                Liên hệ ngay
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                {car.phoneNumber && (
+                                <div style={{ textAlign: 'right' }}>
                                     <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        fontSize: '24px',
-                                        fontWeight: 900,
-                                        color: 'white',
+                                        fontSize: '14px',
+                                        color: '#666',
+                                        marginBottom: '4px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '1px',
+                                        fontWeight: 600,
                                     }}>
-                                        <span style={{
-                                            background: '#DC2626',
-                                            width: '40px',
-                                            height: '40px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                        }}>
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                                            </svg>
-                                        </span>
-                                        {car.phoneNumber}
+                                        Quét mã QR
                                     </div>
-                                )}
-                                {car.zaloLink && (
                                     <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        fontSize: '18px',
+                                        fontSize: '12px',
+                                        color: '#DC2626',
                                         fontWeight: 700,
-                                        color: '#999',
                                     }}>
-                                        <span style={{
-                                            background: '#0068FF',
-                                            width: '40px',
-                                            height: '40px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                        }}>
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                            </svg>
-                                        </span>
-                                        Zalo: {car.zaloLink}
+                                        Xem chi tiết xe
                                     </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* QR Code Section */}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '20px',
-                        }}>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{
-                                    fontSize: '14px',
-                                    color: '#666',
-                                    marginBottom: '4px',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '1px',
-                                    fontWeight: 600,
-                                }}>
-                                    Quét mã QR
                                 </div>
                                 <div style={{
-                                    fontSize: '12px',
-                                    color: '#DC2626',
-                                    fontWeight: 700,
+                                    background: 'white',
+                                    padding: '10px',
                                 }}>
-                                    Xem chi tiết xe
+                                    {qrUrl && (
+                                        <QRCodeSVG
+                                            value={qrUrl}
+                                            size={90}
+                                            level="H"
+                                            includeMargin={false}
+                                            fgColor="#111111"
+                                        />
+                                    )}
                                 </div>
-                            </div>
-                            <div style={{
-                                background: 'white',
-                                padding: '10px',
-                            }}>
-                                {qrUrl && (
-                                    <QRCodeSVG
-                                        value={qrUrl}
-                                        size={90}
-                                        level="H"
-                                        includeMargin={false}
-                                        fgColor="#111111"
-                                    />
-                                )}
                             </div>
                         </div>
                     </div>

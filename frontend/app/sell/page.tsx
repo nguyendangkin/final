@@ -276,6 +276,9 @@ export default function SellPage() {
 
             // Mods
             mods: data.mods, // Sending JSON object directly, backend handles it as jsonb
+
+            // Notable Features
+            notableFeatures: data.notableFeatures,
         };
 
         try {

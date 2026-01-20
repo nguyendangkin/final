@@ -16,6 +16,8 @@ export interface CarSpecs {
     drivetrain: string;   // e.g., "FWD (Trước)", "RWD (Sau)", "AWD (2 cầu)"
     condition: string;    // e.g., "Zin", "Độ nhẹ", "Độ khủng", etc.
 
+    notableFeatures: string[]; // Step 2: Notable features checkbox
+
     // Step 3: Legal
     paperwork: string;    // e.g., "CHÍNH CHỦ", "KHÔNG CHÍNH CHỦ"
     registryExpiry?: string; // Date string
@@ -75,4 +77,5 @@ export const initialCarSpecs: CarSpecs = {
     facebookLink: '',
     zaloLink: '',
     additionalInfo: '',
+    notableFeatures: [],
 };

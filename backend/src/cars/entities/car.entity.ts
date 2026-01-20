@@ -92,6 +92,9 @@ export class Car {
     @Column({ nullable: true })
     plateNumber: string;
 
+    @Column('simple-array', { nullable: true })
+    notableFeatures: string[];
+
     @Column('jsonb', { nullable: true })
     mods: any;
 

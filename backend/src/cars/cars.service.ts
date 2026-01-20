@@ -126,6 +126,9 @@ export class CarsService {
         if (query.engineCode) {
             qb.andWhere('car.engineCode ILIKE :engineCode', { engineCode: `%${query.engineCode}%` });
         }
+        if (query.notableFeatures) {
+            qb.andWhere('car.notableFeatures ILIKE :notableFeatures', { notableFeatures: `%${query.notableFeatures}%` });
+        }
         if (query.mods) {
             // Revert to text-based search for "like other filters" behavior, 
             // but wrap in quotes to target JSON values specifically and avoid partial word matches.
@@ -263,6 +266,9 @@ export class CarsService {
             price: createCarDto.price.toString(),
             status: initialStatus,
         });
+
+        this.logger.log(`Creating car with notableFeatures: ${JSON.stringify(createCarDto.notableFeatures)}`);
+
         const savedCar = await this.carsRepository.save(car);
 
         // Sync tags to Tag table (increment usageCount)
@@ -296,6 +302,10 @@ export class CarsService {
         }
 
         Object.assign(car, updates);
+
+        this.logger.log(`Updating car ${id} with notableFeatures: ${JSON.stringify(updates.notableFeatures)}`);
+        this.logger.log(`Merged car object notableFeatures: ${JSON.stringify(car.notableFeatures)}`);
+
         const updatedCar = await this.carsRepository.save(car);
 
         // Sync tags: Add new tags usage
@@ -479,6 +489,7 @@ export class CarsService {
             condition: new Set(),
             paperwork: new Set(),
             mods: new Set(),
+            notableFeatures: new Set(),
         };
 
         for (const car of cars) {
@@ -526,6 +537,7 @@ export class CarsService {
             mods: Array.from(filters.mods).sort(),
             year: Array.from(filters.year).sort((a, b) => b.localeCompare(a)), // Sort years descending
             location: Array.from(filters.location).sort(),
+            notableFeatures: Array.from(filters.notableFeatures).sort(),
         };
     }
 
@@ -586,6 +598,7 @@ export class CarsService {
             mods: new Set(),
             year: new Set(),
             location: new Set(),
+            notableFeatures: new Set(),
         };
 
         let minPrice = Infinity;
@@ -640,6 +653,7 @@ export class CarsService {
             condition: Array.from(filters.condition).sort(),
             paperwork: Array.from(filters.paperwork).sort(),
             mods: Array.from(filters.mods).sort(),
+            notableFeatures: Array.from(filters.notableFeatures).sort(),
             priceRange: {
                 min: minPrice === Infinity ? 0 : minPrice,
                 max: maxPrice,
@@ -664,6 +678,7 @@ export class CarsService {
         minYear?: number;
         maxYear?: number;
         location?: string;
+        notableFeatures?: string;
     }): Promise<any> {
         const qb = this.carsRepository.createQueryBuilder('car');
         qb.leftJoin('car.seller', 'seller');
@@ -713,6 +728,9 @@ export class CarsService {
         if (query.location) {
             qb.andWhere('car.location ILIKE :location', { location: `%${query.location}%` });
         }
+        if (query.notableFeatures) {
+            qb.andWhere('car.notableFeatures ILIKE :notableFeatures', { notableFeatures: `%${query.notableFeatures}%` });
+        }
 
         const cars = await qb.getMany();
 
@@ -728,6 +746,7 @@ export class CarsService {
             paperwork: new Set(),
             mods: new Set(),
             location: new Set(),
+            notableFeatures: new Set(),
         };
 
         let minPrice = Infinity;
@@ -785,6 +804,13 @@ export class CarsService {
                     });
                 }
             }
+
+            // Handle notableFeatures
+            if (car.notableFeatures && Array.isArray(car.notableFeatures)) {
+                car.notableFeatures.forEach(f => {
+                    if (f && f.trim()) options.notableFeatures.add(f.trim().toUpperCase());
+                });
+            }
         }
 
         return {
@@ -800,6 +826,7 @@ export class CarsService {
                 paperwork: Array.from(options.paperwork).sort(),
                 mods: Array.from(options.mods).sort(),
                 location: Array.from(options.location).sort(),
+                notableFeatures: Array.from(options.notableFeatures).sort(),
             },
             // Ranges
             ranges: {

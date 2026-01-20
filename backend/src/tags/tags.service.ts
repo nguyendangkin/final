@@ -80,6 +80,14 @@ export class TagsService {
             }
         }
 
+        if (car.notableFeatures && Array.isArray(car.notableFeatures)) {
+            car.notableFeatures.forEach(feature => {
+                if (feature && feature.trim()) {
+                    tags.push({ category: 'feature', value: feature.trim().toUpperCase(), parent: '' });
+                }
+            });
+        }
+
         // Sync each tag
         for (const { category, value, parent } of tags) {
             await this.updateTagUsage(category, value, parent || '', increment);
@@ -125,6 +133,7 @@ export class TagsService {
             condition: [],
             paperwork: [],
             location: [],
+            feature: [], // Notable features
             mods: [],
         };
 
@@ -160,7 +169,7 @@ export class TagsService {
             'condition': 'Tình trạng (Condition)',
             'paperwork': 'Giấy tờ (Paperwork)',
             'location': 'Khu vực (Location)',
-            'mods': 'Nâng cấp (Mods)',
+            'feature': 'Ngoại hình chú ý (Features)',
             'mods_exterior': 'Nâng cấp Ngoại thất',
             'mods_interior': 'Nâng cấp Nội thất',
             'mods_engine': 'Nâng cấp Động cơ/Hiệu suất',
@@ -170,6 +179,9 @@ export class TagsService {
         const grouped: Record<string, { tag: string, count: number }[]> = {};
 
         for (const tag of tags) {
+            // Explicitly hide generic 'mods' category as requested
+            if (tag.category === 'mods') continue;
+
             const categoryName = categoryMap[tag.category] || tag.category;
             if (!grouped[categoryName]) {
                 grouped[categoryName] = [];

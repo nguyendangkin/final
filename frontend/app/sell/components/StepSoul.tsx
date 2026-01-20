@@ -176,6 +176,44 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                 {errors.condition && <p className="text-red-500 text-xs mt-1">{errors.condition}</p>}
             </div>
 
-        </div >
+            {/* Notable Features */}
+            <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                    <Activity className="w-4 h-4" /> Ngoại hình chú ý
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {['MUI TRẦN', 'ĐÈN MẮT ẾCH', 'CỬA COUPE'].map((feature) => {
+                        const isChecked = data.notableFeatures?.includes(feature);
+                        return (
+                            <label
+                                key={feature}
+                                className={`flex items-center gap-3 p-4 border cursor-pointer transition-all ${isChecked
+                                    ? 'border-[var(--jdm-red)] bg-red-50'
+                                    : 'border-gray-200 bg-white hover:border-gray-400'
+                                    }`}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={(e) => {
+                                        const current = data.notableFeatures || [];
+                                        if (e.target.checked) {
+                                            updateData({ notableFeatures: [...current, feature] });
+                                        } else {
+                                            updateData({ notableFeatures: current.filter(f => f !== feature) });
+                                        }
+                                    }}
+                                    className="w-5 h-5 text-[var(--jdm-red)] focus:ring-[var(--jdm-red)] border-gray-300 rounded-none"
+                                />
+                                <span className={`font-bold uppercase text-sm ${isChecked ? 'text-[var(--jdm-red)]' : 'text-gray-600'}`}>
+                                    {feature}
+                                </span>
+                            </label>
+                        );
+                    })}
+                </div>
+            </div>
+
+        </div>
     );
 }

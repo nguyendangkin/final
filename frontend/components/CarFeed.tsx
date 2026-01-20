@@ -35,6 +35,7 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
         chassisCode: searchParams.get('chassisCode'),
         engineCode: searchParams.get('engineCode'),
         mods: searchParams.get('mods'),
+        notableFeatures: searchParams.get('notableFeatures'),
     };
 
     // Create a stable key for the filters

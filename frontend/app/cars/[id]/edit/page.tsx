@@ -162,6 +162,7 @@ export default function EditCarPage() {
             engine: [] as string[],
             footwork: [] as string[],
         },
+        notableFeatures: [] as string[],
     });
 
     useEffect(() => {
@@ -232,6 +233,7 @@ export default function EditCarPage() {
                 thumbnail: data.thumbnail || '',
                 images: data.images?.filter((img: string) => img && img.trim() !== '') || [],
                 mods: parsedMods,
+                notableFeatures: data.notableFeatures || [],
             });
             setLoading(false);
         } catch (err: any) {
@@ -699,6 +701,42 @@ export default function EditCarPage() {
                                     {CONDITION_OPTIONS.map(opt => <option key={opt.val} value={opt.val}>{opt.label}</option>)}
                                 </select>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Ngoại hình chú ý */}
+                    <div className="bg-white p-6 rounded-none shadow-sm border border-gray-200">
+                        <h2 className="text-lg font-bold text-black mb-6 uppercase tracking-wide">Ngoại hình chú ý</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {['MUI TRẦN', 'ĐÈN MẮT ẾCH', 'CỬA COUPE'].map((feature) => {
+                                const isChecked = formData.notableFeatures?.includes(feature);
+                                return (
+                                    <label
+                                        key={feature}
+                                        className={`flex items-center gap-3 p-4 border cursor-pointer transition-all ${isChecked
+                                            ? 'border-[var(--jdm-red)] bg-red-50'
+                                            : 'border-gray-200 bg-white hover:border-gray-400'
+                                            }`}
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={isChecked}
+                                            onChange={(e) => {
+                                                const current = formData.notableFeatures || [];
+                                                if (e.target.checked) {
+                                                    setFormData(prev => ({ ...prev, notableFeatures: [...current, feature] }));
+                                                } else {
+                                                    setFormData(prev => ({ ...prev, notableFeatures: current.filter(f => f !== feature) }));
+                                                }
+                                            }}
+                                            className="w-5 h-5 text-[var(--jdm-red)] focus:ring-[var(--jdm-red)] border-gray-300 rounded-none"
+                                        />
+                                        <span className={`font-bold uppercase text-sm ${isChecked ? 'text-[var(--jdm-red)]' : 'text-gray-600'}`}>
+                                            {feature}
+                                        </span>
+                                    </label>
+                                );
+                            })}
                         </div>
                     </div>
 

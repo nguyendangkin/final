@@ -14,7 +14,7 @@ interface SmartFilterProps {
     onSearch: () => void;
 }
 
-const FILTER_ORDER = ['make', 'model', 'location', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
+const FILTER_ORDER = ['make', 'model', 'location', 'notableFeatures', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
 
 const FILTER_LABELS: Record<string, string> = {
     make: 'Hãng xe',
@@ -27,6 +27,7 @@ const FILTER_LABELS: Record<string, string> = {
     paperwork: 'Giấy tờ',
     location: 'Khu vực',
     mods: 'Mods',
+    notableFeatures: 'Ngoại thất',
 };
 
 export default function SmartFilter({
