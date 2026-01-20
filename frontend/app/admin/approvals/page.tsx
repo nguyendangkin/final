@@ -285,7 +285,7 @@ export default function AdminApprovals() {
                                                             <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-6 py-4 min-w-[200px]">
                                                         <div className="text-sm font-bold text-gray-900 uppercase">
                                                             {car.year} {car.make} {car.model} {car.trim}
                                                         </div>
@@ -296,15 +296,15 @@ export default function AdminApprovals() {
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--jdm-red)] font-bold">
                                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(car.price))}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    <td className="px-6 py-4 text-sm text-gray-500">
                                                         <div className="font-bold">{car.seller?.name || 'Unknown'}</div>
                                                         <div className="text-xs">{car.seller?.email}</div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         {new Date(car.createdAt).toLocaleString('vi-VN')}
                                                     </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <div className="flex justify-end gap-2">
+                                                    <td className="px-6 py-4 text-right text-sm font-medium">
+                                                        <div className="flex justify-end gap-2 flex-wrap min-w-[140px]">
                                                             <Link href={`/cars/${car.id}`} target="_blank" className="flex items-center gap-1 px-3 py-1 bg-gray-200 text-gray-800 text-xs font-bold uppercase hover:bg-gray-300 transition-colors">
                                                                 <Eye className="w-3 h-3" /> Xem
                                                             </Link>

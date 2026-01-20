@@ -13,14 +13,14 @@ export default function AdminReports() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [activeTab, setActiveTab] = useState<'PENDING' | 'PROCESSED'>('PENDING');
+
     const router = useRouter();
 
     useEffect(() => {
-        fetchReports(page, activeTab);
-    }, [page, activeTab]);
+        fetchReports(page);
+    }, [page]);
 
-    const fetchReports = (currentPage: number, status: string) => {
+    const fetchReports = (currentPage: number) => {
         const token = localStorage.getItem('jwt_token');
         if (!token) {
             router.push('/login');
@@ -29,7 +29,7 @@ export default function AdminReports() {
 
         setLoading(true);
 
-        fetch(`http://localhost:3000/reports?page=${currentPage}&limit=10&status=${status}`, {
+        fetch(`http://localhost:3000/reports?page=${currentPage}&limit=10&status=PENDING`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {
@@ -63,7 +63,7 @@ export default function AdminReports() {
             });
             if (res.ok) {
                 toast.success('Đã bỏ qua báo cáo');
-                fetchReports(page, activeTab);
+                fetchReports(page);
             } else {
                 toast.error('Có lỗi xảy ra');
             }
@@ -81,7 +81,7 @@ export default function AdminReports() {
             });
             if (res.ok) {
                 toast.success('Đã XÓA xe và xử lý báo cáo');
-                fetchReports(page, activeTab);
+                fetchReports(page);
             } else {
                 toast.error('Có lỗi xảy ra');
             }
@@ -218,20 +218,7 @@ export default function AdminReports() {
                     </Link>
                 </div>
 
-                <div className="flex gap-4 mb-6 border-b border-gray-200">
-                    <button
-                        onClick={() => { setActiveTab('PENDING'); setPage(1); }}
-                        className={`pb-3 text-sm font-bold uppercase tracking-wide border-b-2 transition-all ${activeTab === 'PENDING' ? 'border-[var(--jdm-red)] text-[var(--jdm-red)]' : 'border-transparent text-gray-500 hover:text-black'}`}
-                    >
-                        Chưa xử lý
-                    </button>
-                    <button
-                        onClick={() => { setActiveTab('PROCESSED'); setPage(1); }}
-                        className={`pb-3 text-sm font-bold uppercase tracking-wide border-b-2 transition-all ${activeTab === 'PROCESSED' ? 'border-[var(--jdm-red)] text-[var(--jdm-red)]' : 'border-transparent text-gray-500 hover:text-black'}`}
-                    >
-                        Đã xử lý
-                    </button>
-                </div>
+
 
                 <div className="bg-white shadow-sm border border-gray-200 overflow-hidden">
                     <div className="overflow-x-auto">
@@ -247,7 +234,7 @@ export default function AdminReports() {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {reports.map((report) => (
-                                    <tr key={report.id} className={`hover:bg-gray-50 transition-colors ${report.status !== 'PENDING' ? 'opacity-60 bg-gray-50' : ''}`}>
+                                    <tr key={report.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold">
@@ -294,48 +281,34 @@ export default function AdminReports() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            {report.status === 'PENDING' ? (
-                                                <div className="flex justify-end gap-2 flex-wrap">
-                                                    <button
-                                                        onClick={() => handleIgnore(report.id)}
-                                                        className="text-gray-500 hover:text-black font-bold uppercase text-xs px-3 py-1 border border-gray-300 hover:bg-gray-100 transition-all"
-                                                    >
-                                                        Bỏ qua
-                                                    </button>
-                                                    <button
-                                                        onClick={() => confirmResolve(report.id, `${report.reportedCar?.year} ${report.reportedCar?.make}`)}
-                                                        className="bg-black text-white hover:bg-[var(--jdm-red)] font-bold uppercase text-xs px-3 py-1 transition-all flex items-center gap-1"
-                                                    >
-                                                        <Trash2 className="w-3 h-3" /> Xóa Xe
-                                                    </button>
-                                                    {report.reporter && (
-                                                        report.reporter.isSellingBanned ? (
-                                                            <span className="bg-gray-400 text-white font-bold uppercase text-xs px-3 py-1 flex items-center gap-1 cursor-not-allowed">
-                                                                <Ban className="w-3 h-3" /> Đã cấm người tố cáo
-                                                            </span>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => confirmBanReporter(report.reporter.id, report.reporter.name || 'Ẩn danh')}
-                                                                className="bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-xs px-3 py-1 transition-all flex items-center gap-1"
-                                                            >
-                                                                <Ban className="w-3 h-3" /> Cấm người tố cáo
-                                                            </button>
-                                                        )
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end gap-1">
-                                                    {report.status === 'IGNORED' ? (
-                                                        <span className="text-gray-400 font-bold uppercase text-xs flex items-center gap-1">
-                                                            <XCircle className="w-4 h-4" /> Đã bỏ qua
+                                            <div className="flex justify-end gap-2 flex-wrap">
+                                                <button
+                                                    onClick={() => handleIgnore(report.id)}
+                                                    className="text-gray-500 hover:text-black font-bold uppercase text-xs px-3 py-1 border border-gray-300 hover:bg-gray-100 transition-all"
+                                                >
+                                                    Bỏ qua
+                                                </button>
+                                                <button
+                                                    onClick={() => confirmResolve(report.id, `${report.reportedCar?.year} ${report.reportedCar?.make}`)}
+                                                    className="bg-black text-white hover:bg-[var(--jdm-red)] font-bold uppercase text-xs px-3 py-1 transition-all flex items-center gap-1"
+                                                >
+                                                    <Trash2 className="w-3 h-3" /> Xóa Xe
+                                                </button>
+                                                {report.reporter && (
+                                                    report.reporter.isSellingBanned ? (
+                                                        <span className="bg-gray-400 text-white font-bold uppercase text-xs px-3 py-1 flex items-center gap-1 cursor-not-allowed">
+                                                            <Ban className="w-3 h-3" /> Đã cấm người tố cáo
                                                         </span>
                                                     ) : (
-                                                        <span className="text-green-600 font-bold uppercase text-xs flex items-center gap-1">
-                                                            <CheckCircle className="w-4 h-4" /> Đã xử lý
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
+                                                        <button
+                                                            onClick={() => confirmBanReporter(report.reporter.id, report.reporter.name || 'Ẩn danh')}
+                                                            className="bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-xs px-3 py-1 transition-all flex items-center gap-1"
+                                                        >
+                                                            <Ban className="w-3 h-3" /> Cấm người tố cáo
+                                                        </button>
+                                                    )
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

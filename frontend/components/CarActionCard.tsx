@@ -120,7 +120,7 @@ export default function CarActionCard({
                         {reasonLabel}
                     </div>
                     <p className="text-sm text-gray-600 font-medium leading-relaxed">
-                        Chúng tôi sẽ xem xét báo cáo này. Tuy nhiên, nếu phát hiện bạn <span className="text-[var(--jdm-red)] font-black">CỐ TÌNH BÁO CÁO SAI SỰ THẬT</span>, tài khoản của bạn sẽ bị <span className="text-black font-black bg-yellow-300 px-1">KHÓA VĨNH VIỄN</span> ngay lập tức.
+                        Cảm ơn bạn đã đóng góp, báo cáo này sẽ được chúng tôi xem xét kỹ lưỡng. Để giữ gìn cộng đồng tin cậy, xin vui lòng đảm bảo thông tin của bạn là chính xác. Việc <span className="text-[var(--jdm-red)] font-black">cố ý báo cáo sai sự thật</span> có thể dẫn đến biện pháp <span className="text-black font-black bg-yellow-300 px-1">khóa tài khoản vĩnh viễn</span>.
                     </p>
                 </div>
                 <div className="flex border-t border-gray-100">
