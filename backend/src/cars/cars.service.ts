@@ -514,18 +514,23 @@ export class CarsService {
 
     async rejectCar(id: string): Promise<void> {
         const car = await this.findOne(id);
-        // We can either delete it or mark as rejected. Let's delete for cleanliness or REJECTED for record?
-        // Plan said "Delete or set status REJECTED". Let's set REJECTED so user knows.
-        car.status = CarStatus.REJECTED;
-        await this.carsRepository.save(car);
 
-        // Notify user
+        // Notify user before deletion (so we still have the car data)
         await this.notificationsService.createNotification(
             car.seller.id,
             NotificationType.POST_REJECTED,
             'Bài đăng bị từ chối',
-            `Bài đăng "${car.year} ${car.make} ${car.model}" của bạn đã bị từ chối. Vui lòng kiểm tra lại nội dung.`
+            `Bài đăng "${car.year} ${car.make} ${car.model}" của bạn đã bị từ chối và xóa khỏi hệ thống. Vui lòng kiểm tra lại quy định đăng tin.`
         );
+
+        // Delete associated images from disk
+        await this.deleteCarImages(car);
+
+        // Decrement tag usage counts
+        await this.tagsService.syncTagsFromCar(car, false);
+
+        // Remove from DB
+        await this.carsRepository.remove(car);
     }
 
     async getBrands(): Promise<string[]> {

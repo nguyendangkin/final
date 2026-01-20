@@ -92,13 +92,51 @@ export default function AdminApprovals() {
         }
     };
 
-    const handleReject = async (carId: string) => {
+    const handleReject = (carId: string) => {
+        toast.custom((t) => (
+            <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
+                <div className="p-6">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                                <X className="h-6 w-6 text-white" />
+                            </div>
+                        </div>
+                        <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-black text-black uppercase tracking-wide">
+                                Xác nhận từ chối
+                            </h3>
+                            <p className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
+                                Bạn có chắc chắn muốn <span className="font-bold text-red-600">TỪ CHỐI</span> bài đăng này?
+                                <span className="block mt-1 text-red-600">Hành động này sẽ xóa vĩnh viễn bài đăng và hình ảnh khỏi hệ thống.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex bg-gray-50 mt-4">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-gray-500 hover:text-black hover:bg-gray-100 focus:outline-none uppercase transition-all"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            executeReject(carId);
+                        }}
+                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
+                    >
+                        Xóa luôn
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000 });
+    };
+
+    const executeReject = async (carId: string) => {
         const token = localStorage.getItem('jwt_token');
         if (!token) return;
-
-        if (!confirm('Bạn có chắc chắn muốn từ chối bài đăng này? Bài đăng sẽ bị đánh dấu là TỪ CHỐI.')) {
-            return;
-        }
 
         try {
             const res = await fetch(`http://localhost:3000/cars/admin/cars/${carId}/reject`, {
@@ -110,7 +148,7 @@ export default function AdminApprovals() {
 
             if (res.ok) {
                 setCars(prev => prev.filter(c => c.id !== carId));
-                toast.success('Đã từ chối bài đăng.');
+                toast.success('Đã từ chối và xóa bài đăng.');
                 if (cars.length <= 1 && page < totalPages) {
                     fetchPendingCars(page);
                 } else if (cars.length <= 1 && page > 1) {
