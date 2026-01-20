@@ -564,8 +564,8 @@ export default function Header() {
                             </Link>
 
                             {isAuthChecking ? (
-                                <div className="px-3 py-4 text-center">
-                                    <div className="inline-block w-6 h-6 border-2 border-[var(--jdm-red)] border-t-transparent rounded-full animate-spin"></div>
+                                <div className="px-3 py-4 text-center flex justify-center">
+                                    <div className="w-full h-10 bg-gray-100 animate-pulse rounded-none" />
                                 </div>
                             ) : !user && (
                                 <div className="mx-3 mt-3">

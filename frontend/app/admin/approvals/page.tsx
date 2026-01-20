@@ -244,7 +244,7 @@ export default function AdminApprovals() {
                     </Link>
                 </div>
 
-                {loading ? <TableSkeleton /> : (
+                {loading ? <TableSkeleton type="cars" /> : (
                     <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
                         {cars.length === 0 ? (
                             <div className="p-8 text-center text-gray-500">

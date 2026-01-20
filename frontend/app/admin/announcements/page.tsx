@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Plus, Edit, Trash2, Clock, Save, X, Eye, FileText } from 'lucide-react';
+import AnnouncementSkeleton from '@/components/AnnouncementSkeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -353,7 +354,11 @@ export default function AdminAnnouncementsPage() {
                 {/* History Tab */}
                 {activeTab === 'history' && (
                     <div className="space-y-4">
-                        {announcements.length === 0 && !historyLoading ? (
+                        {historyLoading && announcements.length === 0 ? (
+                            <div>
+                                {[...Array(3)].map((_, i) => <AnnouncementSkeleton key={i} />)}
+                            </div>
+                        ) : announcements.length === 0 ? (
                             <div className="text-center py-12 text-gray-500 bg-white border border-gray-200">
                                 <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
                                 <p>Chưa có thông báo nào</p>
@@ -410,9 +415,9 @@ export default function AdminAnnouncementsPage() {
 
                         {/* Load more trigger */}
                         <div ref={loadMoreRef} className="py-4">
-                            {historyLoading && (
-                                <div className="flex justify-center">
-                                    <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-black"></div>
+                            {historyLoading && announcements.length > 0 && (
+                                <div className="space-y-3">
+                                    {[...Array(2)].map((_, i) => <AnnouncementSkeleton key={`loading-${i}`} />)}
                                 </div>
                             )}
                         </div>

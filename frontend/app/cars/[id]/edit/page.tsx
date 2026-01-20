@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box, Armchair, Hammer, Disc } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getCarIdFromSlug } from '@/lib/utils';
+import EditCarSkeleton from '@/components/EditCarSkeleton';
 
 const BRANDS = [
     'TOYOTA', 'HONDA', 'NISSAN', 'MAZDA', 'MITSUBISHI', 'SUBARU',
@@ -420,11 +421,7 @@ export default function EditCarPage() {
     const inputClassNormal = "w-full px-4 py-3 rounded-none border border-gray-300 focus:ring-2 focus:ring-black focus:border-transparent transition-all";
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[var(--jdm-red)]" />
-            </div>
-        );
+        return <EditCarSkeleton />;
     }
 
     if (error && !car) {

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, User as UserIcon, Megaphone, Check, CheckCheck, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import NotificationSkeleton from '@/components/NotificationSkeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -229,8 +230,16 @@ export default function NotificationsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+            <div className="min-h-screen bg-gray-50 pt-20 pb-12">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="mb-6 h-8 w-48 bg-gray-200 animate-pulse" /> {/* Title Skeleton */}
+                    <div className="mb-6 h-12 w-full bg-gray-200 animate-pulse border-b" /> {/* Tabs Skeleton */}
+                    <div className="space-y-3">
+                        {[...Array(5)].map((_, i) => (
+                            <NotificationSkeleton key={i} />
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }
@@ -409,8 +418,10 @@ export default function NotificationsPage() {
                     {/* Load more trigger */}
                     <div ref={loadMoreRef} className="py-4">
                         {(activeTab === 'user' ? userLoading : systemLoading) && (
-                            <div className="flex justify-center">
-                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-black"></div>
+                            <div className="space-y-3 mt-3">
+                                {[...Array(2)].map((_, i) => (
+                                    <NotificationSkeleton key={`loading-${i}`} />
+                                ))}
                             </div>
                         )}
                     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AdminDashboardSkeleton from '@/components/AdminDashboardSkeleton';
 
 export default function AdminDashboard() {
     const [user, setUser] = useState<any>(null);
@@ -34,11 +35,7 @@ export default function AdminDashboard() {
     }, []);
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-            </div>
-        );
+        return <AdminDashboardSkeleton />;
     }
 
     return (

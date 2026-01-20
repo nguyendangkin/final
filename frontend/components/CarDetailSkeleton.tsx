@@ -20,16 +20,29 @@ export default function CarDetailSkeleton() {
                     <div className="lg:col-span-8 space-y-8">
 
                         {/* Image Gallery Skeleton */}
-                        <div className="bg-white rounded-none overflow-hidden shadow-sm border border-gray-100">
-                            <div className="relative aspect-[16/9]">
+                        <div className="bg-white rounded-none overflow-hidden shadow-sm border border-gray-100 mb-8">
+                            {/* Mobile Skeleton */}
+                            <div className="lg:hidden relative aspect-[4/3]">
                                 <Skeleton className="w-full h-full" />
                             </div>
 
-                            {/* Thumbnails */}
-                            <div className="p-4 grid grid-cols-5 md:grid-cols-6 gap-2">
-                                {[...Array(6)].map((_, i) => (
-                                    <Skeleton key={i} className="aspect-square w-full" />
-                                ))}
+                            {/* Desktop Masonry Grid Skeleton */}
+                            <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-1 h-[400px] xl:h-[450px]">
+                                <div className="col-span-2 row-span-2">
+                                    <Skeleton className="w-full h-full rounded-none" />
+                                </div>
+                                <div className="col-span-1 row-span-1">
+                                    <Skeleton className="w-full h-full rounded-none" />
+                                </div>
+                                <div className="col-span-1 row-span-1">
+                                    <Skeleton className="w-full h-full rounded-none" />
+                                </div>
+                                <div className="col-span-1 row-span-1">
+                                    <Skeleton className="w-full h-full rounded-none" />
+                                </div>
+                                <div className="col-span-1 row-span-1">
+                                    <Skeleton className="w-full h-full rounded-none" />
+                                </div>
                             </div>
                         </div>
 

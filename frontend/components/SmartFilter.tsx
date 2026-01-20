@@ -94,7 +94,11 @@ export default function SmartFilter({
             </div>
 
             {isLoading && !smartFilters ? (
-                <p className="text-xs text-gray-400 text-center py-4">Đang tải bộ lọc...</p>
+                <div className="space-y-3 p-1">
+                    <div className="h-10 bg-gray-100 animate-pulse w-full"></div>
+                    <div className="h-6 bg-gray-100 animate-pulse w-2/3"></div>
+                    <div className="h-20 bg-gray-100 animate-pulse w-full"></div>
+                </div>
             ) : smartFilters?.options ? (
                 <div className="space-y-3">
                     {/* Price Range */}

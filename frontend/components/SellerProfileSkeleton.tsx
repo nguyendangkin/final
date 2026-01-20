@@ -7,23 +7,33 @@ export default function SellerProfileSkeleton() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
                 {/* Seller Header Skeleton */}
-                <div className="bg-white rounded-none shadow-sm border border-gray-100 p-8 mb-8">
-                    <div className="flex items-center gap-6">
-                        <Skeleton className="w-24 h-24 rounded-full border-4 border-white shadow-lg" />
-                        <div className="flex-1 space-y-4">
-                            <Skeleton className="w-64 h-10 bg-gray-200" />
-                            <div className="flex flex-wrap items-center gap-4">
-                                <Skeleton className="w-24 h-5" />
-                                <Skeleton className="w-32 h-5" />
-                                <Skeleton className="w-48 h-5" />
+                <div className="bg-white rounded-none shadow-sm border border-gray-100 p-6 mb-8">
+                    <div className="flex items-center gap-4">
+                        <Skeleton className="w-16 h-16 rounded-none shadow-sm" />
+                        <div className="flex-1 space-y-2">
+                            <Skeleton className="w-48 h-8 rounded-none" />
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                                <Skeleton className="w-20 h-4 rounded-none" />
+                                <Skeleton className="w-24 h-4 rounded-none" />
+                                <Skeleton className="w-32 h-4 rounded-none" />
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* Tabs Skeleton */}
+                <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
+                    <div className="pb-3 relative">
+                        <Skeleton className="w-24 h-5 mb-1 bg-gray-300" />
+                        <div className="absolute bottom-0 left-0 w-full h-0.5 bg-gray-300"></div>
+                    </div>
+                    <div className="pb-3">
+                        <Skeleton className="w-20 h-5 mb-1" />
+                    </div>
+                </div>
+
                 {/* Cars Listings Skeleton */}
                 <div className="mb-6">
-                    <Skeleton className="w-48 h-8 mb-6" />
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {[...Array(6)].map((_, i) => (
                             <CarCardSkeleton key={i} />

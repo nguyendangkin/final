@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import StatsSkeleton from '@/components/StatsSkeleton';
 
 export default function AdminStatsPage() {
     const [stats, setStats] = useState<any>(null);
@@ -37,14 +38,6 @@ export default function AdminStatsPage() {
             });
     }, []);
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-gray-50 pt-20 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,7 +54,7 @@ export default function AdminStatsPage() {
                 <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
                     <div className="px-4 py-5 sm:p-6">
                         {/* Stats Section */}
-                        {stats && (
+                        {loading ? <StatsSkeleton /> : stats && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Users Stats */}
                                 <div className="bg-gray-50 p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">

@@ -21,8 +21,7 @@ export default function WalletSkeleton() {
                                 <Skeleton className="w-12 h-12 bg-gray-800" />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <Skeleton className="h-12 w-full bg-gray-800" />
+                            <div className="grid grid-cols-1 gap-4">
                                 <Skeleton className="h-12 w-full bg-gray-800" />
                             </div>
                         </div>

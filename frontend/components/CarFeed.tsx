@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CarCard from './CarCard';
 import CarCardSkeleton from './CarCardSkeleton';
-import { Loader2 } from 'lucide-react';
+
 
 interface CarFeedProps {
     initialCars?: any[];

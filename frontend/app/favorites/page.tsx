@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import CarCard from '@/components/CarCard';
+import CarCardSkeleton from '@/components/CarCardSkeleton';
 import { Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -103,7 +104,7 @@ export default function FavoritesPage() {
                     {isLoading && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-6">
                             {[...Array(4)].map((_, i) => (
-                                <div key={i} className="h-[400px] bg-gray-100 animate-pulse" />
+                                <CarCardSkeleton key={i} />
                             ))}
                         </div>
                     )}

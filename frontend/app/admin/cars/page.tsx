@@ -202,7 +202,7 @@ export default function AdminCars() {
                     {error && <p className="text-red-500 text-xs mt-2 font-bold">{error}</p>}
                 </div>
 
-                {loading ? <TableSkeleton /> : (
+                {loading ? <TableSkeleton type="cars" /> : (
                     <div className="bg-white shadow rounded-none overflow-hidden border border-gray-200">
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200">
