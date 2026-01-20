@@ -32,4 +32,10 @@ export class SoldCarsService {
             order: { soldAt: 'DESC' },
         });
     }
+
+    async countBySeller(sellerId: string): Promise<number> {
+        return this.soldCarsRepository.count({
+            where: { seller: { id: sellerId } }
+        });
+    }
 }

@@ -60,10 +60,7 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                                 </span>
                                 <span className="flex items-center gap-1">
                                     <CarIcon className="w-3.5 h-3.5" />
-                                    {soldCarsCount > 0
-                                        ? `${activeCarsCount} xe đang bán • ${soldCarsCount} xe đã bán`
-                                        : `${activeCarsCount} xe đang bán`
-                                    }
+                                    {activeCarsCount} xe đang bán • {soldCarsCount} xe đã bán
                                 </span>
                             </div>
                         </div>

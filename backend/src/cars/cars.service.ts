@@ -31,9 +31,7 @@ export class CarsService {
         const selling = await this.carsRepository.count({
             where: { seller: { id: sellerId }, status: CarStatus.AVAILABLE }
         });
-        const sold = await this.carsRepository.count({
-            where: { seller: { id: sellerId }, status: CarStatus.SOLD }
-        });
+        const sold = await this.soldCarsService.countBySeller(sellerId);
         return { selling, sold };
     }
 
