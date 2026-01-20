@@ -104,4 +104,8 @@ export class UsersService {
             );
         }
     }
+
+    async getSellerStats(id: string) {
+        return this.carsService.getSellerStats(id);
+    }
 }

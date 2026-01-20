@@ -22,6 +22,16 @@ export class CarsService {
         private tagsService: TagsService,
     ) { }
 
+    async getSellerStats(sellerId: string): Promise<{ selling: number; sold: number }> {
+        const selling = await this.carsRepository.count({
+            where: { seller: { id: sellerId }, status: CarStatus.AVAILABLE }
+        });
+        const sold = await this.carsRepository.count({
+            where: { seller: { id: sellerId }, status: CarStatus.SOLD }
+        });
+        return { selling, sold };
+    }
+
     /**
      * Delete image files associated with a car from the uploads folder
      */

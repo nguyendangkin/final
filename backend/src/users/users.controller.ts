@@ -52,26 +52,26 @@ export class UsersController {
 
     @Get(':id/profile')
     async getSellerProfile(@Param('id', ParseUUIDPipe) id: string) {
-        const user = await this.usersService.findOneWithCars(id);
+        const user = await this.usersService.findOne(id);
         if (!user) {
             throw new NotFoundException('User not found');
         }
-        // Filter only available cars and sort by newest first
-        // Filter only available cars and sort by newest first
-        // Filter only available cars and sort by newest first
-        // If user is banned, hide all cars
-        // Also exclude HIDDEN cars
-        const availableCars = (user.isSellingBanned ? [] : user.carsForSale)
-            ?.filter(car => car.status !== 'HIDDEN')
-            //.filter(car => car.status === 'AVAILABLE') // Removed to show sold cars
-            ?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
+
+        // Get stats only, avoiding heavy car loading
+        const stats = await this.usersService.getSellerStats(id);
+
         return {
             id: user.id,
             name: user.name,
             email: user.email,
             avatar: user.avatar,
             createdAt: user.createdAt,
-            carsForSale: availableCars,
+            isSellingBanned: user.isSellingBanned,
+            stats: {
+                selling: stats.selling,
+                sold: stats.sold
+            },
+            // We do NOT return carsForSale anymore. Frontend will fetch via /cars?sellerId=...
         };
     }
 }

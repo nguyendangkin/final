@@ -12,7 +12,11 @@ interface SellerProfileProps {
         email?: string;
         avatar?: string;
         createdAt: string;
-        carsForSale: any[];
+        isSellingBanned?: boolean;
+        stats: {
+            selling: number;
+            sold: number;
+        };
     };
 }
 
@@ -22,8 +26,9 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
     const displayName = seller.name || seller.email || 'Người bán ẩn danh';
     const joinYear = new Date(seller.createdAt).getFullYear();
 
-    const activeCarsCount = seller.carsForSale.filter((car: any) => car.status !== 'SOLD').length;
-    const soldCarsCount = seller.carsForSale.filter((car: any) => car.status === 'SOLD').length;
+    // Use stats from backend
+    const activeCarsCount = seller.stats?.selling || 0;
+    const soldCarsCount = seller.stats?.sold || 0;
 
     return (
         <div className="min-h-screen bg-white pt-20 pb-12 font-sans selection:bg-red-500/30">
@@ -97,14 +102,7 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                 <div className="mb-6">
                     <CarFeed
                         key={activeTab} // Force remount when tab changes
-                        // Pass initialCars only if they match the tab to avoid flash of wrong content?
-                        // Actually initialCars from server might be mixed.
-                        // Ideally we should filter initialCars too if we want to use them.
-                        // But since we force filter via API in CarFeed, passing mismatching initialCars might be confusing if CarFeed uses them immediately.
-                        // Let's filter initialCars client-side for the initial render.
-                        initialCars={seller.carsForSale.filter((car: any) =>
-                            activeTab === 'selling' ? car.status !== 'SOLD' : car.status === 'SOLD'
-                        ).slice(0, 12)}
+                        // We do NOT pass initialCars anymore. CarFeed will fetch data itself.
                         filter={{
                             sellerId: seller.id,
                             status: activeTab === 'selling' ? 'AVAILABLE' : 'SOLD'
