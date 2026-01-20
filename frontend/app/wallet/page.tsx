@@ -62,18 +62,12 @@ export default function WalletPage() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <Link href="/wallet/deposit" className="bg-[var(--jdm-red)] hover:bg-red-700 text-white py-3 px-4 rounded-none flex items-center justify-center gap-2 font-bold transition shadow-lg uppercase tracking-wide">
                                         <div className="w-8 h-8 bg-black/20 rounded-full flex items-center justify-center">
                                             <ArrowDownLeft className="w-4 h-4" />
                                         </div>
                                         Nạp tiền
-                                    </Link>
-                                    <Link href="/wallet/withdraw" className="bg-white text-black hover:bg-gray-100 py-3 px-4 rounded-none flex items-center justify-center gap-2 font-bold transition border border-gray-200 uppercase tracking-wide">
-                                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                                            <ArrowUpRight className="w-4 h-4" />
-                                        </div>
-                                        Rút tiền
                                     </Link>
                                 </div>
                             </div>

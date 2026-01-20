@@ -645,7 +645,7 @@ export class CarsService {
 
     // Cascading filters: Level 3 - Get all remaining filter options
     async getFilterDetails(make: string, model?: string, trim?: string): Promise<any> {
-        const qb = this.carsRepository
+        const baseQuery = this.carsRepository
             .createQueryBuilder('car')
             .leftJoin('car.seller', 'seller')
             .where('car.make ILIKE :make', { make: `%${make}%` })
@@ -653,85 +653,111 @@ export class CarsService {
             .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] });
 
         if (model) {
-            qb.andWhere('car.model ILIKE :model', { model: `%${model}%` });
+            baseQuery.andWhere('car.model ILIKE :model', { model: `%${model}%` });
         }
         if (trim) {
-            qb.andWhere('car.trim ILIKE :trim', { trim: `%${trim}%` });
+            baseQuery.andWhere('car.trim ILIKE :trim', { trim: `%${trim}%` });
         }
 
-        const cars = await qb.getMany();
-
-        const filters: Record<string, Set<string>> = {
-            chassisCode: new Set(),
-            engineCode: new Set(),
-            transmission: new Set(),
-            drivetrain: new Set(),
-            condition: new Set(),
-            paperwork: new Set(),
-            mods: new Set(),
-            year: new Set(),
-            location: new Set(),
-            notableFeatures: new Set(),
+        // Helper to get distinct values for a column
+        const getDistinct = async (col: string) => {
+            const q = baseQuery.clone();
+            const res = await q.select(`DISTINCT car.${col}`, 'val').where(`car.${col} IS NOT NULL`).getRawMany();
+            return res.map(r => r.val?.toUpperCase()).filter(Boolean).sort();
         };
 
-        let minPrice = Infinity;
-        let maxPrice = 0;
+        // Helper for year (descending)
+        const getDistinctYears = async () => {
+            const q = baseQuery.clone();
+            const res = await q.select('DISTINCT car.year', 'val').orderBy('car.year', 'DESC').getRawMany();
+            return res.map(r => r.val?.toString()).filter(Boolean);
+        };
 
-        for (const car of cars) {
-            if (car.chassisCode) filters.chassisCode.add(car.chassisCode.toUpperCase());
-            if (car.engineCode) filters.engineCode.add(car.engineCode.toUpperCase());
-            if (car.transmission) filters.transmission.add(car.transmission.toUpperCase());
-            if (car.drivetrain) filters.drivetrain.add(car.drivetrain.toUpperCase());
-            if (car.condition) filters.condition.add(car.condition.toUpperCase());
-            if (car.paperwork) filters.paperwork.add(car.paperwork.toUpperCase());
-            if (car.year) filters.year.add(car.year.toString());
-            if (car.location) filters.location.add(car.location.toUpperCase());
+        // Helper for price range
+        const getPriceRange = async () => {
+            const q = baseQuery.clone();
+            const res = await q.select('MIN(CAST(car.price AS BIGINT))', 'min')
+                .addSelect('MAX(CAST(car.price AS BIGINT))', 'max')
+                .getRawOne();
+            return {
+                min: res?.min ? parseInt(res.min) : 0,
+                max: res?.max ? parseInt(res.max) : 0
+            };
+        };
 
-            // Track price range
-            const price = parseInt(car.price);
-            if (!isNaN(price)) {
-                if (price < minPrice) minPrice = price;
-                if (price > maxPrice) maxPrice = price;
-            }
-
-            // Handle mods
-            if (car.mods) {
-                if (Array.isArray(car.mods)) {
-                    car.mods.forEach((mod: any) => {
-                        if (typeof mod === 'string' && mod.trim()) {
-                            filters.mods.add(mod.trim().toUpperCase());
-                        } else if (mod && mod.name) {
-                            filters.mods.add(mod.name.trim().toUpperCase());
-                        }
+        // Helper for mods (This is still tricky with simple-array or jsonb without unpacking)
+        // Since we cannot easily "SELECT DISTINCT json_elements" without raw Postgres functions which might fail across DBs or look messy,
+        // and assuming "mods" count is not huge per car, we might still have to use some logic or just fetch all mods strings if possible?
+        // But for performance, fetching just the `mods` column is better than fetching entire entities.
+        const getMods = async () => {
+            const q = baseQuery.clone();
+            const res = await q.select('car.mods', 'mods').where('car.mods IS NOT NULL').getRawMany();
+            const modSet = new Set<string>();
+            res.forEach(r => {
+                const m = r.mods;
+                if (Array.isArray(m)) {
+                    m.forEach((v: any) => {
+                        if (typeof v === 'string') modSet.add(v.trim().toUpperCase());
+                        else if (v && v.name) modSet.add(v.name.trim().toUpperCase());
                     });
-                } else if (typeof car.mods === 'object') {
-                    Object.values(car.mods).forEach((values: any) => {
-                        if (Array.isArray(values)) {
-                            values.forEach((v: string) => {
-                                if (v && typeof v === 'string') {
-                                    filters.mods.add(v.trim().toUpperCase());
-                                }
-                            });
-                        }
+                } else if (typeof m === 'object') {
+                    Object.values(m).forEach((v: any) => {
+                        if (Array.isArray(v)) v.forEach((sub: string) => modSet.add(sub.trim().toUpperCase()));
                     });
                 }
-            }
-        }
+            });
+            return Array.from(modSet).sort();
+        };
+
+        // Helper for notableFeatures
+        const getNotableFeatures = async () => {
+            const q = baseQuery.clone();
+            const res = await q.select('car.notableFeatures', 'nf').where('car.notableFeatures IS NOT NULL').getRawMany();
+            const nfSet = new Set<string>();
+            res.forEach(r => {
+                let raw = r.nf;
+                // TypeORM simple-array comes as string "a,b,c" in raw result or parsed? 
+                // It depends on driver. Postgres raw might be string. TypeORM hydrate handles it.
+                // getRawMany returns DB values. simple-array in Postgres is text.
+                if (typeof raw === 'string') {
+                    raw.split(',').forEach(s => nfSet.add(s.trim()));
+                }
+            });
+            return Array.from(nfSet).sort();
+        };
+
+
+        const [
+            chassisCode, engineCode, transmission, drivetrain, condition, paperwork,
+            year, location, priceRange, mods, notableFeatures, count
+        ] = await Promise.all([
+            getDistinct('chassisCode'),
+            getDistinct('engineCode'),
+            getDistinct('transmission'),
+            getDistinct('drivetrain'),
+            getDistinct('condition'),
+            getDistinct('paperwork'),
+            getDistinctYears(),
+            getDistinct('location'),
+            getPriceRange(),
+            getMods(),
+            getNotableFeatures(),
+            baseQuery.getCount()
+        ]);
 
         return {
-            chassisCode: Array.from(filters.chassisCode).sort(),
-            engineCode: Array.from(filters.engineCode).sort(),
-            transmission: Array.from(filters.transmission).sort(),
-            drivetrain: Array.from(filters.drivetrain).sort(),
-            condition: Array.from(filters.condition).sort(),
-            paperwork: Array.from(filters.paperwork).sort(),
-            mods: Array.from(filters.mods).sort(),
-            notableFeatures: Array.from(filters.notableFeatures).sort(),
-            priceRange: {
-                min: minPrice === Infinity ? 0 : minPrice,
-                max: maxPrice,
-            },
-            count: cars.length,
+            chassisCode,
+            engineCode,
+            transmission,
+            drivetrain,
+            condition,
+            paperwork,
+            year,
+            location,
+            mods,
+            notableFeatures,
+            priceRange,
+            count
         };
     }
 

@@ -24,22 +24,6 @@ export class PaymentController {
         }
     }
 
-    @Post('withdraw')
-    @UseGuards(AuthGuard('jwt'))
-    async createWithdrawal(@Body() body: { amount: number; bankBin: string; accountNumber: string; accountName: string }, @Req() req) {
-        const userId = req.user.id || req.user.userId || req.user.sub;
-
-        try {
-            const result = await this.paymentService.createWithdrawal(body.amount, userId, body.bankBin, body.accountNumber, body.accountName);
-            return {
-                error: 0,
-                message: 'Success',
-                data: result
-            };
-        } catch (error) {
-            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-        }
-    }
 
     @Post('webhook')
     async handleWebhook(@Body() body: any) {
@@ -60,13 +44,4 @@ export class PaymentController {
         }
     }
 
-    @Get('banks')
-    async getBanks() {
-        try {
-            const result = await this.paymentService.getBanks();
-            return result;
-        } catch (error) {
-            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }

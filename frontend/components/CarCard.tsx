@@ -1,6 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { GitFork, FileText, CheckCircle2, AlertTriangle, Calendar, Disc, Eye } from 'lucide-react';
-import { generateCarSlug } from '@/lib/utils';
+import { generateCarSlug, shouldOptimizeImage } from '@/lib/utils';
 
 interface CarCardProps {
     car: any;
@@ -12,10 +13,14 @@ export default function CarCard({ car }: CarCardProps) {
             {/* Image Container */}
             <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                 {car.thumbnail || (car.images && car.images.length > 0) ? (
-                    <img
+                    <Image
                         src={car.thumbnail || car.images[0]}
                         alt={`${car.make} ${car.model}`}
-                        className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                        fill
+                        className="object-cover transition duration-700 group-hover:scale-110"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        priority={false}
+                        unoptimized={!shouldOptimizeImage(car.thumbnail || car.images[0])}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm font-bold uppercase tracking-wider">

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany, Index } from 'typeorm';
 import { User } from '../../users/user.entity';
 import { Favorite } from '../../favorites/entities/favorite.entity';
 
@@ -11,23 +11,29 @@ export enum CarStatus {
 }
 
 @Entity()
+@Index(['make', 'model']) // Compound index for make+model search
+@Index(['status', 'createdAt']) // For sorting and filtering by status
 export class Car {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column()
+    @Index()
     make: string;
 
     @Column()
+    @Index()
     model: string;
 
     @Column()
+    @Index() // Range queries on year
     year: number;
 
     @Column({ nullable: true })
     trim: string;
 
     @Column({ type: 'bigint' })
+    @Index() // Range queries on price
     price: string; // TypeORM handles bigint as string
 
     @Column({ default: false })
@@ -96,6 +102,7 @@ export class Car {
     notableFeatures: string[];
 
     @Column('jsonb', { nullable: true })
+    @Index()
     mods: any;
 
     @Column({
@@ -103,6 +110,7 @@ export class Car {
         enum: CarStatus,
         default: CarStatus.AVAILABLE,
     })
+    @Index()
     status: CarStatus;
 
     @ManyToOne(() => User, (user) => user.carsForSale)
@@ -113,12 +121,14 @@ export class Car {
     favorites: Favorite[];
 
     @Column({ nullable: true })
+    @Index()
     sellerId: string;
 
     @Column({ default: 0 })
     views: number;
 
     @CreateDateColumn()
+    @Index()
     createdAt: Date;
 
     @UpdateDateColumn()

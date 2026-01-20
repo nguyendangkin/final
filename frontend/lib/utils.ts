@@ -34,3 +34,12 @@ export function cn(...classes: (string | undefined | null | false)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
+
+export function shouldOptimizeImage(url: string): boolean {
+    if (!url) return false;
+    // Disable optimization for localhost to avoid "resolved to private ip" errors in dev
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        return false;
+    }
+    return true;
+}

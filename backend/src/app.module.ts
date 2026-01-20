@@ -27,6 +27,8 @@ import { TagsModule } from './tags/tags.module';
 import { Tag } from './tags/entities/tag.entity';
 import { SoldCarsModule } from './sold-cars/sold-cars.module';
 import { SoldCar } from './sold-cars/entities/sold-car.entity';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
@@ -34,6 +36,10 @@ import { SoldCar } from './sold-cars/entities/sold-car.entity';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100, // 100 requests per minute per IP
+    }]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -65,6 +71,12 @@ import { SoldCar } from './sold-cars/entities/sold-car.entity';
     SoldCarsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule { }
