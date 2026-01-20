@@ -63,7 +63,7 @@ export class UsersController {
         return {
             id: user.id,
             name: user.name,
-            email: user.email,
+            // email: user.email, // Hidden for privacy
             avatar: user.avatar,
             createdAt: user.createdAt,
             isSellingBanned: user.isSellingBanned,

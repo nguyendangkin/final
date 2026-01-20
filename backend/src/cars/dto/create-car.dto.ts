@@ -1,14 +1,16 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsEnum, IsBoolean, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsEnum, IsBoolean, Max, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CarStatus } from '../entities/car.entity';
 
 export class CreateCarDto {
     @IsString()
     @IsNotEmpty()
+    @MaxLength(100)
     make: string;
 
     @IsString()
     @IsNotEmpty()
+    @MaxLength(100)
     model: string;
 
     @IsNumber()
@@ -29,6 +31,7 @@ export class CreateCarDto {
 
     @IsString()
     @IsNotEmpty()
+    @MaxLength(5000, { message: 'Mô tả quá dài (tối đa 5000 ký tự)' })
     description: string;
 
     @IsArray()
@@ -51,6 +54,7 @@ export class CreateCarDto {
 
     @IsString()
     @IsNotEmpty()
+    @MaxLength(200)
     location: string;
 
     // JDM Specs

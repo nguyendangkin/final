@@ -55,7 +55,8 @@ import { APP_GUARD } from '@nestjs/core';
         password: configService.get<string>('DB_PASSWORD', 'admin'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
         entities: [User, Transaction, Car, CarView, Report, Favorite, Notification, SystemAnnouncement, UserAnnouncementRead, Tag, SoldCar],
-        synchronize: true, // Auto-create tables (dev only)
+        // synchronize: true, // Auto-create tables (dev only)
+        synchronize: configService.get<string>('NODE_ENV') !== 'production', // Only auto-sync in dev
       }),
       inject: [ConfigService],
     }),

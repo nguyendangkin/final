@@ -33,7 +33,11 @@ export class PaymentService {
 
         const fee = 2000;
         const totalAmount = amount + fee;
-        const orderCode = Number(String(Date.now()).slice(-6) + Math.floor(Math.random() * 100)); // Ensure unique
+
+        // Use full timestamp + random to ensure uniqueness/entropy
+        // Max Safe Integer is 9007199254740991 (16 digits). Date.now() is 13 digits. 
+        // We can append 3 random digits safely.
+        const orderCode = Number(`${Date.now()}${Math.floor(Math.random() * 1000)}`);
 
         const paymentLinkData = {
             orderCode: orderCode,
@@ -77,31 +81,39 @@ export class PaymentService {
         const { orderCode, amount } = verifyData;
         // Note: 'amount' here is totalAmount (including fee)
 
-        const transaction = await this.transactionRepository.findOne({ where: { orderCode } });
-        if (!transaction) {
-            this.logger.error(`Transaction not found for orderCode: ${orderCode}`);
-            return;
-        }
+        // Use a transaction to prevent race conditions on double-webhook events
+        return this.dataSource.transaction(async (manager) => {
+            // Lock the transaction row to prevent concurrent updates
+            // In TypeORM, we can use setLock('pessimistic_write') if we use query builder or findOne with lock
+            const transaction = await manager.getRepository(Transaction).findOne({
+                where: { orderCode },
+                lock: { mode: 'pessimistic_write' }
+            });
 
-        if (transaction.status === 'SUCCESS') {
-            return; // Already processed
-        }
+            if (!transaction) {
+                this.logger.error(`Transaction not found for orderCode: ${orderCode}`);
+                return;
+            }
 
-        // Update Transaction
-        transaction.status = 'SUCCESS';
-        await this.transactionRepository.save(transaction);
+            if (transaction.status === 'SUCCESS') {
+                return; // Already processed
+            }
 
-        // Update User Balance
-        const user = await this.userRepository.findOne({ where: { id: transaction.userId } });
-        if (user) {
-            // Parse balance as BigInt, add, then save back
-            // Note: user.balance is string in entity
-            const currentBalance = BigInt(user.balance || 0);
-            const addAmount = BigInt(transaction.amount);
-            user.balance = (currentBalance + addAmount).toString();
-            await this.userRepository.save(user);
-            this.logger.log(`User ${user.id} balance updated. Added ${addAmount}`);
-        }
+            // Update Transaction
+            transaction.status = 'SUCCESS';
+            await manager.save(transaction);
+
+            // Update User Balance
+            const user = await manager.getRepository(User).findOne({ where: { id: transaction.userId } });
+            if (user) {
+                // Parse balance as BigInt, add, then save back
+                const currentBalance = BigInt(user.balance || 0);
+                const addAmount = BigInt(transaction.amount);
+                user.balance = (currentBalance + addAmount).toString();
+                await manager.save(user);
+                this.logger.log(`User ${user.id} balance updated. Added ${addAmount}`);
+            }
+        });
 
         return { success: true };
     }

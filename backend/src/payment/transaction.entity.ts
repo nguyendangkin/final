@@ -5,7 +5,7 @@ export class Transaction {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ type: 'bigint' })
+    @Column({ type: 'bigint', unique: true })
     orderCode: number; // PayOS order code
 
     @Column()

@@ -54,8 +54,11 @@ export class CarsService {
         for (const imageUrl of imagesToDelete) {
             try {
                 // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
-                const filename = imageUrl.split('/uploads/').pop();
-                if (filename) {
+                // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
+                // FIX: Use path.basename to prevent Directory Traversal attacks (e.g. "../../index.js")
+                const rawFilename = imageUrl.split('/uploads/').pop();
+                if (rawFilename) {
+                    const filename = path.basename(rawFilename); // Sanitize filename
                     const filePath = path.join(process.cwd(), 'uploads', filename);
 
                     // Check if file seems to be one of the excluded ones
@@ -217,43 +220,64 @@ export class CarsService {
     }
 
     async findOne(id: string, userPayload?: any): Promise<Car> {
-        const car = await this.carsRepository.findOne({
-            where: { id },
-            relations: ['seller'],
-        });
+        const qb = this.carsRepository.createQueryBuilder('car');
+        qb.leftJoin('car.seller', 'seller');
+        qb.addSelect(['seller.id', 'seller.name', 'seller.avatar', 'seller.isSellingBanned', 'seller.isAdmin']); // Select only public fields
+        qb.where('car.id = :id', { id });
+
+        const car = await qb.getOne();
+
         if (!car) throw new NotFoundException('Car not found');
 
         // Check if car is hidden
         if (car.status === CarStatus.HIDDEN) {
             let isAdmin = false;
-            if (userPayload && userPayload.sub) { // Assuming 'sub' is the ID in standard JWT, or 'id'
-                const userId = userPayload.sub || userPayload.id;
-                const user = await this.dataSource.getRepository(User).findOne({ where: { id: userId } });
+            // userPayload from JWT strategy has minimal info, usually sub/id.
+            // If we selected 'seller.isAdmin' above, that's for the seller of the car, NOT the requesting user.
+            // We need to check the requesting user's admin status.
+            if (userPayload && (userPayload.sub || userPayload.id || userPayload.userId)) {
+                const userId = userPayload.sub || userPayload.id || userPayload.userId;
+                // Query user role explicitly safely
+                const user = await this.dataSource.getRepository(User).findOne({
+                    where: { id: userId },
+                    select: ['id', 'isAdmin']
+                });
                 if (user && user.isAdmin) {
                     isAdmin = true;
                 }
             }
 
             if (!isAdmin) {
-                throw new NotFoundException('Car not found');
+                // If the user is the seller, they should see it too?
+                // Logic says "HIDDEN" is administrative hide? Or user draft?
+                // If user draft is PENDING, HIDDEN might be banned.
+                // Let's assume only Admin sees HIDDEN. 
+                // Wait, if I am the seller, I might want to see my hidden car?
+                // Use strict check: userPayload.id === car.seller.id
+                if (userPayload && (userPayload.sub || userPayload.id) === car.seller.id) {
+                    // Seller can see own car
+                } else {
+                    throw new NotFoundException('Car not found');
+                }
             }
         }
 
         // Hide car if seller is banned
         if (car.seller && car.seller.isSellingBanned) {
-            // Check admin override for banned sellers too? 
-            // User requested "like user ban", and usually admins SEE banned users.
-            // So we should probably allow Admins to see banned seller cars too.
             let isAdmin = false;
-            if (userPayload && userPayload.sub) {
+            if (userPayload && (userPayload.sub || userPayload.id)) {
                 const userId = userPayload.sub || userPayload.id;
-                const user = await this.dataSource.getRepository(User).findOne({ where: { id: userId } });
+                const user = await this.dataSource.getRepository(User).findOne({
+                    where: { id: userId },
+                    select: ['id', 'isAdmin']
+                });
                 if (user && user.isAdmin) {
                     isAdmin = true;
                 }
             }
 
-            if (!isAdmin) {
+            // Allow seller to see their own banned car? Usually yes so they can appeal.
+            if (!isAdmin && (!userPayload || (userPayload.sub || userPayload.id) !== car.seller.id)) {
                 throw new NotFoundException('Car not found');
             }
         }

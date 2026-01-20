@@ -14,6 +14,20 @@ export class UploadController {
                 return cb(null, `${randomName}${extname(file.originalname)}`);
             },
         }),
+        limits: {
+            fileSize: 5 * 1024 * 1024, // 5MB limit
+        },
+        fileFilter: (req, file, cb) => {
+            // Check mime type
+            if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+                return cb(new Error('Only image files are allowed!'), false);
+            }
+            // Check file extension (Security fix: Prevent .html/.php files with image headers)
+            if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                return cb(new Error('File extension not allowed!'), false);
+            }
+            cb(null, true);
+        },
     }))
     uploadFile(@UploadedFile() file: Express.Multer.File) {
         return {
