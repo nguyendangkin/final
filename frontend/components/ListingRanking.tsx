@@ -74,7 +74,7 @@ export default function ListingRanking({ carId }: ListingRankingProps) {
                 <div className="space-y-1.5">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
                         <span className="flex items-center gap-1.5 text-gray-500">
-                            <Globe className="w-3 h-3" /> Dòng thời gian chính
+                            <Globe className="w-3 h-3" /> Trang chủ
                         </span>
                         <span className="text-black">
                             <span className="text-[var(--jdm-red)]">{ranking.global.rank}</span>/{ranking.global.total} xe
