@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { SystemAnnouncement } from './entities/system-announcement.entity';
 import { UserAnnouncementRead } from './entities/user-announcement-read.entity';
@@ -87,10 +87,19 @@ export class NotificationsService {
         const [announcements, total] = await queryBuilder.getManyAndCount();
 
         // Get read status for each announcement
-        const readRecords = await this.readRepo.find({
-            where: { userId },
-        });
-        const readAnnouncementIds = new Set(readRecords.map(r => r.announcementId));
+        const announcementIds = announcements.map(a => a.id);
+        const readAnnouncementIds = new Set<string>();
+
+        if (announcementIds.length > 0) {
+            const readRecords = await this.readRepo.find({
+                where: {
+                    userId,
+                    announcementId: In(announcementIds)
+                },
+                select: ['announcementId']
+            });
+            readRecords.forEach(r => readAnnouncementIds.add(r.announcementId));
+        }
 
         const items = announcements.map(a => ({
             ...a,
@@ -121,22 +130,25 @@ export class NotificationsService {
     }
 
     async markAllAnnouncementsAsRead(userId: string) {
-        const announcements = await this.announcementRepo.find({
-            where: { isPublished: true },
-            select: ['id'],
-        });
+        // Get user for created date rule
+        const user = await this.announcementRepo.manager.findOne('User', {
+            where: { id: userId },
+            select: ['createdAt'],
+        } as any) as any;
 
-        const readRecords = await this.readRepo.find({
-            where: { userId },
-            select: ['announcementId'],
-        });
-        const readIds = new Set(readRecords.map(r => r.announcementId));
+        if (!user) return { success: false };
 
-        const newReads = announcements
-            .filter(a => !readIds.has(a.id))
-            .map(a => this.readRepo.create({ userId, announcementId: a.id }));
+        // Find all VISIBLE and UNREAD announcements
+        const unreads = await this.announcementRepo.createQueryBuilder('announcement')
+            .leftJoin('user_announcement_read', 'read', 'read.announcementId = announcement.id AND read.userId = :userId', { userId })
+            .select('announcement.id')
+            .where('announcement.isPublished = :isPublished', { isPublished: true })
+            .andWhere('(announcement.isGlobal = :isGlobal OR announcement.createdAt >= :userCreatedAt)', { isGlobal: true, userCreatedAt: user.createdAt })
+            .andWhere('read.id IS NULL')
+            .getMany();
 
-        if (newReads.length > 0) {
+        if (unreads.length > 0) {
+            const newReads = unreads.map(a => this.readRepo.create({ userId, announcementId: a.id }));
             await this.readRepo.save(newReads);
         }
 
@@ -158,19 +170,26 @@ export class NotificationsService {
             where: { userId, isRead: false },
         });
 
-        // Count unread system announcements
-        const totalAnnouncements = await this.announcementRepo.count({
-            where: { isPublished: true },
-        });
-        const readAnnouncements = await this.readRepo.count({
-            where: { userId },
-        });
-        const systemCount = totalAnnouncements - readAnnouncements;
+        // Get user creation time for announcement filtering
+        const user = await this.announcementRepo.manager.findOne('User', {
+            where: { id: userId },
+            select: ['createdAt'],
+        } as any) as any;
+
+        let systemCount = 0;
+        if (user) {
+            systemCount = await this.announcementRepo.createQueryBuilder('announcement')
+                .leftJoin('user_announcement_read', 'read', 'read.announcementId = announcement.id AND read.userId = :userId', { userId })
+                .where('announcement.isPublished = :isPublished', { isPublished: true })
+                .andWhere('(announcement.isGlobal = :isGlobal OR announcement.createdAt >= :userCreatedAt)', { isGlobal: true, userCreatedAt: user.createdAt })
+                .andWhere('read.id IS NULL') // Unread check
+                .getCount();
+        }
 
         return {
             user: userCount,
-            system: Math.max(0, systemCount),
-            total: userCount + Math.max(0, systemCount),
+            system: systemCount,
+            total: userCount + systemCount,
         };
     }
 }

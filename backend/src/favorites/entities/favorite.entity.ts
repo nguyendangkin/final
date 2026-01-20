@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn, Unique, Index } from 'typeorm';
 import { User } from '../../users/user.entity';
 import { Car } from '../../cars/entities/car.entity';
 
@@ -10,10 +10,12 @@ export class Favorite {
 
     @ManyToOne(() => User, (user) => user.favorites, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'userId' })
+    @Index()
     user: User;
 
     @ManyToOne(() => Car, (car) => car.favorites, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'carId' })
+    @Index()
     car: Car;
 
     @CreateDateColumn()

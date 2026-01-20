@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CacheModule } from '@nestjs/cache-manager';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './users/user.entity';
@@ -35,6 +36,10 @@ import { APP_GUARD } from '@nestjs/core';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 60000, // 1 minute cache
     }),
     ThrottlerModule.forRoot([{
       ttl: 60000,

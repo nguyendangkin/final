@@ -25,6 +25,7 @@ export default function Header() {
     const [smartFilters, setSmartFilters] = useState<any>(null);
     const [selectedFilters, setSelectedFilters] = useState<Record<string, string>>({});
     const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
+    const [debouncedPriceRange, setDebouncedPriceRange] = useState(priceRange);
     const [isLoading, setIsLoading] = useState(false);
 
     const [user, setUser] = useState<any>(null);
@@ -61,16 +62,25 @@ export default function Header() {
     // Initial load - get all available options
     useEffect(() => {
         if (isSearchOptionsOpen && !smartFilters) {
-            fetchSmartFilters({}, priceRange);
+            fetchSmartFilters({}, debouncedPriceRange);
         }
     }, [isSearchOptionsOpen]);
 
-    // Re-fetch when filters or price range change (both desktop and mobile)
+    // Debounce price range
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedPriceRange(priceRange);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [priceRange]);
+
+    // Re-fetch when filters or debounced price range change
     useEffect(() => {
         if (isSearchOptionsOpen || isMobileFilterOpen) {
-            fetchSmartFilters(selectedFilters, priceRange);
+            fetchSmartFilters(selectedFilters, debouncedPriceRange);
         }
-    }, [selectedFilters, priceRange.min, priceRange.max]);
+    }, [selectedFilters, debouncedPriceRange]);
 
     // Select a filter value
     const selectFilter = (category: string, value: string) => {

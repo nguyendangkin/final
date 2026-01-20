@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseUUIDPipe, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query, ParseUUIDPipe, ForbiddenException, Inject, forwardRef, UseInterceptors } from '@nestjs/common';
 import { CarsService } from './cars.service';
 import { UsersService } from '../users/users.service';
 import { CreateCarDto, UpdateCarDto } from './dto/create-car.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('cars')
 export class CarsController {
@@ -194,27 +195,32 @@ export class CarsController {
     }
 
     @Get('brands/all')
+    @UseInterceptors(CacheInterceptor)
     getBrands() {
         return this.carsService.getBrands();
     }
 
     @Get('tags/:brand')
+    @UseInterceptors(CacheInterceptor)
     getTagsByBrand(@Param('brand') brand: string) {
         return this.carsService.getFiltersByBrand(brand);
     }
 
     // Cascading filters
     @Get('filters/models')
+    @UseInterceptors(CacheInterceptor)
     getModelsByBrand(@Query('make') make: string) {
         return this.carsService.getModelsByBrand(make);
     }
 
     @Get('filters/trims')
+    @UseInterceptors(CacheInterceptor)
     getTrimsByModel(@Query('make') make: string, @Query('model') model: string) {
         return this.carsService.getTrimsByModel(make, model);
     }
 
     @Get('filters/details')
+    @UseInterceptors(CacheInterceptor)
     getFilterDetails(
         @Query('make') make: string,
         @Query('model') model?: string,
@@ -225,6 +231,7 @@ export class CarsController {
 
     // Smart unified filter - adapts options based on current selections
     @Get('filters/smart')
+    @UseInterceptors(CacheInterceptor)
     getSmartFilters(@Query() query: any) {
         return this.carsService.getSmartFilters(query);
     }

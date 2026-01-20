@@ -234,7 +234,7 @@ export default function AdminCars() {
                                         <tr key={car.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="h-16 w-24 flex-shrink-0">
-                                                    <img className="h-16 w-24 object-cover rounded-sm" src={car.images?.[0] || '/placeholder-car.png'} alt="" />
+                                                    <img className="h-16 w-24 object-cover rounded-sm" src={car.thumbnail || car.images?.[0] || '/placeholder-car.png'} alt="" />
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">

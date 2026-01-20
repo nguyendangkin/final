@@ -78,19 +78,19 @@ export class CarsService {
 
     async findAll(query: any): Promise<{ data: Car[], meta: any }> {
         const qb = this.carsRepository.createQueryBuilder('car');
-        qb.leftJoinAndSelect('car.seller', 'seller');
-        // qb.where('car.status = :status', { status: CarStatus.AVAILABLE }); // Removed to show sold cars
 
-        // Hide hidden cars by default (admin can still see them if we want, but for now let's just show them to admin only? 
-        // Logic: Public feed should NOT show HIDDEN. Admin feed SHOULD show HIDDEN.
-        // The current findAll is used by BOTH. 
-        // We need a way to distinguish. 
-        // Let's add an optional 'includeHidden' param or check user role.
-        // For simplicity, let's assume this is public facing primarily, but Admin uses it too.
-        // The current request "Hide/Delete" implies Admin wants to see them to Un-hide properly? 
-        // Or if it's "Delete", it's gone. 
-        // User said "Hide (like delete)". 
-        // Let's exclude HIDDEN from public results.
+        // Select only necessary fields for listing to reduce payload size
+        qb.select([
+            'car.id', 'car.make', 'car.model', 'car.year', 'car.trim',
+            'car.price', 'car.mileage', 'car.location',
+            'car.thumbnail', 'car.images', 'car.status', 'car.createdAt', 'car.views',
+            'car.isNegotiable', 'car.condition', 'car.paperwork',
+            'car.transmission', 'car.drivetrain', 'car.registryExpiry', 'car.noRegistry'
+        ]);
+
+        // We also need seller info
+        qb.leftJoin('car.seller', 'seller');
+        qb.addSelect(['seller.id', 'seller.name', 'seller.avatar', 'seller.isSellingBanned']);
 
         if (!query.includeHidden) {
             qb.andWhere('car.status IN (:...publicStatuses)', { publicStatuses: [CarStatus.AVAILABLE, CarStatus.SOLD] });
@@ -141,13 +141,10 @@ export class CarsService {
         if (query.mods) {
             // Revert to text-based search for "like other filters" behavior, 
             // but wrap in quotes to target JSON values specifically and avoid partial word matches.
-            // e.g., searching for "G" becomes ILIKE '%"G"%', which matches ["G"] or [{"name":"G"}] 
-            // but NOT ["Engine"] (because "Engine" doesn't contain "G" with quotes).
             qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', { mods: `%"${query.mods}"%` });
         }
 
         // Smart full-text search - concatenate all searchable fields into one string
-        // Each word must be found somewhere in this combined searchable text
         if (query.q) {
             const searchWords = query.q.trim().split(/\s+/).filter((w: string) => w.length > 0);
 
@@ -176,12 +173,8 @@ export class CarsService {
             qb.andWhere('car.status = :status', { status: query.status });
         }
 
-        // Default sort: AVAILABLE first, then others (SOLD, HIDDEN etc at the end)
-        // We can explicitly sort by whether status is AVAILABLE or not.
-        // Assuming we want SOLD at the end.
-        // Let's use a CASE statement for custom ordering if no specific status filter is active
+        // Sorting
         if (!query.status) {
-            // 'AVAILABLE' < 'SOLD' alphabetically, so this puts available cars first
             qb.orderBy('car.status', 'ASC');
             qb.addOrderBy('car.createdAt', 'DESC');
         } else {
@@ -197,6 +190,20 @@ export class CarsService {
         qb.skip(skip);
 
         const [cars, total] = await qb.getManyAndCount();
+
+        // Fix images array for frontend because we didn't select it? 
+        // Frontend uses `car.thumbnail` mostly. But `CarCard` checks `car.images[0]`.
+        // If `thumbnail` is missing, it falls back to `images[0]`.
+        // Since we are NOT selecting `images`, `cars[i].images` will be undefined.
+        // We should ensure `images` is strictly not needed OR select it partially?
+        // Actually, `thumbnail` is encouraged. If we want to support fallback, we must select `images`.
+        // But `images` is simple-array (text). It's not THAT huge unless 100 images.
+        // Let's check `CarCard`: `car.thumbnail || (car.images && car.images.length > 0) ? ...`
+        // If we don't select `images`, `car.images` is undefined.
+        // So we MUST select `images` IF `thumbnail` can be null.
+        // Can we Select `images`? Yes, it's a column. 
+        // Let's add 'car.images' to selection to be safe, it's just text.
+        // But `description` is the big one we want to avoid.
 
         return {
             data: cars,
@@ -544,73 +551,106 @@ export class CarsService {
     }
 
     async getFiltersByBrand(make: string): Promise<any> {
-        const cars = await this.carsRepository
-            .createQueryBuilder('car')
+        const baseQuery = this.carsRepository.createQueryBuilder('car')
             .leftJoin('car.seller', 'seller')
             .where('car.make ILIKE :make', { make: `%${make}%` })
             .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-            .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] })
-            .getMany();
+            .andWhere('car.status IN (:...statuses)', { statuses: [CarStatus.AVAILABLE, CarStatus.SOLD] });
 
-        // Extract unique values for each filterable field
-        const filters: Record<string, Set<string>> = {
-            model: new Set(),
-            chassisCode: new Set(),
-            engineCode: new Set(),
-            transmission: new Set(),
-            drivetrain: new Set(),
-            condition: new Set(),
-            paperwork: new Set(),
-            mods: new Set(),
-            notableFeatures: new Set(),
+        // Helper to get distinct values for a column
+        const getDistinct = async (col: string) => {
+            const result = await baseQuery.clone()
+                .select(`DISTINCT car.${col}`, 'val')
+                .andWhere(`car.${col} IS NOT NULL`)
+                .getRawMany();
+            return result.map(r => r.val?.toUpperCase()).filter(Boolean).sort();
         };
 
-        for (const car of cars) {
-            if (car.model) filters.model.add(car.model.toUpperCase());
-            if (car.chassisCode) filters.chassisCode.add(car.chassisCode.toUpperCase());
-            if (car.engineCode) filters.engineCode.add(car.engineCode.toUpperCase());
-            if (car.transmission) filters.transmission.add(car.transmission.toUpperCase());
-            if (car.drivetrain) filters.drivetrain.add(car.drivetrain.toUpperCase());
-            if (car.condition) filters.condition.add(car.condition.toUpperCase());
-            if (car.paperwork) filters.paperwork.add(car.paperwork.toUpperCase());
+        // Helper for year (descending)
+        const getDistinctYears = async () => {
+            const result = await baseQuery.clone()
+                .select('DISTINCT car.year', 'val')
+                .orderBy('val', 'DESC')
+                .getRawMany();
+            return result.map(r => r.val?.toString()).filter(Boolean);
+        };
 
-            // Handle mods
-            if (car.mods) {
-                if (Array.isArray(car.mods)) {
-                    car.mods.forEach((mod: any) => {
-                        if (typeof mod === 'string' && mod.trim()) {
-                            filters.mods.add(mod.trim().toUpperCase());
-                        } else if (mod && mod.name) {
-                            filters.mods.add(mod.name.trim().toUpperCase());
-                        }
+        // Helper for mods (Still needing some manual processing if stored as complex JSON, but let's try to minimize fetch)
+        // Optimization: Fetch only 'mods' column, not full entity
+        const getMods = async () => {
+            const result = await baseQuery.clone()
+                .select('car.mods', 'mods')
+                .where('car.mods IS NOT NULL')
+                .getRawMany();
+
+            const modSet = new Set<string>();
+            result.forEach(r => {
+                const m = r.mods;
+                if (Array.isArray(m)) {
+                    m.forEach((v: any) => {
+                        if (typeof v === 'string' && v.trim()) modSet.add(v.trim().toUpperCase());
+                        else if (v && v.name) modSet.add(v.name.trim().toUpperCase());
                     });
-                } else if (typeof car.mods === 'object') {
-                    Object.values(car.mods).forEach((values: any) => {
+                } else if (typeof m === 'object') {
+                    Object.values(m).forEach((values: any) => {
                         if (Array.isArray(values)) {
                             values.forEach((v: string) => {
-                                if (v && typeof v === 'string') {
-                                    filters.mods.add(v.trim().toUpperCase());
-                                }
+                                if (v && typeof v === 'string') modSet.add(v.trim().toUpperCase());
                             });
                         }
                     });
                 }
-            }
-        }
+            });
+            return Array.from(modSet).sort();
+        };
 
-        // Convert Sets to sorted arrays and return
+        // Helper for notableFeatures
+        const getNotableFeatures = async () => {
+            const result = await baseQuery.clone()
+                .select('car.notableFeatures', 'nf')
+                .where('car.notableFeatures IS NOT NULL')
+                .getRawMany();
+
+            const nfSet = new Set<string>();
+            result.forEach(r => {
+                let raw = r.nf;
+                if (typeof raw === 'string') {
+                    raw.split(',').forEach(s => nfSet.add(s.trim()));
+                }
+            });
+            return Array.from(nfSet).sort();
+        };
+
+
+        const [
+            model, chassisCode, engineCode, transmission, drivetrain, condition, paperwork,
+            year, location, mods, notableFeatures
+        ] = await Promise.all([
+            getDistinct('model'),
+            getDistinct('chassisCode'),
+            getDistinct('engineCode'),
+            getDistinct('transmission'),
+            getDistinct('drivetrain'),
+            getDistinct('condition'),
+            getDistinct('paperwork'),
+            getDistinctYears(),
+            getDistinct('location'),
+            getMods(),
+            getNotableFeatures()
+        ]);
+
         return {
-            model: Array.from(filters.model).sort(),
-            chassisCode: Array.from(filters.chassisCode).sort(),
-            engineCode: Array.from(filters.engineCode).sort(),
-            transmission: Array.from(filters.transmission).sort(),
-            drivetrain: Array.from(filters.drivetrain).sort(),
-            condition: Array.from(filters.condition).sort(),
-            paperwork: Array.from(filters.paperwork).sort(),
-            mods: Array.from(filters.mods).sort(),
-            year: Array.from(filters.year).sort((a, b) => b.localeCompare(a)), // Sort years descending
-            location: Array.from(filters.location).sort(),
-            notableFeatures: Array.from(filters.notableFeatures).sort(),
+            model,
+            chassisCode,
+            engineCode,
+            transmission,
+            drivetrain,
+            condition,
+            paperwork,
+            year,
+            location,
+            mods,
+            notableFeatures
         };
     }
 
@@ -662,14 +702,18 @@ export class CarsService {
         // Helper to get distinct values for a column
         const getDistinct = async (col: string) => {
             const q = baseQuery.clone();
-            const res = await q.select(`DISTINCT car.${col}`, 'val').where(`car.${col} IS NOT NULL`).getRawMany();
+            const res = await q.select(`DISTINCT car.${col}`, 'val')
+                .andWhere(`car.${col} IS NOT NULL`)
+                .getRawMany();
             return res.map(r => r.val?.toUpperCase()).filter(Boolean).sort();
         };
 
         // Helper for year (descending)
         const getDistinctYears = async () => {
             const q = baseQuery.clone();
-            const res = await q.select('DISTINCT car.year', 'val').orderBy('car.year', 'DESC').getRawMany();
+            const res = await q.select('DISTINCT car.year', 'val')
+                .orderBy('val', 'DESC')
+                .getRawMany();
             return res.map(r => r.val?.toString()).filter(Boolean);
         };
 
@@ -691,7 +735,7 @@ export class CarsService {
         // But for performance, fetching just the `mods` column is better than fetching entire entities.
         const getMods = async () => {
             const q = baseQuery.clone();
-            const res = await q.select('car.mods', 'mods').where('car.mods IS NOT NULL').getRawMany();
+            const res = await q.select('car.mods', 'mods').andWhere('car.mods IS NOT NULL').getRawMany();
             const modSet = new Set<string>();
             res.forEach(r => {
                 const m = r.mods;
@@ -701,8 +745,12 @@ export class CarsService {
                         else if (v && v.name) modSet.add(v.name.trim().toUpperCase());
                     });
                 } else if (typeof m === 'object') {
-                    Object.values(m).forEach((v: any) => {
-                        if (Array.isArray(v)) v.forEach((sub: string) => modSet.add(sub.trim().toUpperCase()));
+                    Object.values(m).forEach((values: any) => {
+                        if (Array.isArray(values)) {
+                            values.forEach((v: string) => {
+                                if (v && typeof v === 'string') modSet.add(v.trim().toUpperCase());
+                            });
+                        }
                     });
                 }
             });
@@ -712,7 +760,7 @@ export class CarsService {
         // Helper for notableFeatures
         const getNotableFeatures = async () => {
             const q = baseQuery.clone();
-            const res = await q.select('car.notableFeatures', 'nf').where('car.notableFeatures IS NOT NULL').getRawMany();
+            const res = await q.select('car.notableFeatures', 'nf').andWhere('car.notableFeatures IS NOT NULL').getRawMany();
             const nfSet = new Set<string>();
             res.forEach(r => {
                 let raw = r.nf;

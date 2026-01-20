@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique, Index } from 'typeorm';
 
 @Entity()
 @Unique(['category', 'value', 'parent'])
@@ -7,9 +7,11 @@ export class Tag {
     id: string;
 
     @Column()
+    @Index()
     category: string; // 'make', 'model', 'chassisCode', 'engineCode', 'transmission', 'drivetrain', 'condition', 'paperwork', 'location', 'mods', 'trim'
 
     @Column()
+    @Index()
     value: string; // Normalized uppercase value
 
     @Column({ default: '' })

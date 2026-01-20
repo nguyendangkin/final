@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, CreateDateColumn, Index } from 'typeorm';
 import { User } from '../../users/user.entity';
 
 @Entity()
@@ -28,5 +28,6 @@ export class SoldCar {
     seller: User;
 
     @CreateDateColumn()
+    @Index()
     soldAt: Date;
 }

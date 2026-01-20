@@ -59,18 +59,23 @@ export class Car {
 
     // JDM Specifics
     @Column({ nullable: true })
+    @Index()
     chassisCode: string;
 
     @Column({ nullable: true })
+    @Index()
     engineCode: string;
 
     @Column({ nullable: true })
+    @Index()
     transmission: string; // MT, AT, CVT
 
     @Column({ nullable: true })
+    @Index()
     drivetrain: string; // FWD, RWD, AWD
 
     @Column({ nullable: true })
+    @Index()
     condition: string;
 
     @Column({ default: '' })
@@ -87,6 +92,7 @@ export class Car {
 
     // Legal
     @Column({ nullable: true })
+    @Index()
     paperwork: string;
 
     @Column({ nullable: true })
@@ -96,6 +102,7 @@ export class Car {
     noRegistry: boolean; // Flag for "Không đăng kiểm được"
 
     @Column({ nullable: true })
+    @Index() // Good for admin search or check
     plateNumber: string;
 
     @Column('simple-array', { nullable: true })
