@@ -36,6 +36,8 @@ services:
       - PAYOS_CHECKSUM_KEY=${PAYOS_CHECKSUM_KEY}
     networks:
       - app-network
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       - postgres
 
@@ -85,4 +87,6 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  uploads_data:
     driver: local
