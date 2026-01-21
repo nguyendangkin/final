@@ -11,7 +11,11 @@ interface CarFeedProps {
     filter?: any; // { make, model, sellerId, etc. }
 }
 
-export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps) {
+import { Suspense } from 'react';
+
+// ... (keep existing imports, add Suspense if needed but i am importing it above)
+
+function CarFeedContent({ initialCars = [], filter = {} }: CarFeedProps) {
     const [cars, setCars] = useState<any[]>(initialCars);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
@@ -130,5 +134,17 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
                 </div>
             )}
         </div>
+    );
+}
+
+export default function CarFeed(props: CarFeedProps) {
+    return (
+        <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+            {[...Array(6)].map((_, i) => (
+                <CarCardSkeleton key={i} />
+            ))}
+        </div>}>
+            <CarFeedContent {...props} />
+        </Suspense>
     );
 }

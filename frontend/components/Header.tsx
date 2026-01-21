@@ -12,7 +12,11 @@ const BRANDS = [
     'Subaru', 'Suzuki', 'Daihatsu', 'Lexus', 'Acura', 'Infiniti'
 ];
 
-export default function Header() {
+import { Suspense } from 'react';
+
+// ... imports remain the same but add Suspense if not present (it is from 'react')
+
+function HeaderContent() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isBrandsOpen, setIsBrandsOpen] = useState(false);
@@ -585,5 +589,13 @@ export default function Header() {
                 )
             }
         </header >
+    );
+}
+
+export default function Header() {
+    return (
+        <Suspense fallback={<div className="h-16 w-full bg-white border-b border-gray-200 fixed top-0 z-50"></div>}>
+            <HeaderContent />
+        </Suspense>
     );
 }
