@@ -50,14 +50,14 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
             <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-1 h-[400px] xl:h-[450px] cursor-pointer" onClick={() => onOpenLightbox(0)}>
                 {images.length === 1 && (
                     <div className="col-span-4 row-span-2 relative group overflow-hidden">
-                        <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car" sizes="100vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                        <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car" sizes="100vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
                     </div>
                 )}
 
                 {images.length === 2 && (
                     <>
                         <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
                         </div>
                         <div className="col-span-2 row-span-2 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
                             <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="50vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
@@ -68,7 +68,7 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
                 {images.length === 3 && (
                     <>
                         <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
                         </div>
                         <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
                             <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="25vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
@@ -82,7 +82,7 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
                 {images.length === 4 && (
                     <>
                         <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
                         </div>
                         <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
                             <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="25vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
@@ -99,7 +99,7 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
                 {images.length >= 5 && (
                     <>
                         <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
                             {status === 'SOLD' && (
                                 <div className="absolute top-4 left-4 z-10">
                                     <span className="bg-emerald-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider rounded shadow-sm">
