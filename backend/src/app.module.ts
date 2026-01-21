@@ -69,7 +69,7 @@ import { APP_GUARD } from '@nestjs/core';
           SoldCar,
         ],
         // synchronize: true, // Auto-create tables (dev only)
-        synchronize: configService.get<string>('NODE_ENV') !== 'production', // Only auto-sync in dev
+        synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true' || configService.get<string>('NODE_ENV') !== 'production', // Auto-sync if explicitly enabled or in dev
       }),
       inject: [ConfigService],
     }),
