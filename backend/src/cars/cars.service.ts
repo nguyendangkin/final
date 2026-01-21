@@ -18,6 +18,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
 import { TagsService } from '../tags/tags.service';
 import { SoldCarsService } from '../sold-cars/sold-cars.service';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class CarsService {
@@ -32,7 +33,8 @@ export class CarsService {
     private notificationsService: NotificationsService,
     private tagsService: TagsService,
     private soldCarsService: SoldCarsService,
-  ) {}
+    private uploadService: UploadService,
+  ) { }
 
   async getSellerStats(
     sellerId: string,
@@ -387,6 +389,30 @@ export class CarsService {
       );
     }
 
+    // Move images from temp to permanent storage
+    // This must happen BEFORE saving to DB so that the URLs are correct
+    let permanentImages: string[] = [];
+    let permanentThumbnail: string | undefined = createCarDto.thumbnail;
+
+    if (createCarDto.images && createCarDto.images.length > 0) {
+      permanentImages = this.uploadService.moveFilesToPermanent(
+        createCarDto.images,
+      );
+      this.logger.log(
+        `Moved ${permanentImages.length} images from temp to permanent storage`,
+      );
+    }
+
+    if (createCarDto.thumbnail) {
+      const movedThumbnails = this.uploadService.moveFilesToPermanent([
+        createCarDto.thumbnail,
+      ]);
+      if (movedThumbnails.length > 0) {
+        permanentThumbnail = movedThumbnails[0];
+        this.logger.log('Moved thumbnail from temp to permanent storage');
+      }
+    }
+
     // Check how many approved posts this user has
     const approvedCount = await this.carsRepository.count({
       where: [
@@ -404,6 +430,8 @@ export class CarsService {
 
     const car = this.carsRepository.create({
       ...createCarDto,
+      images: permanentImages,
+      thumbnail: permanentThumbnail,
       seller,
       price: createCarDto.price.toString(),
       status: initialStatus,

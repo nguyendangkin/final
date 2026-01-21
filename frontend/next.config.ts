@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
         source: '/uploads/:path*',
         destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/uploads/:path*`,
       },
+      {
+        source: '/temp/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/temp/:path*`,
+      },
     ];
   },
 };

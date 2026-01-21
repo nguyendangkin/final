@@ -17,7 +17,7 @@ export class UploadController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads',
+        destination: './temp',
         filename: (req, file, cb) => {
           const randomName = Array(32)
             .fill(null)
@@ -44,7 +44,7 @@ export class UploadController {
   )
   uploadFile(@UploadedFile() file: Express.Multer.File) {
     return {
-      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`,
+      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/temp/${file.filename}`,
     };
   }
 }

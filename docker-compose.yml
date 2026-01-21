@@ -39,6 +39,7 @@ services:
       - app-network
     volumes:
       - uploads_data:/app/uploads
+      - temp_data:/app/temp
     depends_on:
       - postgres
 
@@ -90,4 +91,6 @@ volumes:
   postgres_data:
     driver: local
   uploads_data:
+    driver: local
+  temp_data:
     driver: local

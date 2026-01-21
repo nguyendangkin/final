@@ -9,6 +9,7 @@ import { UsersModule } from '../users/users.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { TagsModule } from '../tags/tags.module';
 import { SoldCarsModule } from '../sold-cars/sold-cars.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -18,9 +19,10 @@ import { SoldCarsModule } from '../sold-cars/sold-cars.module';
     NotificationsModule,
     TagsModule,
     SoldCarsModule,
+    UploadModule,
   ],
   controllers: [CarsController],
   providers: [CarsService],
   exports: [CarsService],
 })
-export class CarsModule {}
+export class CarsModule { }

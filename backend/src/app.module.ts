@@ -30,6 +30,7 @@ import { SoldCarsModule } from './sold-cars/sold-cars.module';
 import { SoldCar } from './sold-cars/entities/sold-car.entity';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -73,10 +74,17 @@ import { APP_GUARD } from '@nestjs/core';
       }),
       inject: [ConfigService],
     }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
+    ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot(
+      {
+        rootPath: join(__dirname, '..', 'uploads'),
+        serveRoot: '/uploads',
+      },
+      {
+        rootPath: join(__dirname, '..', 'temp'),
+        serveRoot: '/temp',
+      },
+    ),
     UsersModule,
     AuthModule,
     PaymentModule,

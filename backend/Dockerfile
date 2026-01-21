@@ -23,6 +23,11 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+# Create uploads and temp directories with correct permissions
+# temp/ is for temporary uploads (auto-cleaned by cron job)
+# uploads/ is for permanent storage (mounted as volume)
+RUN mkdir -p /app/uploads /app/temp && chown -R node:node /app/uploads /app/temp
+
 EXPOSE 8080
 
 USER node

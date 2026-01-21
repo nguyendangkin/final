@@ -152,20 +152,41 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                                 </label>
                             </div>
                         </div>
+                    ) : uploading.includes(-1) ? (
+                        /* Skeleton loading state for thumbnail */
+                        <div className="relative w-full h-48 rounded-none overflow-hidden border-2 border-dashed border-gray-300 bg-gray-100">
+                            {/* Shimmer effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                <div className="relative">
+                                    <div className="w-12 h-12 rounded-full border-3 border-gray-300 border-t-[var(--jdm-red)] animate-spin" />
+                                    <ImageIcon className="w-6 h-6 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                </div>
+                                <p className="text-sm text-gray-500 font-medium">Đang tải ảnh đại diện...</p>
+                            </div>
+                            {/* Progress bar */}
+                            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-200 overflow-hidden">
+                                <div className="h-full bg-[var(--jdm-red)] w-1/2" style={{
+                                    animation: 'thumbnailLoading 1.5s ease-in-out infinite',
+                                }} />
+                            </div>
+                            <style jsx>{`
+                                @keyframes thumbnailLoading {
+                                    0% { transform: translateX(-100%); }
+                                    100% { transform: translateX(300%); }
+                                }
+                            `}</style>
+                        </div>
                     ) : (
                         <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-none cursor-pointer hover:bg-gray-50 hover:border-[var(--jdm-red)] transition-all bg-gray-50 group">
                             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                {uploading.includes(-1) ? (
-                                    <Loader2 className="w-10 h-10 mb-3 text-[var(--jdm-red)] animate-spin" />
-                                ) : (
-                                    <UploadCloud className="w-10 h-10 mb-3 text-gray-400 group-hover:text-[var(--jdm-red)] transition-colors" />
-                                )}
+                                <UploadCloud className="w-10 h-10 mb-3 text-gray-400 group-hover:text-[var(--jdm-red)] transition-colors" />
                                 <p className="mb-2 text-sm text-gray-500 group-hover:text-[var(--jdm-red)] font-medium">
-                                    {uploading.includes(-1) ? 'Đang tải lên...' : 'Nhấn để tải ảnh hoặc kéo thả'}
+                                    Nhấn để tải ảnh hoặc kéo thả
                                 </p>
                                 <p className="text-xs text-gray-400">SVG, PNG, JPG (Tối đa 5MB)</p>
                             </div>
-                            <input type="file" className="hidden" accept="image/*" onChange={handleThumbnailUpload} disabled={uploading.includes(-1)} />
+                            <input type="file" className="hidden" accept="image/*" onChange={handleThumbnailUpload} />
                         </label>
                     )}
                 </div>
@@ -198,9 +219,10 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {/* Render uploaded images */}
                     {data.images.map((img, idx) => (
                         <div
-                            key={idx}
+                            key={`img-${idx}`}
                             draggable
                             onDragStart={(e) => handleDragStart(e, idx)}
                             onDragOver={handleDragOver}
@@ -225,7 +247,38 @@ export default function StepMedia({ data, updateData, errors = {} }: StepMediaPr
                         </div>
                     ))}
 
-                    {data.images.length < 20 && (
+                    {/* Skeleton placeholders for uploading images */}
+                    {uploading.filter(i => i >= 0).map((loadingIdx) => (
+                        <div
+                            key={`skeleton-${loadingIdx}`}
+                            className="relative aspect-square rounded-none overflow-hidden border border-gray-200 bg-gray-100"
+                        >
+                            {/* Shimmer skeleton effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                <div className="relative">
+                                    <div className="w-10 h-10 rounded-full border-2 border-gray-300 border-t-[var(--jdm-red)] animate-spin" />
+                                    <ImageIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                </div>
+                                <span className="text-xs text-gray-500 font-medium">Đang tải...</span>
+                            </div>
+                            {/* Progress bar animation */}
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 overflow-hidden">
+                                <div className="h-full bg-[var(--jdm-red)] animate-[loading_1.5s_ease-in-out_infinite] w-1/2" style={{
+                                    animation: 'loading 1.5s ease-in-out infinite',
+                                }} />
+                            </div>
+                            <style jsx>{`
+                                @keyframes loading {
+                                    0% { transform: translateX(-100%); }
+                                    100% { transform: translateX(300%); }
+                                }
+                            `}</style>
+                        </div>
+                    ))}
+
+                    {/* Add more button */}
+                    {data.images.length + uploading.filter(i => i >= 0).length < 20 && (
                         <label className="aspect-square border-2 border-dashed border-gray-300 rounded-none flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[var(--jdm-red)] transition-all bg-gray-50 text-gray-400 hover:text-[var(--jdm-red)]">
                             <UploadCloud className="w-8 h-8 mb-2" />
                             <span className="text-xs font-medium">Thêm ảnh</span>
