@@ -50,7 +50,8 @@ export default function Header() {
         if (price?.max) params.append('maxPrice', price.max);
 
         try {
-            const res = await fetch(`http://localhost:3000/cars/filters/smart?${params.toString()}`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/filters/smart?${params.toString()}`);
             const data = await res.json();
             setSmartFilters(data);
         } catch {
@@ -139,7 +140,8 @@ export default function Header() {
 
     const fetchUser = async (token: string) => {
         try {
-            const res = await fetch('http://localhost:3000/users/me', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -177,7 +179,8 @@ export default function Header() {
 
     const fetchNotificationCount = async (token: string) => {
         try {
-            const res = await fetch('http://localhost:3000/notifications/unread-count', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/notifications/unread-count`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {

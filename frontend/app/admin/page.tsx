@@ -17,7 +17,8 @@ export default function AdminDashboard() {
             return;
         }
 
-        fetch('http://localhost:3000/users/me', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/users/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.json())

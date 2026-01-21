@@ -52,8 +52,8 @@ import { APP_GUARD } from '@nestjs/core';
         type: 'postgres',
         host: configService.get<string>('DB_HOST', 'localhost'),
         port: configService.get<number>('DB_PORT', 5432),
-        username: configService.get<string>('DB_USERNAME', 'postgres'),
-        password: configService.get<string>('DB_PASSWORD', 'admin'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME', 'sukasuka_db'),
         entities: [
           User,
@@ -98,4 +98,4 @@ import { APP_GUARD } from '@nestjs/core';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

@@ -109,7 +109,8 @@ export default function StepMods({ data, updateData }: StepModsProps) {
 
         const fetchModSuggestions = async () => {
             try {
-                const res = await fetch('http://localhost:3000/tags/suggestions');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/tags/suggestions`);
                 const data = await res.json();
                 if (active && data) {
                     setSuggestions({

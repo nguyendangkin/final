@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { ArrowLeft, Save, Loader2, UploadCloud, X, Plus, Image as ImageIcon, Box, Armchair, Hammer, Disc } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getCarIdFromSlug, shouldOptimizeImage } from '@/lib/utils';
+import { getCarIdFromSlug, shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 import EditCarSkeleton from '@/components/EditCarSkeleton';
 
 const BRANDS = [
@@ -173,7 +173,8 @@ export default function EditCarPage() {
 
     const fetchCar = async () => {
         try {
-            const res = await fetch(`http://localhost:3000/cars/${carId}`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/${carId}`);
             if (!res.ok) throw new Error('Không tìm thấy xe');
             const data = await res.json();
             setCar(data);
@@ -185,7 +186,7 @@ export default function EditCarPage() {
                 return;
             }
 
-            const userRes = await fetch('http://localhost:3000/users/me', {
+            const userRes = await fetch(`${apiUrl}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (userRes.ok) {
@@ -283,7 +284,8 @@ export default function EditCarPage() {
         formDataUpload.append('file', file);
 
         try {
-            const response = await fetch('http://localhost:3000/upload', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const response = await fetch(`${apiUrl}/upload`, {
                 method: 'POST',
                 body: formDataUpload,
             });
@@ -397,7 +399,8 @@ export default function EditCarPage() {
             const token = localStorage.getItem('jwt_token');
             if (!token) throw new Error('Vui lòng đăng nhập');
 
-            const res = await fetch(`http://localhost:3000/cars/${carId}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/${carId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -479,7 +482,7 @@ export default function EditCarPage() {
                             <div className="relative group">
                                 {formData.thumbnail ? (
                                     <div className="relative w-full h-64 rounded-none overflow-hidden border border-gray-200 bg-gray-50 shadow-sm group-hover:border-[var(--jdm-red)] transition-all">
-                                        <Image src={formData.thumbnail} alt="Thumbnail Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(formData.thumbnail)} />
+                                        <Image src={getImgUrl(formData.thumbnail)} alt="Thumbnail Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(getImgUrl(formData.thumbnail))} />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <label className="cursor-pointer px-4 py-2 bg-[var(--jdm-red)] text-white rounded-none font-bold hover:bg-red-700 transition-all shadow-lg flex items-center gap-2">
                                                 <UploadCloud className="w-5 h-5" /> Thay ảnh
@@ -521,7 +524,7 @@ export default function EditCarPage() {
                                         key={idx}
                                         className="relative aspect-square rounded-none overflow-hidden border border-gray-200 group hover:border-[var(--jdm-red)] transition-all bg-white"
                                     >
-                                        <Image src={img} alt={`Album ${idx}`} fill className="object-cover" unoptimized={!shouldOptimizeImage(img)} />
+                                        <Image src={getImgUrl(img)} alt={`Album ${idx}`} fill className="object-cover" unoptimized={!shouldOptimizeImage(getImgUrl(img))} />
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveImage(idx)}

@@ -34,6 +34,14 @@ export function cn(...classes: (string | undefined | null | false)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
+export function getImgUrl(url: string | null | undefined): string {
+    if (!url) return '/placeholder-car.png';
+    // If it's already a full URL, return it
+    if (url.startsWith('http')) return url;
+    // If it's a relative path starting with /, prefix with API URL
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/+$/, '');
+    return `${apiUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+}
 
 export function shouldOptimizeImage(url: string): boolean {
     if (!url) return false;

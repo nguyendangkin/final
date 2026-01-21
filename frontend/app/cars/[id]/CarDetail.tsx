@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History, Flag, AlertTriangle, Camera, Download } from 'lucide-react';
 import Lightbox from '@/components/Lightbox';
 import { toast } from 'react-hot-toast';
-import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
+import { generateCarSlug, generateSellerSlug, getImgUrl } from '@/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import CarGallery from '@/components/CarGallery';
@@ -24,7 +24,8 @@ export default function CarDetail({ car }: CarDetailProps) {
     useEffect(() => {
         const token = localStorage.getItem('jwt_token');
         if (token) {
-            fetch('http://localhost:3000/users/me', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            fetch(`${apiUrl}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.ok ? res.json() : null)
@@ -45,7 +46,8 @@ export default function CarDetail({ car }: CarDetailProps) {
         hasIncremented.current = true;
 
         const token = localStorage.getItem('jwt_token');
-        fetch(`http://localhost:3000/cars/${car.id}/view`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/cars/${car.id}/view`, {
             method: 'POST',
             headers: {
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -426,7 +428,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                             overflow: 'hidden',
                         }}>
                             <img
-                                src={images[0]}
+                                src={getImgUrl(images[0])}
                                 alt={`${car.make} ${car.model}`}
                                 style={{
                                     width: '100%',

@@ -7,7 +7,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Fetch cars
     let cars = [];
     try {
-        const res = await fetch('http://localhost:3000/cars?limit=1000', { cache: 'no-store' });
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        const res = await fetch(`${apiUrl}/cars?limit=1000`, { cache: 'no-store' });
         if (res.ok) {
             const data = await res.json();
             cars = data.data || [];

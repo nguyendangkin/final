@@ -8,7 +8,7 @@ import { Search, Ban, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Pagination from '@/components/Pagination';
 import TableSkeleton from '@/components/TableSkeleton';
-import { shouldOptimizeImage } from '@/lib/utils';
+import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
@@ -31,7 +31,8 @@ export default function AdminUsers() {
             return;
         }
 
-        fetch(`http://localhost:3000/users?page=${currentPage}&limit=12`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/users?page=${currentPage}&limit=12`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {
@@ -66,7 +67,8 @@ export default function AdminUsers() {
         // Check if searching by email (contains @)
         if (query.includes('@')) {
             try {
-                const res = await fetch(`http://localhost:3000/users/search/email?q=${encodeURIComponent(query)}`, {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/users/search/email?q=${encodeURIComponent(query)}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) {
@@ -98,7 +100,8 @@ export default function AdminUsers() {
         const carId = match[0];
 
         try {
-            const res = await fetch(`http://localhost:3000/cars/${carId}`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/${carId}`);
             if (!res.ok) {
                 setError('Không tìm thấy xe với ID này.');
                 return;
@@ -161,7 +164,8 @@ export default function AdminUsers() {
 
     const executeBan = async (userId: string, currentStatus: boolean, token: string) => {
         try {
-            const res = await fetch(`http://localhost:3000/users/${userId}/ban`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/users/${userId}/ban`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -261,11 +265,11 @@ export default function AdminUsers() {
                                                         {user.avatar ? (
                                                             <Image
                                                                 className="rounded-full object-cover"
-                                                                src={user.avatar}
+                                                                src={getImgUrl(user.avatar)}
                                                                 alt="User Avatar"
                                                                 width={40}
                                                                 height={40}
-                                                                unoptimized={!shouldOptimizeImage(user.avatar)}
+                                                                unoptimized={!shouldOptimizeImage(getImgUrl(user.avatar))}
                                                             />
                                                         ) : (
                                                             <div className="h-10 w-10 rounded-full bg-black flex items-center justify-center text-white font-bold">

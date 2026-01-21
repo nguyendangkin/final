@@ -19,7 +19,8 @@ export default function LoginPage() {
     const handleGoogleLogin = () => {
         // Store the redirect URL to use after login
         localStorage.setItem('login_redirect', redirectTo);
-        window.location.href = 'http://localhost:3000/auth/google';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        window.location.href = `${apiUrl}/auth/google`;
     };
 
     return (

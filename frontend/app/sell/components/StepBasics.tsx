@@ -29,7 +29,8 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         if (data.make) {
             const fetchModels = async () => {
                 try {
-                    const res = await fetch(`http://localhost:3000/tags/suggestions/model?parent=${encodeURIComponent(data.make)}`);
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                    const res = await fetch(`${apiUrl}/tags/suggestions/model?parent=${encodeURIComponent(data.make)}`);
                     const resData = await res.json();
                     if (active && Array.isArray(resData)) {
                         setSuggestedModels(resData);
@@ -54,12 +55,13 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
             const fetchTrims = async () => {
                 try {
                     // Try to fetch trims first
-                    const res = await fetch(`http://localhost:3000/tags/suggestions/trim?parent=${encodeURIComponent(data.model)}`);
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                    const res = await fetch(`${apiUrl}/tags/suggestions/trim?parent=${encodeURIComponent(data.model)}`);
                     let trims = await res.json();
 
                     // If no explicit trims, try chassisCodes as trims (common in JDM)
                     if (!trims || trims.length === 0) {
-                        const resChassis = await fetch(`http://localhost:3000/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
+                        const resChassis = await fetch(`${apiUrl}/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
                         trims = await resChassis.json();
                     }
 
@@ -91,7 +93,8 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                 if (data.make) params.append('make', data.make);
                 if (data.model) params.append('model', data.model);
 
-                const res = await fetch(`http://localhost:3000/cars/filters/smart?${params.toString()}`);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/cars/filters/smart?${params.toString()}`);
                 const resData = await res.json();
 
                 if (active) {
@@ -124,7 +127,8 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
         let active = true;
         const fetchLocations = async () => {
             try {
-                const res = await fetch('http://localhost:3000/tags/suggestions/location');
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/tags/suggestions/location`);
                 const data = await res.json();
                 if (active && Array.isArray(data)) {
                     setSuggestedLocations(data);

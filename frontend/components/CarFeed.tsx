@@ -64,7 +64,8 @@ export default function CarFeed({ initialCars = [], filter = {} }: CarFeedProps)
                 if (value) queryParams.set(key, value);
             });
 
-            const res = await fetch(`http://localhost:3000/cars?${queryParams.toString()}`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars?${queryParams.toString()}`);
             if (!res.ok) throw new Error('Failed to fetch');
             const data = await res.json();
             const newCars = data.data || [];

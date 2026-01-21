@@ -63,7 +63,8 @@ export default function NotificationsPage() {
             return;
         }
 
-        fetch('http://localhost:3000/users/me', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/users/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.json())
@@ -82,7 +83,8 @@ export default function NotificationsPage() {
         if (!token) return;
 
         try {
-            const res = await fetch('http://localhost:3000/notifications/unread-count', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/notifications/unread-count`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -101,7 +103,8 @@ export default function NotificationsPage() {
 
         setUserLoading(true);
         try {
-            const res = await fetch(`http://localhost:3000/notifications?type=user&page=${page}&limit=10`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/notifications?type=user&page=${page}&limit=10`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -123,7 +126,8 @@ export default function NotificationsPage() {
 
         setSystemLoading(true);
         try {
-            const res = await fetch(`http://localhost:3000/notifications?type=system&page=${page}&limit=10`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/notifications?type=system&page=${page}&limit=10`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -178,7 +182,8 @@ export default function NotificationsPage() {
         if (!token) return;
 
         try {
-            await fetch(`http://localhost:3000/notifications/${id}/read?type=${type}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            await fetch(`${apiUrl}/notifications/${id}/read?type=${type}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -204,7 +209,8 @@ export default function NotificationsPage() {
         if (!token) return;
 
         try {
-            await fetch(`http://localhost:3000/notifications/mark-all-read?type=${type}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            await fetch(`${apiUrl}/notifications/mark-all-read?type=${type}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

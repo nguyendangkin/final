@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { User, Calendar, ShieldCheck, Car as CarIcon } from 'lucide-react';
 import CarFeed from '@/components/CarFeed';
-import { shouldOptimizeImage } from '@/lib/utils';
+import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 
 interface SellerProfileProps {
     seller: {
@@ -43,13 +43,13 @@ export default function SellerProfile({ seller }: SellerProfileProps) {
                             {seller.avatar ? (
                                 <div className="relative w-full h-full">
                                     <Image
-                                        src={seller.avatar}
+                                        src={getImgUrl(seller.avatar)}
                                         alt={displayName}
                                         fill
                                         className="object-cover"
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         referrerPolicy="no-referrer"
-                                        unoptimized={!shouldOptimizeImage(seller.avatar)}
+                                        unoptimized={!shouldOptimizeImage(getImgUrl(seller.avatar))}
                                     />
                                 </div>
                             ) : (
@@ -126,7 +126,8 @@ function SoldCarsList({ sellerId }: { sellerId: string }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`http://localhost:3000/sold-cars/seller/${sellerId}`)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/sold-cars/seller/${sellerId}`)
             .then(res => res.json())
             .then(data => {
                 setSoldCars(data);

@@ -28,12 +28,13 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
         if (data.model) {
             const fetchSuggestions = async () => {
                 try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                     // Fetch Chassis Codes
-                    const resChassis = await fetch(`http://localhost:3000/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
+                    const resChassis = await fetch(`${apiUrl}/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
                     const chassisData = await resChassis.json();
 
                     // Fetch Engine Codes
-                    const resEngine = await fetch(`http://localhost:3000/tags/suggestions/engineCode?parent=${encodeURIComponent(data.model)}`);
+                    const resEngine = await fetch(`${apiUrl}/tags/suggestions/engineCode?parent=${encodeURIComponent(data.model)}`);
                     const engineData = await resEngine.json();
 
                     if (active) {

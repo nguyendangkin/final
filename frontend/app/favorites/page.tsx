@@ -38,7 +38,8 @@ export default function FavoritesPage() {
 
             setIsLoading(true);
             try {
-                const res = await fetch(`http://localhost:3000/favorites?page=${page}&limit=12`, {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/favorites?page=${page}&limit=12`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

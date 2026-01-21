@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { getImgUrl } from '@/lib/utils';
 
 interface LightboxProps {
     images: string[];
@@ -74,7 +75,7 @@ export default function Lightbox({ images, initialIndex, isOpen, onClose }: Ligh
                             onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
                         >
                             <img
-                                src={img}
+                                src={getImgUrl(img)}
                                 alt={`View ${idx + 1}`}
                                 className="w-full h-auto object-contain max-h-[90vh] rounded-none"
                                 loading={Math.abs(idx - initialIndex) < 2 ? "eager" : "lazy"}

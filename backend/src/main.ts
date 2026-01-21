@@ -39,13 +39,12 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:3000', // Frontend local
-      'http://localhost:3001', // Frontend/Admin local alternate
       process.env.FRONTEND_URL, // Production URL
     ].filter(Boolean),
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 8080);
 }
 bootstrap();

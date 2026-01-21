@@ -15,7 +15,8 @@ export default function WalletPage() {
             if (!token) return;
 
             try {
-                const res = await fetch('http://localhost:3000/users/me', {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/users/me`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {

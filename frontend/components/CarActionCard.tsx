@@ -33,7 +33,8 @@ export default function CarActionCard({
     useEffect(() => {
         if (currentUser && car) {
             const token = localStorage.getItem('jwt_token');
-            fetch(`http://localhost:3000/favorites/check/${car.id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            fetch(`${apiUrl}/favorites/check/${car.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.json())
@@ -51,8 +52,9 @@ export default function CarActionCard({
         setIsLoadingFav(true);
 
         const token = localStorage.getItem('jwt_token');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         try {
-            const res = await fetch(`http://localhost:3000/favorites/toggle/${car.id}`, {
+            const res = await fetch(`${apiUrl}/favorites/toggle/${car.id}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -81,9 +83,10 @@ export default function CarActionCard({
         if (!token) return;
 
         const toastId = toast.loading('Đang gửi báo cáo...');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
         try {
-            const res = await fetch('http://localhost:3000/reports', {
+            const res = await fetch(`${apiUrl}/reports`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -256,7 +259,8 @@ export default function CarActionCard({
                                                             const toastId = toast.loading('Đang xử lý...');
                                                             try {
                                                                 const token = localStorage.getItem('jwt_token');
-                                                                const res = await fetch(`http://localhost:3000/cars/${car.id}/sold`, {
+                                                                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                                                                const res = await fetch(`${apiUrl}/cars/${car.id}/sold`, {
                                                                     method: 'POST',
                                                                     headers: {
                                                                         'Content-Type': 'application/json',
@@ -326,7 +330,8 @@ export default function CarActionCard({
                                                             const toastId = toast.loading('Đang xóa...');
                                                             try {
                                                                 const token = localStorage.getItem('jwt_token');
-                                                                const res = await fetch(`http://localhost:3000/cars/${car.id}`, {
+                                                                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                                                                const res = await fetch(`${apiUrl}/cars/${car.id}`, {
                                                                     method: 'DELETE',
                                                                     headers: {
                                                                         'Authorization': `Bearer ${token}`

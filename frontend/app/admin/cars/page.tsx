@@ -8,7 +8,7 @@ import Pagination from '@/components/Pagination';
 import { Trash2, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
-import { shouldOptimizeImage } from '@/lib/utils';
+import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 
 export default function AdminCars() {
     const [cars, setCars] = useState<any[]>([]);
@@ -32,7 +32,8 @@ export default function AdminCars() {
 
         setLoading(true);
 
-        fetch('http://localhost:3000/users/me', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/users/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.json())
@@ -44,7 +45,7 @@ export default function AdminCars() {
                 // Fetch cars including hidden ones (if any left, though we are moving to delete)
                 // We keep 'includeHidden=true' for now if the backend still supports it or just to be safe, 
                 // but effectively we just want all cars.
-                return fetch(`http://localhost:3000/cars?page=${currentPage}&limit=12&includeHidden=true`);
+                return fetch(`${apiUrl}/cars?page=${currentPage}&limit=12&includeHidden=true`);
             })
             .then(res => res && res.json())
             .then(data => {
@@ -79,7 +80,8 @@ export default function AdminCars() {
         const carId = match[0];
 
         try {
-            const res = await fetch(`http://localhost:3000/cars/${carId}`);
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/${carId}`);
             if (!res.ok) {
                 setError('Không tìm thấy xe với ID này.');
                 return;
@@ -140,7 +142,8 @@ export default function AdminCars() {
 
     const executeDelete = async (carId: string, token: string) => {
         try {
-            const res = await fetch(`http://localhost:3000/cars/${carId}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/${carId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -238,10 +241,10 @@ export default function AdminCars() {
                                                 <div className="h-16 w-24 flex-shrink-0 relative">
                                                     <Image
                                                         className="object-cover rounded-sm"
-                                                        src={car.thumbnail || car.images?.[0] || '/placeholder-car.png'}
+                                                        src={getImgUrl(car.thumbnail || car.images?.[0])}
                                                         alt="Car Thumbnail"
                                                         fill
-                                                        unoptimized={!shouldOptimizeImage(car.thumbnail || car.images?.[0] || '/placeholder-car.png')}
+                                                        unoptimized={!shouldOptimizeImage(getImgUrl(car.thumbnail || car.images?.[0]))}
                                                     />
                                                 </div>
                                             </td>

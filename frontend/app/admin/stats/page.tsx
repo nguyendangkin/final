@@ -18,7 +18,8 @@ export default function AdminStatsPage() {
         }
 
         // Fetch stats
-        fetch('http://localhost:3000/stats', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/stats`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {

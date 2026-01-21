@@ -29,7 +29,8 @@ export default function DepositPage() {
                 return;
             }
 
-            const res = await fetch('http://localhost:3000/payment/create', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/payment/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

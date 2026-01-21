@@ -49,8 +49,8 @@ export class PaymentService {
       orderCode: orderCode,
       amount: totalAmount,
       description: `${description}`.substring(0, 25),
-      cancelUrl: 'http://localhost:3001/?status=cancelled',
-      returnUrl: 'http://localhost:3001/?status=success',
+      cancelUrl: `${this.configService.get<string>('FRONTEND_URL')}/?status=cancelled`,
+      returnUrl: `${this.configService.get<string>('FRONTEND_URL')}/?status=success`,
       items: [
         {
           name: 'Nạp tiền tài khoản',

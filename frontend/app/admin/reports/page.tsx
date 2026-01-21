@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Pagination from '@/components/Pagination';
 import { Flag, XCircle, CheckCircle, Eye, EyeOff, User, AlertTriangle, Ban, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { generateCarSlug, shouldOptimizeImage } from '@/lib/utils';
+import { generateCarSlug, shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 import ReportsSkeleton from '@/components/ReportsSkeleton';
 
 export default function AdminReports() {
@@ -31,7 +31,8 @@ export default function AdminReports() {
 
         setLoading(true);
 
-        fetch(`http://localhost:3000/reports?page=${currentPage}&limit=10&status=PENDING`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/reports?page=${currentPage}&limit=10&status=PENDING`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {
@@ -59,7 +60,8 @@ export default function AdminReports() {
     const handleIgnore = async (reportId: string) => {
         const token = localStorage.getItem('jwt_token');
         try {
-            const res = await fetch(`http://localhost:3000/reports/${reportId}/ignore`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/reports/${reportId}/ignore`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -77,7 +79,8 @@ export default function AdminReports() {
     const handleResolve = async (reportId: string) => {
         const token = localStorage.getItem('jwt_token');
         try {
-            const res = await fetch(`http://localhost:3000/reports/${reportId}/resolve`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/reports/${reportId}/resolve`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -137,7 +140,8 @@ export default function AdminReports() {
     const handleBanReporter = async (userId: string) => {
         const token = localStorage.getItem('jwt_token');
         try {
-            const res = await fetch(`http://localhost:3000/users/${userId}/ban`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/users/${userId}/ban`, {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -250,10 +254,10 @@ export default function AdminReports() {
                                                         {report.reportedCar?.thumbnail ? (
                                                             <Image
                                                                 className="object-cover"
-                                                                src={report.reportedCar.thumbnail}
+                                                                src={getImgUrl(report.reportedCar.thumbnail)}
                                                                 alt="Reported Car"
                                                                 fill
-                                                                unoptimized={!shouldOptimizeImage(report.reportedCar.thumbnail)}
+                                                                unoptimized={!shouldOptimizeImage(getImgUrl(report.reportedCar.thumbnail))}
                                                             />
                                                         ) : (
                                                             <div className="flex items-center justify-center h-full text-xs text-gray-400 font-bold">NO IMG</div>

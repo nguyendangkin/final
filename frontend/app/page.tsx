@@ -19,7 +19,7 @@ async function getCars(searchParams: any) {
       });
     }
 
-    const res = await fetch(`http://localhost:3000/cars?${params.toString()}`, { cache: 'no-store' });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/cars?${params.toString()}`, { cache: 'no-store' });
     if (!res.ok) return [];
     const data = await res.json();
     return data.data || [];

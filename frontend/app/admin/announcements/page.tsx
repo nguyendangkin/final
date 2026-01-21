@@ -54,7 +54,8 @@ export default function AdminAnnouncementsPage() {
             return;
         }
 
-        fetch('http://localhost:3000/users/me', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        fetch(`${apiUrl}/users/me`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => res.json())
@@ -78,7 +79,8 @@ export default function AdminAnnouncementsPage() {
 
         setHistoryLoading(true);
         try {
-            const res = await fetch(`http://localhost:3000/admin/announcements?page=${pageNum}&limit=10`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/admin/announcements?page=${pageNum}&limit=10`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -133,9 +135,10 @@ export default function AdminAnnouncementsPage() {
 
         setIsSubmitting(true);
         try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const url = editingId
-                ? `http://localhost:3000/admin/announcements/${editingId}`
-                : 'http://localhost:3000/admin/announcements';
+                ? `${apiUrl}/admin/announcements/${editingId}`
+                : `${apiUrl}/admin/announcements`;
             const method = editingId ? 'PUT' : 'POST';
 
             const res = await fetch(url, {
@@ -187,7 +190,8 @@ export default function AdminAnnouncementsPage() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3000/admin/announcements/${id}`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/admin/announcements/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

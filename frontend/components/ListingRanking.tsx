@@ -26,7 +26,8 @@ export default function ListingRanking({ carId }: ListingRankingProps) {
     useEffect(() => {
         const fetchRanking = async () => {
             try {
-                const res = await fetch(`http://localhost:3000/cars/${carId}/ranking`);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/cars/${carId}/ranking`);
                 if (res.ok) {
                     const data = await res.json();
                     setRanking(data);

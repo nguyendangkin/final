@@ -1,7 +1,7 @@
 import { CarSpecs } from '../types';
 import Image from 'next/image';
 import { Fuel, MapPin, Gauge } from 'lucide-react';
-import { shouldOptimizeImage } from '@/lib/utils';
+import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 
 export default function PreviewCard({ data }: { data: CarSpecs }) {
     const formatMoney = (amount: number) => {
@@ -21,7 +21,7 @@ export default function PreviewCard({ data }: { data: CarSpecs }) {
             <div className="bg-white rounded-none overflow-hidden shadow-2xl shadow-gray-200/50 transform transition-all hover:scale-[1.02] group border border-gray-100">
                 <div className="relative aspect-[4/3] bg-gray-100">
                     {data.thumbnail ? (
-                        <Image src={data.thumbnail} alt="Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(data.thumbnail)} />
+                        <Image src={getImgUrl(data.thumbnail)} alt="Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(getImgUrl(data.thumbnail))} />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 bg-gray-50">
                             <span className="text-4xl font-black opacity-20">JDM</span>

@@ -8,7 +8,7 @@ import { Check, X, Eye, Ban } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
 import Pagination from '@/components/Pagination';
-import { shouldOptimizeImage } from '@/lib/utils';
+import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 
 export default function AdminApprovals() {
     const [cars, setCars] = useState<any[]>([]);
@@ -35,7 +35,8 @@ export default function AdminApprovals() {
 
         try {
             // First verify admin status (could be optimized to not do this every time if we trust token but good for security)
-            const userRes = await fetch('http://localhost:3000/users/me', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const userRes = await fetch(`${apiUrl}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const userData = await userRes.json();
@@ -45,7 +46,7 @@ export default function AdminApprovals() {
                 return;
             }
 
-            const pendingRes = await fetch(`http://localhost:3000/cars/admin/pending?page=${pageNum}&limit=${LIMIT}`, {
+            const pendingRes = await fetch(`${apiUrl}/cars/admin/pending?page=${pageNum}&limit=${LIMIT}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await pendingRes.json();
@@ -69,7 +70,8 @@ export default function AdminApprovals() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3000/cars/admin/cars/${carId}/approve`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/admin/cars/${carId}/approve`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -141,7 +143,8 @@ export default function AdminApprovals() {
         if (!token) return;
 
         try {
-            const res = await fetch(`http://localhost:3000/cars/admin/cars/${carId}/reject`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars/admin/cars/${carId}/reject`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -212,7 +215,8 @@ export default function AdminApprovals() {
 
     const executeBan = async (userId: string, currentStatus: boolean, token: string) => {
         try {
-            const res = await fetch(`http://localhost:3000/users/${userId}/ban`, {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/users/${userId}/ban`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -286,10 +290,10 @@ export default function AdminApprovals() {
                                                         <div className="h-16 w-24 flex-shrink-0 relative">
                                                             <Image
                                                                 className="object-cover rounded-sm"
-                                                                src={car.images?.[0] || '/placeholder-car.png'}
+                                                                src={getImgUrl(car.images?.[0])}
                                                                 alt="Car Thumbnail"
                                                                 fill
-                                                                unoptimized={!shouldOptimizeImage(car.images?.[0] || '/placeholder-car.png')}
+                                                                unoptimized={!shouldOptimizeImage(getImgUrl(car.images?.[0]))}
                                                             />
                                                         </div>
                                                     </td>

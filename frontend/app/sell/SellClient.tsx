@@ -44,7 +44,8 @@ export default function SellClient() {
             router.push('/login?redirect=/sell');
         } else {
             // Validate token and check ban status
-            fetch('http://localhost:3000/users/me', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            fetch(`${apiUrl}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => {
@@ -282,7 +283,8 @@ export default function SellClient() {
         };
 
         try {
-            const res = await fetch('http://localhost:3000/cars', {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const res = await fetch(`${apiUrl}/cars`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
