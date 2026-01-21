@@ -44,6 +44,8 @@ echo
 
 echo "### Starting nginx ..."
 docker compose up --force-recreate -d nginx
+echo "### Waiting for Nginx to start ..."
+sleep 30 # Give Nginx time to spin up
 echo
 
 echo "### Deleting dummy certificate for $domains ..."
