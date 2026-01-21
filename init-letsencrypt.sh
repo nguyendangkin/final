@@ -68,6 +68,17 @@ for domain in "${domains[@]}"; do
   domain_args="$domain_args -d $domain"
 done
 
+# Fix permissions
+echo "### Fixing permissions ..."
+mkdir -p "$data_path/www"
+chmod -R 777 "$data_path"
+
+# Debug Nginx Config
+echo "### Checking Nginx Config (Debug) ..."
+docker compose exec nginx cat /etc/nginx/conf.d/default.conf
+echo
+
+
 # Select appropriate email arg
 case "$email" in
   "") email_arg="--register-unsafely-without-email" ;;
