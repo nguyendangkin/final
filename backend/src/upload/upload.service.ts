@@ -45,8 +45,11 @@ export class UploadService {
                 return null;
             }
 
-            // Move file (rename is atomic on same filesystem)
-            fs.renameSync(tempPath, permanentPath);
+            // Copy file then delete original (works across different volumes/devices)
+            // standard fs.rename fails with EXDEV across docker volumes
+            fs.copyFileSync(tempPath, permanentPath);
+            fs.unlinkSync(tempPath);
+
             this.logger.log(`Moved file to permanent storage: ${safeFilename}`);
 
             return safeFilename;
