@@ -5,6 +5,11 @@ if ! [ -x "$(command -v docker compose)" ]; then
   exit 1
 fi
 
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root (sudo ./init-letsencrypt.sh)"
+  exit
+fi
+
 if [ -f .env ]; then
   export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
 fi
