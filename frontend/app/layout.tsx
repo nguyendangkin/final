@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "4Gach - Sàn Mua Bán Xe JDM Đỉnh Cao",
     description: "Nơi mua bán xe JDM và xe thể thao Nhật Bản uy tín nhất Việt Nam. Tham gia cộng đồng ngay hôm nay.",
-    url: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001",
+    url: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
     siteName: "4Gach JDM Market",
     locale: "vi_VN",
     type: "website",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     description: "Mua bán xe JDM uy tín tại Việt Nam.",
     creator: "@4gach_jdm",
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000"),
   alternates: {
     canonical: "/",
   },
@@ -68,10 +68,10 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'WebSite',
               name: '4Gach JDM',
-              url: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3001',
+              url: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
               potentialAction: {
                 '@type': 'SearchAction',
-                target: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3001'}/search?q={search_term_string}`,
+                target: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/search?q={search_term_string}`,
                 'query-input': 'required name=search_term_string'
               }
             })

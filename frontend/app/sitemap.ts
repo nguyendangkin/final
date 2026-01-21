@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { generateCarSlug } from '@/lib/utils';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'http://localhost:3001';
+    const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
 
     // Fetch cars
     let cars = [];

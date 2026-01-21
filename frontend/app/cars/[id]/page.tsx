@@ -47,7 +47,7 @@ export async function generateMetadata(
             description: description,
             images: images,
             type: 'article',
-            url: `http://localhost:3001/cars/${slug}`,
+            url: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/cars/${slug}`,
             siteName: 'Chợ xe JDM',
         },
         twitter: {
@@ -87,7 +87,7 @@ export default async function CarPage({ params }: { params: Promise<{ id: string
             priceCurrency: 'VND',
             itemCondition: 'https://schema.org/UsedCondition',
             availability: car.status === 'SOLD' ? 'https://schema.org/Sold' : 'https://schema.org/InStock',
-            url: `http://localhost:3001/cars/${slug}`,
+            url: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/cars/${slug}`,
             seller: {
                 '@type': 'Person',
                 name: car.seller?.name || 'Người bán ẩn danh',

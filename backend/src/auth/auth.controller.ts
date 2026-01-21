@@ -4,7 +4,7 @@ import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -18,6 +18,6 @@ export class AuthController {
     const { access_token, user } = await this.authService.login(req.user);
     // Redirect to frontend with token
     // In production, better to use cookies or a secure way to pass the token
-    res.redirect(`http://localhost:3001?token=${access_token}`);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?token=${access_token}`);
   }
 }
