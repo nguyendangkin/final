@@ -9,7 +9,7 @@ export class TagsService {
   constructor(
     @InjectRepository(Tag)
     private tagsRepository: Repository<Tag>,
-  ) {}
+  ) { }
 
   /**
    * Extract all tags from a car and sync them in the database
@@ -328,5 +328,9 @@ export class TagsService {
     }
 
     return grouped;
+  }
+  async deleteTagByValue(value: string): Promise<void> {
+    const capsValue = value.trim().toUpperCase();
+    await this.tagsRepository.delete({ value: capsValue });
   }
 }

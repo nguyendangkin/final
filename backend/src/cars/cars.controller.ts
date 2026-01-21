@@ -29,7 +29,7 @@ export class CarsController {
     private readonly carsService: CarsService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   @Get()
   findAll(@Query() query: any) {
@@ -51,12 +51,16 @@ export class CarsController {
     return { message: 'Tag updated successfully' };
   }
 
+  @Delete('admin/tags/:tag')
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   async deleteTagWithPenalty(@Param('tag') tag: string) {
     const initiatorId = await this.carsService.deleteTagWithPenalty(tag);
     if (initiatorId) {
       await this.usersService.banUser(initiatorId);
+      return { message: 'Tag deleted and penalties applied', initiatorId };
+    } else {
+      return { message: 'Tag not found in any active listings (or already deleted)', warning: 'No penalties applied' };
     }
-    return { message: 'Tag deleted and penalties applied', initiatorId };
   }
 
   @Get('admin/pending')

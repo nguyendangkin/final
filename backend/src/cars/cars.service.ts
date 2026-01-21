@@ -1270,22 +1270,22 @@ export class CarsService {
     const verifiedCars = allCars.filter((car) => {
       const targetTag = tag.trim().toUpperCase();
 
-      // Check simple string fields
-      if (car.make && car.make.toUpperCase() === targetTag) return true;
-      if (car.model && car.model.toUpperCase() === targetTag) return true;
-      if (car.chassisCode && car.chassisCode.toUpperCase() === targetTag)
+      // Check simple string fields - added .trim() for robustness
+      if (car.make && car.make.trim().toUpperCase() === targetTag) return true;
+      if (car.model && car.model.trim().toUpperCase() === targetTag) return true;
+      if (car.chassisCode && car.chassisCode.trim().toUpperCase() === targetTag)
         return true;
-      if (car.engineCode && car.engineCode.toUpperCase() === targetTag)
+      if (car.engineCode && car.engineCode.trim().toUpperCase() === targetTag)
         return true;
-      if (car.transmission && car.transmission.toUpperCase() === targetTag)
+      if (car.transmission && car.transmission.trim().toUpperCase() === targetTag)
         return true;
-      if (car.drivetrain && car.drivetrain.toUpperCase() === targetTag)
+      if (car.drivetrain && car.drivetrain.trim().toUpperCase() === targetTag)
         return true;
-      if (car.condition && car.condition.toUpperCase() === targetTag)
+      if (car.condition && car.condition.trim().toUpperCase() === targetTag)
         return true;
-      if (car.paperwork && car.paperwork.toUpperCase() === targetTag)
+      if (car.paperwork && car.paperwork.trim().toUpperCase() === targetTag)
         return true;
-      if (car.location && car.location.toUpperCase() === targetTag) return true;
+      if (car.location && car.location.trim().toUpperCase() === targetTag) return true;
 
       // Check mods (complex JSON structure)
       if (car.mods) {
@@ -1325,6 +1325,9 @@ export class CarsService {
         await this.tagsService.syncTagsFromCar(car, false);
       }
       await this.carsRepository.remove(verifiedCars);
+
+      // Permanently remove the tag from Tag table so it doesn't show in suggestions
+      await this.tagsService.deleteTagByValue(tag);
 
       // Send notification to the initiator (seller of the first car found)
       if (initiator) {
