@@ -274,7 +274,10 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         label="Năm sản xuất"
                         name="year"
                         value={data.year === 0 ? '' : data.year.toString()}
-                        onChange={(val) => updateData({ year: parseInt(val) || 0 })}
+                        onChange={(val) => {
+                            const numericVal = val.replace(/\D/g, '');
+                            updateData({ year: parseInt(numericVal) || 0 });
+                        }}
                         suggestions={suggestedYears}
                         placeholder="YYYY"
                         error={errors.year}

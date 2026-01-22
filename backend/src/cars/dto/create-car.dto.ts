@@ -26,7 +26,7 @@ export class CreateCarDto {
 
   @IsNumber()
   @Type(() => Number)
-  @Min(1000, { message: 'Năm sản xuất phải có 4 chữ số' })
+  @Min(1, { message: 'Năm sản xuất không hợp lệ' })
   @Max(9999, { message: 'Năm sản xuất không hợp lệ' })
   year: number;
 
@@ -147,7 +147,7 @@ export class UpdateCarDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
-  @Min(1000, { message: 'Năm sản xuất phải có 4 chữ số' })
+  @Min(1, { message: 'Năm sản xuất không hợp lệ' })
   @Max(9999, { message: 'Năm sản xuất không hợp lệ' })
   year?: number;
 
