@@ -143,29 +143,29 @@ export class CarsService {
     qb.andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
 
     if (query.make) {
-      qb.andWhere('car.make ILIKE :make', { make: `%${query.make}%` });
+      qb.andWhere('car.make ILIKE :make', { make: query.make });
     }
     if (query.model) {
-      qb.andWhere('car.model ILIKE :model', { model: `%${query.model}%` });
+      qb.andWhere('car.model ILIKE :model', { model: query.model });
     }
     if (query.transmission) {
       qb.andWhere('car.transmission ILIKE :transmission', {
-        transmission: `%${query.transmission}%`,
+        transmission: query.transmission,
       });
     }
     if (query.drivetrain) {
       qb.andWhere('car.drivetrain ILIKE :drivetrain', {
-        drivetrain: `%${query.drivetrain}%`,
+        drivetrain: query.drivetrain,
       });
     }
     if (query.condition) {
       qb.andWhere('car.condition ILIKE :condition', {
-        condition: `%${query.condition}%`,
+        condition: query.condition,
       });
     }
     if (query.paperwork) {
       qb.andWhere('car.paperwork ILIKE :paperwork', {
-        paperwork: `%${query.paperwork}%`,
+        paperwork: query.paperwork,
       });
     }
     if (query.minPrice) {
@@ -183,29 +183,55 @@ export class CarsService {
     }
     if (query.location) {
       qb.andWhere('car.location ILIKE :location', {
-        location: `%${query.location}%`,
+        location: query.location,
       });
     }
     if (query.chassisCode) {
       qb.andWhere('car.chassisCode ILIKE :chassisCode', {
-        chassisCode: `%${query.chassisCode}%`,
+        chassisCode: query.chassisCode,
       });
     }
     if (query.engineCode) {
       qb.andWhere('car.engineCode ILIKE :engineCode', {
-        engineCode: `%${query.engineCode}%`,
+        engineCode: query.engineCode,
       });
     }
     if (query.notableFeatures) {
       qb.andWhere('car.notableFeatures ILIKE :notableFeatures', {
-        notableFeatures: `%${query.notableFeatures}%`,
+        notableFeatures: query.notableFeatures,
       });
+    }
+    if (query.trim) {
+      qb.andWhere('car.trim ILIKE :trim', { trim: query.trim });
+    }
+    if (query.year && !query.minYear && !query.maxYear) {
+      qb.andWhere('car.year = :year', { year: query.year });
     }
     if (query.mods) {
       // Revert to text-based search for "like other filters" behavior,
       // but wrap in quotes to target JSON values specifically and avoid partial word matches.
       qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', {
         mods: `%"${query.mods}"%`,
+      });
+    }
+    if (query.mods_exterior) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_exterior', {
+        mods_exterior: `%"${query.mods_exterior}"%`,
+      });
+    }
+    if (query.mods_interior) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_interior', {
+        mods_interior: `%"${query.mods_interior}"%`,
+      });
+    }
+    if (query.mods_engine) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_engine', {
+        mods_engine: `%"${query.mods_engine}"%`,
+      });
+    }
+    if (query.mods_footwork) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_footwork', {
+        mods_footwork: `%"${query.mods_footwork}"%`,
       });
     }
 
@@ -1042,6 +1068,13 @@ export class CarsService {
     maxYear?: number;
     location?: string;
     notableFeatures?: string;
+    trim?: string;
+    year?: string;
+    q?: string;
+    mods_exterior?: string;
+    mods_interior?: string;
+    mods_engine?: string;
+    mods_footwork?: string;
   }): Promise<any> {
     const qb = this.carsRepository.createQueryBuilder('car');
     qb.leftJoin('car.seller', 'seller');
@@ -1050,47 +1083,73 @@ export class CarsService {
       statuses: [CarStatus.AVAILABLE, CarStatus.SOLD],
     });
 
-    // Apply existing filters
+    // Apply existing filters - Use ILIKE without wildcard for exact but case-insensitive match
     if (query.make) {
-      qb.andWhere('car.make ILIKE :make', { make: `%${query.make}%` });
+      qb.andWhere('car.make ILIKE :make', { make: query.make });
     }
     if (query.model) {
-      qb.andWhere('car.model ILIKE :model', { model: `%${query.model}%` });
+      qb.andWhere('car.model ILIKE :model', { model: query.model });
     }
     if (query.chassisCode) {
       qb.andWhere('car.chassisCode ILIKE :chassisCode', {
-        chassisCode: `%${query.chassisCode}%`,
+        chassisCode: query.chassisCode,
       });
     }
     if (query.engineCode) {
       qb.andWhere('car.engineCode ILIKE :engineCode', {
-        engineCode: `%${query.engineCode}%`,
+        engineCode: query.engineCode,
       });
     }
     if (query.transmission) {
       qb.andWhere('car.transmission ILIKE :transmission', {
-        transmission: `%${query.transmission}%`,
+        transmission: query.transmission,
       });
     }
     if (query.drivetrain) {
       qb.andWhere('car.drivetrain ILIKE :drivetrain', {
-        drivetrain: `%${query.drivetrain}%`,
+        drivetrain: query.drivetrain,
       });
     }
     if (query.condition) {
       qb.andWhere('car.condition ILIKE :condition', {
-        condition: `%${query.condition}%`,
+        condition: query.condition,
       });
     }
     if (query.paperwork) {
       qb.andWhere('car.paperwork ILIKE :paperwork', {
-        paperwork: `%${query.paperwork}%`,
+        paperwork: query.paperwork,
       });
     }
     if (query.mods) {
       qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods', {
         mods: `%"${query.mods}"%`,
       });
+    }
+    if (query.mods_exterior) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_exterior', {
+        mods_exterior: `%"${query.mods_exterior}"%`,
+      });
+    }
+    if (query.mods_interior) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_interior', {
+        mods_interior: `%"${query.mods_interior}"%`,
+      });
+    }
+    if (query.mods_engine) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_engine', {
+        mods_engine: `%"${query.mods_engine}"%`,
+      });
+    }
+    if (query.mods_footwork) {
+      qb.andWhere('CAST(car.mods AS TEXT) ILIKE :mods_footwork', {
+        mods_footwork: `%"${query.mods_footwork}"%`,
+      });
+    }
+    if (query.trim) {
+      qb.andWhere('car.trim ILIKE :trim', { trim: query.trim });
+    }
+    if (query.year) {
+      qb.andWhere('car.year = :year', { year: parseInt(query.year) });
     }
     if (query.minPrice) {
       qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', {
@@ -1110,12 +1169,41 @@ export class CarsService {
     }
     if (query.location) {
       qb.andWhere('car.location ILIKE :location', {
-        location: `%${query.location}%`,
+        location: query.location,
       });
     }
     if (query.notableFeatures) {
       qb.andWhere('car.notableFeatures ILIKE :notableFeatures', {
-        notableFeatures: `%${query.notableFeatures}%`,
+        notableFeatures: query.notableFeatures,
+      });
+    }
+
+    // Integrate keyword search (q) into smart filters
+    if (query.q) {
+      const searchWords = query.q
+        .trim()
+        .split(/\s+/)
+        .filter((w: string) => w.length > 0);
+
+      const searchableFields = `CONCAT_WS(' ', 
+                COALESCE(car.make, ''), 
+                COALESCE(car.model, ''), 
+                COALESCE(car.trim, ''), 
+                COALESCE(car.chassisCode, ''), 
+                COALESCE(car.engineCode, ''), 
+                COALESCE(car.transmission, ''),
+                COALESCE(car.drivetrain, ''),
+                COALESCE(car.condition, ''), 
+                COALESCE(car.paperwork, ''), 
+                COALESCE(car.description, ''),
+                COALESCE(CAST(car.mods AS TEXT), '')
+            )`;
+
+      searchWords.forEach((word: string, index: number) => {
+        const paramName = `sq${index}`;
+        qb.andWhere(`${searchableFields} ILIKE :${paramName}`, {
+          [paramName]: `%${word}%`,
+        });
       });
     }
 
@@ -1125,6 +1213,8 @@ export class CarsService {
     const options: Record<string, Set<string>> = {
       make: new Set(),
       model: new Set(),
+      trim: new Set(),
+      year: new Set(),
       chassisCode: new Set(),
       engineCode: new Set(),
       transmission: new Set(),
@@ -1132,6 +1222,10 @@ export class CarsService {
       condition: new Set(),
       paperwork: new Set(),
       mods: new Set(),
+      mods_exterior: new Set(),
+      mods_interior: new Set(),
+      mods_engine: new Set(),
+      mods_footwork: new Set(),
       location: new Set(),
       notableFeatures: new Set(),
     };
@@ -1146,6 +1240,8 @@ export class CarsService {
     for (const car of cars) {
       if (car.make) options.make.add(car.make.toUpperCase());
       if (car.model) options.model.add(car.model.toUpperCase());
+      if (car.trim) options.trim.add(car.trim.toUpperCase());
+      if (car.year) options.year.add(car.year.toString());
       if (car.chassisCode)
         options.chassisCode.add(car.chassisCode.toUpperCase());
       if (car.engineCode) options.engineCode.add(car.engineCode.toUpperCase());
@@ -1175,13 +1271,37 @@ export class CarsService {
       if (car.mods) {
         if (Array.isArray(car.mods)) {
           car.mods.forEach((mod: any) => {
-            if (typeof mod === 'string' && mod.trim()) {
-              options.mods.add(mod.trim().toUpperCase());
-            } else if (mod && mod.name) {
-              options.mods.add(mod.name.trim().toUpperCase());
+            const modVal = typeof mod === 'string' ? mod.trim().toUpperCase() : mod?.name?.trim().toUpperCase();
+            if (modVal) {
+              options.mods.add(modVal);
+              // Fallback to exterior if type is unknown for flat arrays
+              options.mods_exterior.add(modVal);
             }
           });
         } else if (typeof car.mods === 'object') {
+          const modsObj = car.mods as any;
+          if (modsObj.exterior) {
+            modsObj.exterior.forEach((v: string) => {
+              if (v && typeof v === 'string') options.mods_exterior.add(v.trim().toUpperCase());
+            });
+          }
+          if (modsObj.interior) {
+            modsObj.interior.forEach((v: string) => {
+              if (v && typeof v === 'string') options.mods_interior.add(v.trim().toUpperCase());
+            });
+          }
+          if (modsObj.engine) {
+            modsObj.engine.forEach((v: string) => {
+              if (v && typeof v === 'string') options.mods_engine.add(v.trim().toUpperCase());
+            });
+          }
+          if (modsObj.footwork) {
+            modsObj.footwork.forEach((v: string) => {
+              if (v && typeof v === 'string') options.mods_footwork.add(v.trim().toUpperCase());
+            });
+          }
+
+          // Also add to generic mods for backward compatibility/global search
           Object.values(car.mods).forEach((values: any) => {
             if (Array.isArray(values)) {
               values.forEach((v: string) => {
@@ -1208,6 +1328,8 @@ export class CarsService {
       options: {
         make: Array.from(options.make).sort(),
         model: Array.from(options.model).sort(),
+        trim: Array.from(options.trim).sort(),
+        year: Array.from(options.year).sort((a, b) => parseInt(b) - parseInt(a)), // Sort years DESC
         chassisCode: Array.from(options.chassisCode).sort(),
         engineCode: Array.from(options.engineCode).sort(),
         transmission: Array.from(options.transmission).sort(),
@@ -1215,6 +1337,10 @@ export class CarsService {
         condition: Array.from(options.condition).sort(),
         paperwork: Array.from(options.paperwork).sort(),
         mods: Array.from(options.mods).sort(),
+        mods_exterior: Array.from(options.mods_exterior).sort(),
+        mods_interior: Array.from(options.mods_interior).sort(),
+        mods_engine: Array.from(options.mods_engine).sort(),
+        mods_footwork: Array.from(options.mods_footwork).sort(),
         location: Array.from(options.location).sort(),
         notableFeatures: Array.from(options.notableFeatures).sort(),
       },

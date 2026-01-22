@@ -198,6 +198,8 @@ export class TagsService {
     const grouped: Record<string, string[]> = {
       make: [],
       model: [],
+      trim: [],
+      year: [],
       chassisCode: [],
       engineCode: [],
       transmission: [],
@@ -207,6 +209,10 @@ export class TagsService {
       location: [],
       feature: [], // Notable features
       mods: [],
+      mods_exterior: [],
+      mods_interior: [],
+      mods_engine: [],
+      mods_footwork: [],
     };
 
     for (const tag of tags) {
@@ -236,20 +242,22 @@ export class TagsService {
     const tags = await this.tagsRepository.find({ order: { value: 'ASC' } });
 
     const categoryMap: Record<string, string> = {
-      make: 'Hãng xe (Make)',
-      model: 'Dòng xe (Model)',
-      chassisCode: 'Mã khung (Chassis)',
-      engineCode: 'Mã máy (Engine)',
-      transmission: 'Hộp số (Transmission)',
-      drivetrain: 'Dẫn động (Drivetrain)',
-      condition: 'Tình trạng (Condition)',
-      paperwork: 'Giấy tờ (Paperwork)',
-      location: 'Khu vực (Location)',
-      feature: 'Ngoại hình chú ý (Features)',
-      mods_exterior: 'Nâng cấp Ngoại thất',
-      mods_interior: 'Nâng cấp Nội thất',
-      mods_engine: 'Nâng cấp Động cơ/Hiệu suất',
-      mods_footwork: 'Nâng cấp Gầm/Bánh',
+      make: 'Hãng xe',
+      model: 'Dòng xe',
+      trim: 'Phiên bản',
+      year: 'Năm sản xuất',
+      chassisCode: 'Mã khung gầm',
+      engineCode: 'Mã động cơ',
+      transmission: 'Hộp số',
+      drivetrain: 'Hệ dẫn động',
+      condition: 'Tình trạng',
+      paperwork: 'Loại giấy tờ',
+      location: 'Khu vực',
+      feature: 'Ngoại hình chú ý',
+      mods_exterior: 'Mods: Ngoại thất',
+      mods_interior: 'Mods: Nội thất',
+      mods_engine: 'Mods: Hiệu suất & Máy',
+      mods_footwork: 'Mods: Gầm & Bánh',
     };
 
     const grouped: Record<string, { tag: string; count: number }[]> = {};

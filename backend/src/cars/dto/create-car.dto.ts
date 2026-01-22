@@ -7,6 +7,7 @@ import {
   IsEnum,
   IsBoolean,
   Max,
+  Min,
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -25,6 +26,8 @@ export class CreateCarDto {
 
   @IsNumber()
   @Type(() => Number)
+  @Min(1000, { message: 'Năm sản xuất phải có 4 chữ số' })
+  @Max(9999, { message: 'Năm sản xuất không hợp lệ' })
   year: number;
 
   @IsString()
@@ -144,6 +147,8 @@ export class UpdateCarDto {
   @IsOptional()
   @IsNumber()
   @Type(() => Number)
+  @Min(1000, { message: 'Năm sản xuất phải có 4 chữ số' })
+  @Max(9999, { message: 'Năm sản xuất không hợp lệ' })
   year?: number;
 
   @IsOptional()

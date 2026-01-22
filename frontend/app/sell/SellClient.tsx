@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CarSpecs, initialCarSpecs } from './types';
 import StepBasics from './components/StepBasics';
@@ -94,7 +94,7 @@ export default function SellClient() {
         }
     }, [data, isLoaded]);
 
-    const updateData = (fields: Partial<CarSpecs>) => {
+    const updateData = useCallback((fields: Partial<CarSpecs>) => {
         setData((prev) => ({ ...prev, ...fields }));
         // Clear errors for fields being updated
         const fieldKeys = Object.keys(fields);
@@ -105,7 +105,7 @@ export default function SellClient() {
                 return newErrors;
             });
         }
-    };
+    }, []);
 
     // Auto-fill Logic
     useEffect(() => {

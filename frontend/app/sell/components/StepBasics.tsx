@@ -101,9 +101,14 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                     // Update Year Suggestions from Range (only from active cars)
                     if (resData.ranges && resData.ranges.year) {
                         const { min, max } = resData.ranges.year;
-                        if (min > 0 && max > 0 && min !== Infinity) {
+                        // DEFENSIVE: Prevent infinite or massive loops if data is corrupt
+                        if (min > 1900 && max > 0 && min <= max) {
                             const years = [];
-                            for (let y = max; y >= min; y--) {
+                            // Limit to last 150 years max to prevent OOM
+                            const startYear = max;
+                            const endYear = Math.max(min, max - 150);
+
+                            for (let y = startYear; y >= endYear; y--) {
                                 years.push(y.toString());
                             }
                             setSuggestedYears(years);

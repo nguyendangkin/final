@@ -52,6 +52,7 @@ function HeaderContent() {
         // Add price range if set
         if (price?.min) params.append('minPrice', price.min);
         if (price?.max) params.append('maxPrice', price.max);
+        if (searchQuery) params.append('q', searchQuery);
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
