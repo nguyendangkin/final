@@ -26,6 +26,12 @@ export class TagsService {
         value: car.make.toUpperCase(),
         parent: '',
       });
+    if (car.year)
+      tags.push({
+        category: 'year',
+        value: car.year.toString(),
+        parent: '',
+      });
     if (car.location)
       tags.push({
         category: 'location',
@@ -307,6 +313,8 @@ export class TagsService {
     const grouped: Record<string, string[]> = {
       make: [],
       model: [],
+      trim: [],
+      year: [],
       chassisCode: [],
       engineCode: [],
       transmission: [],

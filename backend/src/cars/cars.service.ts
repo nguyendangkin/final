@@ -1528,6 +1528,7 @@ export class CarsService {
         else if (category === 'drivetrain') car.drivetrain = newTag;
         else if (category === 'condition') car.condition = newTag;
         else if (category === 'paperwork') car.paperwork = newTag;
+        else if (category === 'year') car.year = parseInt(newTag);
         else if (category === 'location') car.location = newTag;
         else if (category === 'feature' && car.notableFeatures) {
           car.notableFeatures = car.notableFeatures.map((f) =>

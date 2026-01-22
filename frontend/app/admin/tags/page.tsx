@@ -21,22 +21,28 @@ export default function TagsManagementPage() {
     const [newTagVal, setNewTagVal] = useState('');
 
     const categoryMap: Record<string, string> = {
-        'make': 'Hãng xe (Make)',
-        'model': 'Dòng xe (Model)',
-        'trim': 'Phiên bản (Trim)',
-        'chassisCode': 'Mã khung (Chassis)',
-        'engineCode': 'Mã máy (Engine)',
-        'transmission': 'Hộp số (Transmission)',
-        'drivetrain': 'Dẫn động (Drivetrain)',
-        'condition': 'Tình trạng (Condition)',
-        'paperwork': 'Giấy tờ (Paperwork)',
-        'location': 'Khu vực (Location)',
-        'feature': 'Ngoại hình chú ý (Features)',
-        'mods_exterior': 'Nâng cấp Ngoại thất',
-        'mods_interior': 'Nâng cấp Nội thất',
-        'mods_engine': 'Nâng cấp Động cơ/Hiệu suất',
-        'mods_footwork': 'Nâng cấp Gầm/Bánh',
+        'make': '1. Hãng xe',
+        'model': '2. Dòng xe',
+        'trim': '3. Phiên bản',
+        'year': '4. Năm sản xuất',
+        'chassisCode': '5. Mã khung gầm',
+        'engineCode': '6. Mã động cơ',
+        'transmission': '7. Hộp số',
+        'drivetrain': '8. Hệ dẫn động',
+        'condition': '9. Tình trạng',
+        'feature': '10. Ngoại hình chú ý',
+        'paperwork': '11. Loại giấy tờ',
+        'mods_exterior': '12. Mods: Ngoại thất',
+        'mods_interior': '12. Mods: Nội thất',
+        'mods_engine': '12. Mods: Máy móc và hiệu suất',
+        'mods_footwork': '12. Mods: Gầm và bánh',
     };
+
+    const sortOrder = [
+        'make', 'model', 'trim', 'year', 'chassisCode', 'engineCode',
+        'transmission', 'drivetrain', 'condition', 'feature', 'paperwork',
+        'mods_exterior', 'mods_interior', 'mods_engine', 'mods_footwork'
+    ];
 
     const fetchTags = async (showLoading = true) => {
         if (showLoading) setLoading(true);
@@ -187,49 +193,52 @@ export default function TagsManagementPage() {
                     <TagsSkeleton />
                 ) : (
                     <div className="space-y-8">
-                        {categories.map((cat) => (
-                            <div key={cat.category}>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <h3 className="font-bold uppercase tracking-wide text-sm">
-                                        {categoryMap[cat.category] || cat.category}
-                                    </h3>
-                                    <span className="bg-black text-white text-xs px-2 py-0.5 font-mono">
-                                        {cat.items.length}
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {cat.items.map((item) => (
-                                        <div
-                                            key={item.tag}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 hover:border-black transition-colors group"
-                                        >
-                                            <span className="font-bold text-sm group-hover:text-[var(--jdm-red)] transition-colors">
-                                                {item.tag}
-                                            </span>
-                                            <span className="text-xs text-gray-400 font-mono">
-                                                x{item.count}
-                                            </span>
-                                            <div className="flex items-center ml-2 border-l border-gray-300 pl-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => openEdit(cat.category, item.tag)}
-                                                    className="text-gray-400 hover:text-blue-600 transition-colors p-1"
-                                                    title="Sửa Tag"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteClick(item.tag)}
-                                                    className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                                                    title="Xóa & Phạt"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                        {categories
+                            .filter(cat => sortOrder.includes(cat.category))
+                            .sort((a, b) => sortOrder.indexOf(a.category) - sortOrder.indexOf(b.category))
+                            .map((cat) => (
+                                <div key={cat.category}>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <h3 className="font-bold uppercase tracking-wide text-sm">
+                                            {categoryMap[cat.category] || cat.category}
+                                        </h3>
+                                        <span className="bg-black text-white text-xs px-2 py-0.5 font-mono">
+                                            {cat.items.length}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {cat.items.map((item) => (
+                                            <div
+                                                key={item.tag}
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 border border-gray-200 hover:border-black transition-colors group"
+                                            >
+                                                <span className="font-bold text-sm group-hover:text-[var(--jdm-red)] transition-colors">
+                                                    {item.tag}
+                                                </span>
+                                                <span className="text-xs text-gray-400 font-mono">
+                                                    x{item.count}
+                                                </span>
+                                                <div className="flex items-center ml-2 border-l border-gray-300 pl-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => openEdit(cat.category, item.tag)}
+                                                        className="text-gray-400 hover:text-blue-600 transition-colors p-1"
+                                                        title="Sửa Tag"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteClick(item.tag)}
+                                                        className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                                        title="Xóa & Phạt"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
                     </div>
                 )}
             </div>
