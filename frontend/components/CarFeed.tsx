@@ -38,6 +38,12 @@ function CarFeedContent({ initialCars = [], filter = {} }: CarFeedProps) {
         location: searchParams.get('location'),
         chassisCode: searchParams.get('chassisCode'),
         engineCode: searchParams.get('engineCode'),
+        trim: searchParams.get('trim'),
+        year: searchParams.get('year'),
+        mods_exterior: searchParams.get('mods_exterior'),
+        mods_interior: searchParams.get('mods_interior'),
+        mods_engine: searchParams.get('mods_engine'),
+        mods_footwork: searchParams.get('mods_footwork'),
         mods: searchParams.get('mods'),
         notableFeatures: searchParams.get('notableFeatures'),
     };

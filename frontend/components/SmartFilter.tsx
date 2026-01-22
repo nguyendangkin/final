@@ -14,20 +14,42 @@ interface SmartFilterProps {
     onSearch: () => void;
 }
 
-const FILTER_ORDER = ['make', 'model', 'location', 'notableFeatures', 'transmission', 'drivetrain', 'condition', 'paperwork', 'chassisCode', 'engineCode', 'mods'];
+const FILTER_ORDER = [
+    'make',
+    'model',
+    'trim',
+    'year',
+    'chassisCode',
+    'engineCode',
+    'transmission',
+    'drivetrain',
+    'condition',
+    'notableFeatures',
+    'paperwork',
+    'location',
+    'mods_exterior',
+    'mods_interior',
+    'mods_engine',
+    'mods_footwork'
+];
 
 const FILTER_LABELS: Record<string, string> = {
     make: 'Hãng xe',
     model: 'Dòng xe',
-    chassisCode: 'Mã gầm',
-    engineCode: 'Mã máy',
+    trim: 'Phiên bản',
+    year: 'Năm sản xuất',
+    chassisCode: 'Mã khung gầm',
+    engineCode: 'Mã động cơ',
     transmission: 'Hộp số',
-    drivetrain: 'Dẫn động',
+    drivetrain: 'Hệ dẫn động',
     condition: 'Tình trạng',
-    paperwork: 'Giấy tờ',
+    notableFeatures: 'Ngoại hình chú ý',
+    paperwork: 'Loại giấy tờ',
     location: 'Khu vực',
-    mods: 'Mods',
-    notableFeatures: 'Ngoại thất',
+    mods_exterior: 'Mods: Ngoại thất',
+    mods_interior: 'Mods: Nội thất',
+    mods_engine: 'Mods: Hiệu suất & Máy',
+    mods_footwork: 'Mods: Gầm & Bánh',
 };
 
 export default function SmartFilter({
@@ -101,6 +123,47 @@ export default function SmartFilter({
                 </div>
             ) : smartFilters?.options ? (
                 <div className="space-y-3">
+                    {/* Search Button - Moved to top for better UX */}
+                    <button
+                        onClick={onSearch}
+                        className="w-full bg-black hover:bg-[var(--jdm-red)] text-white py-2.5 text-sm font-bold uppercase tracking-wider transition-colors shadow-md sticky top-0 z-10"
+                    >
+                        Tìm kiếm {smartFilters?.count ? `(${smartFilters.count} kết quả)` : ''}
+                    </button>
+
+                    {/* Selected Filters Summary - Moved to top */}
+                    {Object.keys(selectedFilters).length > 0 && (
+                        <div className="bg-gray-50 p-2 border border-gray-100">
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">
+                                    Đang lọc ({Object.keys(selectedFilters).length})
+                                </label>
+                                <button
+                                    onClick={onClearFilters}
+                                    className="text-[10px] font-bold text-[var(--jdm-red)] hover:underline uppercase"
+                                >
+                                    Xóa hết
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                                {Object.entries(selectedFilters).map(([category, value]) => (
+                                    <span
+                                        key={category}
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold bg-black text-white"
+                                    >
+                                        <span className="opacity-60">{FILTER_LABELS[category]}:</span> {value}
+                                        <button
+                                            onClick={() => onSelectFilter(category, value)}
+                                            className="hover:bg-white/20 rounded-full p-0.5"
+                                        >
+                                            <X className="w-2.5 h-2.5" />
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Price Range */}
                     <div className="bg-gray-50 p-2 border-l-2 border-[var(--jdm-red)]">
                         <label className="text-xs font-bold text-gray-700 uppercase mb-1.5 block">
@@ -171,46 +234,6 @@ export default function SmartFilter({
                             </div>
                         );
                     })}
-
-                    {/* Selected Filters Summary */}
-                    {Object.keys(selectedFilters).length > 0 && (
-                        <div className="border-t border-gray-200 mt-3 pt-3">
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-bold text-gray-700 uppercase">
-                                    Đã chọn ({Object.keys(selectedFilters).length})
-                                </label>
-                                <button
-                                    onClick={onClearFilters}
-                                    className="text-xs text-gray-500 hover:text-[var(--jdm-red)] underline"
-                                >
-                                    Xóa tất cả
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                                {Object.entries(selectedFilters).map(([category, value]) => (
-                                    <span
-                                        key={category}
-                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-bold bg-[var(--jdm-red)] text-white"
-                                    >
-                                        <span className="opacity-70">{FILTER_LABELS[category]}:</span> {value}
-                                        <button
-                                            onClick={() => onSelectFilter(category, value)}
-                                            className="hover:bg-white/20 rounded-full p-0.5"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    <button
-                        onClick={onSearch}
-                        className="w-full mt-3 bg-black hover:bg-[var(--jdm-red)] text-white py-2 text-sm font-bold uppercase tracking-wider transition-colors shadow-sm"
-                    >
-                        Tìm kiếm {smartFilters?.count ? `(${smartFilters.count} kết quả)` : ''}
-                    </button>
                 </div>
             ) : (
                 <p className="text-xs text-gray-400 text-center py-4">Không thể tải bộ lọc</p>

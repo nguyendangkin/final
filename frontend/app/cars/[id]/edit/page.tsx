@@ -577,9 +577,14 @@ export default function EditCarPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Năm sản xuất <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
-                                    value={formData.year}
-                                    onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || 0 })}
+                                    value={formData.year || ''}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, '');
+                                        setFormData({ ...formData, year: parseInt(val) || 0 });
+                                    }}
+                                    maxLength={4}
                                     className={inputClassBase}
+                                    placeholder="YYYY"
                                     required
                                 />
                             </div>

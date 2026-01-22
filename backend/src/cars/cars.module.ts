@@ -25,4 +25,4 @@ import { UploadModule } from '../upload/upload.module';
   providers: [CarsService],
   exports: [CarsService],
 })
-export class CarsModule { }
+export class CarsModule {}
