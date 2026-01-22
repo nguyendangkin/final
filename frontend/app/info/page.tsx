@@ -41,7 +41,7 @@ export default function InfoPage() {
                 <section>
                     <h2 className="text-2xl font-black uppercase tracking-tight mb-6 flex items-center gap-3">
                         <Car className="w-6 h-6 text-[var(--jdm-red)]" />
-                        Về Chúng Tôi
+                        Về Chúng Tôi.
                     </h2>
                     <div className="bg-white p-6 border border-gray-200 shadow-sm">
                         <p className="text-gray-700 leading-relaxed mb-4">
