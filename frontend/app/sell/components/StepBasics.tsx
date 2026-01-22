@@ -7,9 +7,8 @@ interface StepBasicsProps {
     data: CarSpecs;
     updateData: (fields: Partial<CarSpecs>) => void;
     errors?: Record<string, string>;
+    suggestions?: any;
 }
-
-
 
 export default function StepBasics({ data, updateData, errors = {} }: StepBasicsProps) {
     const brands = [
@@ -22,110 +21,59 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
     const [suggestedYears, setSuggestedYears] = useState<string[]>([]);
     const [suggestedLocations, setSuggestedLocations] = useState<string[]>([]);
 
-    // Fetch Model suggestions based on Make
+    // Fetch Model suggestions based on Make (from Tag history)
     useEffect(() => {
         let active = true;
-
         if (data.make) {
             const fetchModels = async () => {
                 try {
                     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                    const res = await fetch(`${apiUrl}/tags/suggestions/model?parent=${encodeURIComponent(data.make)}`);
+                    const res = await fetch(`${apiUrl}/tags/suggestions/model?parent=${encodeURIComponent(data.make.toUpperCase())}`);
                     const resData = await res.json();
-                    if (active && Array.isArray(resData)) {
-                        setSuggestedModels(resData);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch models', err);
-                }
+                    if (active && Array.isArray(resData)) setSuggestedModels(resData);
+                } catch (err) { console.error(err); }
             };
             fetchModels();
-        } else {
-            setSuggestedModels([]);
-        }
-
+        } else setSuggestedModels([]);
         return () => { active = false; };
     }, [data.make]);
 
-    // Fetch Trim & Chassis suggestions based on Model (Use chassisCode as trim if trim not available)
+    // Fetch Trim suggestions based on Model (from Tag history)
     useEffect(() => {
         let active = true;
-
         if (data.model) {
             const fetchTrims = async () => {
                 try {
-                    // Try to fetch trims first
                     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                    const res = await fetch(`${apiUrl}/tags/suggestions/trim?parent=${encodeURIComponent(data.model)}`);
-                    let trims = await res.json();
-
-                    // If no explicit trims, try chassisCodes as trims (common in JDM)
-                    if (!trims || trims.length === 0) {
-                        const resChassis = await fetch(`${apiUrl}/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
-                        trims = await resChassis.json();
-                    }
-
-                    if (active && Array.isArray(trims)) {
-                        setSuggestedTrims(trims);
-                    }
-                } catch (err) {
-                    console.error('Failed to fetch trims', err);
-                }
+                    const res = await fetch(`${apiUrl}/tags/suggestions/trim?parent=${encodeURIComponent(data.model.toUpperCase())}`);
+                    const resData = await res.json();
+                    if (active && Array.isArray(resData)) setSuggestedTrims(resData);
+                } catch (err) { console.error(err); }
             };
             fetchTrims();
-        } else {
-            setSuggestedTrims([]);
-        }
-
+        } else setSuggestedTrims([]);
         return () => { active = false; };
     }, [data.model]);
 
-    // Fetch filtering options (Location, Year range) from smart filter (still needs active cars for accurate pricing/location availability)
-
-
-    // Fetch smart suggestions for year range (still needs active cars)
+    // Fetch Year suggestions based on Model
     useEffect(() => {
         let active = true;
-
-        const fetchSmartSuggestions = async () => {
-            try {
-                const params = new URLSearchParams();
-                if (data.make) params.append('make', data.make);
-                if (data.model) params.append('model', data.model);
-
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                const res = await fetch(`${apiUrl}/cars/filters/smart?${params.toString()}`);
-                const resData = await res.json();
-
-                if (active) {
-                    // Update Year Suggestions from Range (only from active cars)
-                    if (resData.ranges && resData.ranges.year) {
-                        const { min, max } = resData.ranges.year;
-                        // DEFENSIVE: Prevent infinite or massive loops if data is corrupt
-                        if (min > 1900 && max > 0 && min <= max) {
-                            const years = [];
-                            // Limit to last 150 years max to prevent OOM
-                            const startYear = max;
-                            const endYear = Math.max(min, max - 150);
-
-                            for (let y = startYear; y >= endYear; y--) {
-                                years.push(y.toString());
-                            }
-                            setSuggestedYears(years);
-                        } else {
-                            setSuggestedYears([]);
-                        }
+        if (data.model) {
+            const fetchYears = async () => {
+                try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                    const res = await fetch(`${apiUrl}/tags/suggestions/year?parent=${encodeURIComponent(data.model.toUpperCase())}`);
+                    const resData = await res.json();
+                    if (active && Array.isArray(resData)) {
+                        const sorted = resData.sort((a, b) => parseInt(b) - parseInt(a));
+                        setSuggestedYears(sorted);
                     }
-                }
-            } catch (err) {
-                console.error('Failed to fetch smart suggestions', err);
-            }
-        };
-
-        fetchSmartSuggestions();
-
+                } catch (err) { console.error(err); }
+            };
+            fetchYears();
+        }
         return () => { active = false; };
-    }, [data.make, data.model]);
+    }, [data.model]);
 
     // Fetch Location suggestions (Global)
     useEffect(() => {
@@ -134,19 +82,16 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 const res = await fetch(`${apiUrl}/tags/suggestions/location`);
-                const data = await res.json();
-                if (active && Array.isArray(data)) {
-                    setSuggestedLocations(data);
-                }
-            } catch (err) {
-                console.error('Failed to fetch locations', err);
-            }
+                const resData = await res.json();
+                if (active && Array.isArray(resData)) setSuggestedLocations(resData);
+            } catch (err) { console.error(err); }
         };
         fetchLocations();
         return () => { active = false; };
     }, []);
 
     const priceInputRef = useRef<HTMLInputElement>(null);
+
     const cursorPositionRef = useRef<number | null>(null);
     const odoInputRef = useRef<HTMLInputElement>(null);
     const odoCursorPositionRef = useRef<number | null>(null);
@@ -260,6 +205,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         value={data.model}
                         onChange={(val) => updateData({ model: val })}
                         suggestions={suggestedModels}
+                        disableSort={true}
                         placeholder="Ví dụ: Civic, Supra..."
                         error={errors.model}
                         required
@@ -267,6 +213,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         icon={<CarFront className="w-5 h-5" />}
                     />
                 </div>
+
 
                 {/* Year */}
                 <div className="space-y-0">
@@ -279,6 +226,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                             updateData({ year: parseInt(numericVal) || 0 });
                         }}
                         suggestions={suggestedYears}
+                        disableSort={true} // Keep descending order for years
                         placeholder="YYYY"
                         error={errors.year}
                         required
@@ -286,6 +234,7 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         icon={<Calendar className="w-5 h-5" />}
                     />
                 </div>
+
 
                 {/* Trim */}
                 <div className="space-y-0">
@@ -295,12 +244,14 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         value={data.trim}
                         onChange={(val) => updateData({ trim: val })}
                         suggestions={suggestedTrims}
+                        disableSort={true}
                         placeholder="Ví dụ: Type R, Spec-R..."
                         error={errors.trim}
                         maxLength={50}
                         required
                     />
                 </div>
+
 
                 {/* Price */}
                 <div className="space-y-2">
@@ -341,12 +292,14 @@ export default function StepBasics({ data, updateData, errors = {} }: StepBasics
                         value={data.location}
                         onChange={(val) => updateData({ location: val })}
                         suggestions={suggestedLocations}
+                        disableSort={true}
                         placeholder="Ví dụ: TP.HCM, Hà Nội..."
                         error={errors.location}
                         maxLength={100}
                         required
                     />
                 </div>
+
 
                 {/* Odo */}
                 <div className="space-y-2">

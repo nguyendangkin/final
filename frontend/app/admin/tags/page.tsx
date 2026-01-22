@@ -62,29 +62,42 @@ export default function TagsManagementPage() {
         fetchTags();
     }, []);
 
-    const handleDeleteClick = (tag: string) => {
+    const handleDeleteClick = (item: { tag: string; count: number }) => {
+        const { tag, count } = item;
+        const isCleanup = count === 0;
+
         toast.custom((t) => (
             <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col border-2 border-black`}>
                 <div className="p-6">
                     <div className="flex items-start">
                         <div className="flex-shrink-0 pt-0.5">
-                            <div className="h-12 w-12 rounded-none bg-[var(--jdm-red)] flex items-center justify-center">
+                            <div className={`h-12 w-12 rounded-none ${isCleanup ? 'bg-black' : 'bg-[var(--jdm-red)]'} flex items-center justify-center`}>
                                 <Trash2 className="h-6 w-6 text-white" />
                             </div>
                         </div>
                         <div className="ml-4 flex-1">
                             <h3 className="text-lg font-black text-black uppercase tracking-wide">
-                                Cảnh báo cực đại
+                                {isCleanup ? 'Dọn dẹp hệ thống' : 'Cảnh báo cực đại'}
                             </h3>
                             <div className="mt-2 text-sm text-gray-600 font-medium leading-relaxed">
-                                Bạn đang xóa tag <span className="font-black text-black">"{tag}"</span>.
-                                <br />
-                                <span className="text-red-600 font-bold block mt-1">HẬU QUẢ KHÔNG THỂ HOÀN TÁC:</span>
-                                <ul className="list-disc ml-4 text-xs mt-1 text-gray-500">
-                                    <li>Xóa toàn bộ bài viết chứa tag này.</li>
-                                    <li>BAN vĩnh viễn người tạo tag.</li>
-                                    <li>Xóa sạch xe của người bị ban.</li>
-                                </ul>
+                                {isCleanup ? (
+                                    <>
+                                        Bạn đang xóa tag <span className="font-black text-black">"{tag}"</span>.
+                                        <br />
+                                        Tag này hiện không có bài viết nào sử dụng. Xóa sẽ giúp làm sạch danh sách gợi ý.
+                                    </>
+                                ) : (
+                                    <>
+                                        Bạn đang xóa tag <span className="font-black text-black">"{tag}"</span>.
+                                        <br />
+                                        <span className="text-red-600 font-bold block mt-1">HẬU QUẢ KHÔNG THỂ HOÀN TÁC:</span>
+                                        <ul className="list-disc ml-4 text-xs mt-1 text-gray-500">
+                                            <li>Xóa toàn bộ bài viết chứa tag này.</li>
+                                            <li>BAN vĩnh viễn người tạo tag.</li>
+                                            <li>Xóa sạch xe của người bị ban.</li>
+                                        </ul>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -99,22 +112,26 @@ export default function TagsManagementPage() {
                     <button
                         onClick={() => {
                             toast.dismiss(t.id);
-                            executeDelete(tag);
+                            executeDelete(tag, isCleanup);
                         }}
-                        className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-[var(--jdm-red)] hover:bg-red-700 focus:outline-none uppercase transition-all"
+                        className={`w-1/2 p-4 flex items-center justify-center text-sm font-black text-white ${isCleanup ? 'bg-black hover:bg-gray-800' : 'bg-[var(--jdm-red)] hover:bg-red-700'} focus:outline-none uppercase transition-all`}
                     >
-                        Xác nhận trừng phạt
+                        {isCleanup ? 'Xác nhận xóa' : 'Xác nhận trừng phạt'}
                     </button>
                 </div>
             </div>
         ), { duration: 8000 });
     };
 
-    const executeDelete = async (tag: string) => {
+    const executeDelete = async (tag: string, isCleanup: boolean) => {
         try {
             await deleteTagWithPenalty(tag);
             fetchTags(false);
-            toast.success(`Đã xóa tag "${tag}" và thi hành án phạt.`, {
+            const message = isCleanup 
+                ? `Đã dọn dẹp tag "${tag}" khỏi hệ thống.`
+                : `Đã xóa tag "${tag}" và thi hành án phạt.`;
+
+            toast.success(message, {
                 style: {
                     borderRadius: '0px',
                     border: '1px solid black',
@@ -122,10 +139,11 @@ export default function TagsManagementPage() {
                     color: '#fff',
                 },
                 iconTheme: {
-                    primary: 'var(--jdm-red)',
-                    secondary: '#fff',
+                    primary: isCleanup ? '#fff' : 'var(--jdm-red)',
+                    secondary: '#000',
                 },
             });
+
         } catch (err) {
             console.error(err);
             toast.error('Có lỗi xảy ra khi xóa tag.', {
@@ -228,12 +246,13 @@ export default function TagsManagementPage() {
                                                         <Edit2 size={14} />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDeleteClick(item.tag)}
+                                                        onClick={() => handleDeleteClick(item)}
                                                         className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                                                        title="Xóa & Phạt"
+                                                        title={item.count === 0 ? "Dọn dẹp Tag" : "Xóa & Phạt"}
                                                     >
                                                         <Trash2 size={14} />
                                                     </button>
+
                                                 </div>
                                             </div>
                                         ))}

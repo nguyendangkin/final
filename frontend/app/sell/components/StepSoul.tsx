@@ -7,51 +7,40 @@ interface StepSoulProps {
     data: CarSpecs;
     updateData: (fields: Partial<CarSpecs>) => void;
     errors?: Record<string, string>;
+    suggestions?: any;
 }
-
-// Unused suggestions removed
-
 
 export default function StepSoul({ data, updateData, errors = {} }: StepSoulProps) {
     const inputClassWithIcon = (field: string) =>
         `w-full bg-white border ${errors[field] ? 'border-[var(--jdm-red)]' : 'border-gray-300'} text-black rounded-none p-4 pl-12 focus:ring-2 focus:ring-black outline-none transition-all hover:bg-gray-50 hover:border-gray-400 placeholder:text-gray-400 uppercase`;
 
-    const [suggestions, setSuggestions] = useState<{
-        chassisCode: string[];
-        engineCode: string[];
-    }>({ chassisCode: [], engineCode: [] });
+    const [suggestedChassis, setSuggestedChassis] = useState<string[]>([]);
+    const [suggestedEngine, setSuggestedEngine] = useState<string[]>([]);
 
-    // Fetch Chassis & Engine suggestions based on Model
+    // Fetch Chassis & Engine suggestions based on Model (from Tag history)
     useEffect(() => {
         let active = true;
-
         if (data.model) {
-            const fetchSuggestions = async () => {
+            const fetchSpecs = async () => {
                 try {
                     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                    // Fetch Chassis Codes
-                    const resChassis = await fetch(`${apiUrl}/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model)}`);
+                    const resChassis = await fetch(`${apiUrl}/tags/suggestions/chassisCode?parent=${encodeURIComponent(data.model.toUpperCase())}`);
                     const chassisData = await resChassis.json();
 
-                    // Fetch Engine Codes
-                    const resEngine = await fetch(`${apiUrl}/tags/suggestions/engineCode?parent=${encodeURIComponent(data.model)}`);
+                    const resEngine = await fetch(`${apiUrl}/tags/suggestions/engineCode?parent=${encodeURIComponent(data.model.toUpperCase())}`);
                     const engineData = await resEngine.json();
 
                     if (active) {
-                        setSuggestions({
-                            chassisCode: Array.isArray(chassisData) ? chassisData : [],
-                            engineCode: Array.isArray(engineData) ? engineData : [],
-                        });
+                        setSuggestedChassis(Array.isArray(chassisData) ? chassisData : []);
+                        setSuggestedEngine(Array.isArray(engineData) ? engineData : []);
                     }
-                } catch (err) {
-                    console.error('Failed to fetch details', err);
-                }
+                } catch (err) { console.error(err); }
             };
-            fetchSuggestions();
+            fetchSpecs();
         } else {
-            setSuggestions({ chassisCode: [], engineCode: [] });
+            setSuggestedChassis([]);
+            setSuggestedEngine([]);
         }
-
         return () => { active = false; };
     }, [data.model]);
 
@@ -65,7 +54,8 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                         name="chassisCode"
                         value={data.chassisCode}
                         onChange={(val) => updateData({ chassisCode: val })}
-                        suggestions={suggestions.chassisCode}
+                        suggestions={suggestedChassis}
+                        disableSort={true}
                         placeholder="S15, R34, EK9..."
                         error={errors.chassisCode}
                         required
@@ -81,7 +71,8 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                         name="engineCode"
                         value={data.engineCode}
                         onChange={(val) => updateData({ engineCode: val })}
-                        suggestions={suggestions.engineCode}
+                        suggestions={suggestedEngine}
+                        disableSort={true}
                         placeholder="SR20DET, 2JZ-GTE..."
                         error={errors.engineCode}
                         required
@@ -89,7 +80,9 @@ export default function StepSoul({ data, updateData, errors = {} }: StepSoulProp
                         icon={<Cpu className="w-5 h-5" />}
                     />
                 </div>
+
             </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Transmission */}

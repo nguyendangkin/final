@@ -9,7 +9,7 @@ export class TagsService {
   constructor(
     @InjectRepository(Tag)
     private tagsRepository: Repository<Tag>,
-  ) { }
+  ) {}
 
   /**
    * Extract all tags from a car and sync them in the database
@@ -23,53 +23,56 @@ export class TagsService {
     if (car.make)
       tags.push({
         category: 'make',
-        value: car.make.toUpperCase(),
+        value: car.make.trim().toUpperCase(),
         parent: '',
       });
-    if (car.year)
+    if (car.year && car.model)
       tags.push({
         category: 'year',
         value: car.year.toString(),
-        parent: '',
+        parent: car.model.trim().toUpperCase(),
       });
+
     if (car.location)
       tags.push({
         category: 'location',
-        value: car.location.toUpperCase(),
+        value: car.location.trim().toUpperCase(),
         parent: '',
       });
     if (car.transmission)
       tags.push({
         category: 'transmission',
-        value: car.transmission.toUpperCase(),
+        value: car.transmission.trim().toUpperCase(),
         parent: '',
       });
     if (car.drivetrain)
       tags.push({
         category: 'drivetrain',
-        value: car.drivetrain.toUpperCase(),
+        value: car.drivetrain.trim().toUpperCase(),
         parent: '',
       });
     if (car.condition)
       tags.push({
         category: 'condition',
-        value: car.condition.toUpperCase(),
+        value: car.condition.trim().toUpperCase(),
         parent: '',
       });
     if (car.paperwork)
       tags.push({
         category: 'paperwork',
-        value: car.paperwork.toUpperCase(),
+        value: car.paperwork.trim().toUpperCase(),
         parent: '',
       });
 
     // 2. Dependent Tags
+    const modelParent = car.model ? car.model.trim().toUpperCase() : '';
+
     // Model depends on Make
     if (car.model && car.make) {
       tags.push({
         category: 'model',
-        value: car.model.toUpperCase(),
-        parent: car.make.toUpperCase(),
+        value: car.model.trim().toUpperCase(),
+        parent: car.make.trim().toUpperCase(),
       });
     }
 
@@ -77,8 +80,8 @@ export class TagsService {
     if (car.trim && car.model) {
       tags.push({
         category: 'trim',
-        value: car.trim.toUpperCase(),
-        parent: car.model.toUpperCase(),
+        value: car.trim.trim().toUpperCase(),
+        parent: modelParent,
       });
     }
 
@@ -86,8 +89,8 @@ export class TagsService {
     if (car.chassisCode && car.model) {
       tags.push({
         category: 'chassisCode',
-        value: car.chassisCode.toUpperCase(),
-        parent: car.model.toUpperCase(),
+        value: car.chassisCode.trim().toUpperCase(),
+        parent: modelParent,
       });
     }
 
@@ -95,8 +98,61 @@ export class TagsService {
     if (car.engineCode && car.model) {
       tags.push({
         category: 'engineCode',
-        value: car.engineCode.toUpperCase(),
-        parent: car.model.toUpperCase(),
+        value: car.engineCode.trim().toUpperCase(),
+        parent: modelParent,
+      });
+    }
+
+    // Mods - categorizing into specific types AND linking to Model
+    if (car.mods && car.model) {
+      // Helper to add mod tags with Model as parent
+      const addModTags = (items: string[], type: string) => {
+        if (Array.isArray(items)) {
+          items.forEach((mod) => {
+            if (mod && mod.trim()) {
+              tags.push({
+                category: `mods_${type}`,
+                value: mod.trim().toUpperCase(),
+                parent: modelParent,
+              });
+            }
+          });
+        }
+      };
+
+      if (typeof car.mods === 'object' && !Array.isArray(car.mods)) {
+        const modsObj = car.mods;
+        if (modsObj.exterior) addModTags(modsObj.exterior, 'exterior');
+        if (modsObj.interior) addModTags(modsObj.interior, 'interior');
+        if (modsObj.engine) addModTags(modsObj.engine, 'engine');
+        if (modsObj.footwork) addModTags(modsObj.footwork, 'footwork');
+      }
+    }
+
+    // Trim depends on Model
+    if (car.trim && car.model) {
+      tags.push({
+        category: 'trim',
+        value: car.trim.trim().toUpperCase(),
+        parent: car.model.trim().toUpperCase(),
+      });
+    }
+
+    // ChassisCode depends on Model
+    if (car.chassisCode && car.model) {
+      tags.push({
+        category: 'chassisCode',
+        value: car.chassisCode.trim().toUpperCase(),
+        parent: car.model.trim().toUpperCase(),
+      });
+    }
+
+    // EngineCode depends on Model
+    if (car.engineCode && car.model) {
+      tags.push({
+        category: 'engineCode',
+        value: car.engineCode.trim().toUpperCase(),
+        parent: car.model.trim().toUpperCase(),
       });
     }
 
@@ -300,7 +356,8 @@ export class TagsService {
   async getSuggestions(category: string, parent?: string): Promise<string[]> {
     const whereClause: any = { category };
     if (parent) {
-      whereClause.parent = parent;
+      // Use case-insensitive matching for parent if possible, or ensure it's uppercased
+      whereClause.parent = parent.trim().toUpperCase();
     }
 
     const tags = await this.tagsRepository.find({

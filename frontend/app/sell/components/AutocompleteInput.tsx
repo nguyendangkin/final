@@ -13,6 +13,7 @@ interface AutocompleteInputProps {
     name: string;
     onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     maxLength?: number;
+    disableSort?: boolean; // New prop to disable internal sorting
 }
 
 export default function AutocompleteInput({
@@ -26,7 +27,8 @@ export default function AutocompleteInput({
     required,
     name,
     onKeyDown,
-    maxLength
+    maxLength,
+    disableSort = false
 }: AutocompleteInputProps) {
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -39,8 +41,11 @@ export default function AutocompleteInput({
             const lowerVal = value.toLowerCase();
             result = suggestions.filter(item => item.toLowerCase().includes(lowerVal));
         }
-        return result.sort((a, b) => a.localeCompare(b));
-    }, [value, suggestions]);
+        
+        if (disableSort) return result;
+        return [...result].sort((a, b) => a.localeCompare(b));
+    }, [value, suggestions, disableSort]);
+
 
     // Handle outside click to close
     useEffect(() => {

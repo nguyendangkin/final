@@ -29,7 +29,7 @@ export class CarsController {
     private readonly carsService: CarsService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   @Get()
   findAll(@Query() query: any) {
@@ -59,7 +59,10 @@ export class CarsController {
       await this.usersService.banUser(initiatorId);
       return { message: 'Tag deleted and penalties applied', initiatorId };
     } else {
-      return { message: 'Tag not found in any active listings (or already deleted)', warning: 'No penalties applied' };
+      return {
+        message: 'Tag not found in any active listings (or already deleted)',
+        warning: 'No penalties applied',
+      };
     }
   }
 

@@ -31,19 +31,47 @@ export default function SellClient() {
     const [errors, setErrors] = useState<Record<string, string>>({});
     const hasRedirected = useRef(false);
 
+    const updateData = useCallback((fields: Partial<CarSpecs>) => {
+        setData((prev) => {
+            const newData = { ...prev, ...fields };
+
+            // Cascading clear: Ensure suggestions stay relevant to the NEW parent
+            if (fields.make && fields.make.toUpperCase() !== prev.make?.toUpperCase()) {
+                newData.model = '';
+                newData.trim = '';
+                newData.chassisCode = '';
+                newData.engineCode = '';
+            }
+            if (fields.model && fields.model.toUpperCase() !== prev.model?.toUpperCase()) {
+                newData.trim = '';
+                newData.chassisCode = '';
+                newData.engineCode = '';
+            }
+
+            return newData;
+        });
+        // Clear errors for fields being updated
+        const fieldKeys = Object.keys(fields);
+        if (fieldKeys.length > 0) {
+            setErrors((prev) => {
+                const newErrors = { ...prev };
+                fieldKeys.forEach((key) => delete newErrors[key]);
+                return newErrors;
+            });
+        }
+    }, []);
+
+
     // Check authentication on mount
     useEffect(() => {
-        // Prevent double execution in StrictMode
         if (hasRedirected.current) return;
 
         const token = localStorage.getItem('jwt_token');
         if (!token) {
             hasRedirected.current = true;
             setIsAuthenticated(false);
-            // Redirect to login page
             router.push('/login?redirect=/sell');
         } else {
-            // Validate token and check ban status
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             fetch(`${apiUrl}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -68,18 +96,16 @@ export default function SellClient() {
 
     // Load from LocalStorage
     useEffect(() => {
-        // Only load draft if authenticated
         if (isAuthenticated !== true) return;
 
         const savedData = localStorage.getItem('sell_draft');
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                // FIX: Remove empty strings from images array to prevent rendering errors
                 if (parsed.images && Array.isArray(parsed.images)) {
                     parsed.images = parsed.images.filter((img: string) => img && img.trim() !== '');
                 }
-                setData({ ...initialCarSpecs, ...parsed }); // Merge to ensure new fields exists
+                setData({ ...initialCarSpecs, ...parsed });
             } catch (e) {
                 console.error('Failed to load draft', e);
             }
@@ -94,37 +120,23 @@ export default function SellClient() {
         }
     }, [data, isLoaded]);
 
-    const updateData = useCallback((fields: Partial<CarSpecs>) => {
-        setData((prev) => ({ ...prev, ...fields }));
-        // Clear errors for fields being updated
-        const fieldKeys = Object.keys(fields);
-        if (fieldKeys.length > 0) {
-            setErrors((prev) => {
-                const newErrors = { ...prev };
-                fieldKeys.forEach((key) => delete newErrors[key]);
-                return newErrors;
-            });
-        }
-    }, []);
-
     // Auto-fill Logic
     useEffect(() => {
         if (!isLoaded) return;
 
-        // Example Auto-fill logic
-        if (data.make === 'Nissan' && data.model === 'Silvia') {
+        if (data.make === 'NISSAN' && data.model === 'SILVIA') {
             if (data.year >= 1999 && !data.chassisCode) {
-                updateData({ chassisCode: 'S15', engineCode: 'SR20DET', drivetrain: 'RWD', transmission: 'MT' });
+                updateData({ chassisCode: 'S15', engineCode: 'SR20DET', drivetrain: 'RWD (SAU)', transmission: 'SỐ SÀN (MT)' });
             } else if (data.year >= 1993 && data.year <= 1998 && !data.chassisCode) {
-                updateData({ chassisCode: 'S14', engineCode: 'SR20DET', drivetrain: 'RWD', transmission: 'MT' });
+                updateData({ chassisCode: 'S14', engineCode: 'SR20DET', drivetrain: 'RWD (SAU)', transmission: 'SỐ SÀN (MT)' });
             }
         }
-        if (data.make === 'Honda' && data.model === 'Civic' && !data.chassisCode) {
+        if (data.make === 'HONDA' && data.model === 'CIVIC' && !data.chassisCode) {
             if (data.year >= 1996 && data.year <= 2000) {
-                updateData({ chassisCode: 'EK9', engineCode: 'B16B', drivetrain: 'FWD', transmission: 'MT' });
+                updateData({ chassisCode: 'EK9', engineCode: 'B16B', drivetrain: 'FWD (TRƯỚC)', transmission: 'SỐ SÀN (MT)' });
             }
         }
-    }, [data.make, data.model, data.year]);
+    }, [data.make, data.model, data.year, isLoaded, updateData]);
 
     const clearDraft = () => {
         toast.custom((t) => (
@@ -180,7 +192,7 @@ export default function SellClient() {
                 if (!data.trim.trim()) errs.trim = 'Vui lòng nhập phiên bản (Trim)';
                 if (!data.price || data.price <= 0) errs.price = 'Vui lòng nhập mức giá';
                 if (!data.location.trim()) errs.location = 'Vui lòng nhập khu vực';
-                if (data.odo === undefined || data.odo === null || data.odo <= 0) errs.odo = 'Vui lòng nhập số ODO hợp lệ';
+                if (data.odo === undefined || data.odo === null || data.odo < 0) errs.odo = 'Vui lòng nhập số ODO hợp lệ';
                 break;
             case 2: // Thông số
                 if (!data.chassisCode.trim()) errs.chassisCode = 'Vui lòng nhập mã khung gầm';
@@ -223,19 +235,15 @@ export default function SellClient() {
     };
 
     const handleSubmit = async () => {
-        // Validate Step 5 before submitting
         const errs = validateStep(5);
         if (Object.keys(errs).length > 0) {
             setErrors(errs);
             return;
         }
         setErrors({});
-
         setLoading(true);
 
-        // FIX: Use correct token key 'jwt_token' matching Header.tsx
         const token = localStorage.getItem('jwt_token');
-
         if (!token) {
             setLoading(false);
             router.push('/login?redirect=/sell');
@@ -249,36 +257,26 @@ export default function SellClient() {
             trim: data.trim,
             price: Number(data.price),
             isNegotiable: data.isNegotiable,
-            mileage: Number(data.odo), // Mapping 'odo' from frontend to 'mileage' in backend
-            location: data.location || 'Vietnam', // Default if empty
+            mileage: Number(data.odo),
+            location: data.location || 'Vietnam',
             description: data.description || `BÁN XE ${data.year} ${data.make} ${data.model} ${data.trim || ''}`,
             images: data.images,
             thumbnail: data.thumbnail,
             videoLink: data.videoLink,
-
-            // JDM Specs
             chassisCode: data.chassisCode,
             engineCode: data.engineCode,
             transmission: data.transmission,
             drivetrain: data.drivetrain,
             condition: data.condition,
-
-            // Legal
             paperwork: data.paperwork,
             plateNumber: data.hidePlate ? 'Hidden' : data.plateNumber,
-            registryExpiry: data.registryExpiry?.toString(), // Ensure string
-            noRegistry: data.noRegistry, // Send the noRegistry flag
-
-            // Contact
+            registryExpiry: data.registryExpiry?.toString(),
+            noRegistry: data.noRegistry,
             phoneNumber: data.phoneNumber,
             facebookLink: data.facebookLink,
             zaloLink: data.zaloLink,
             additionalInfo: data.additionalInfo,
-
-            // Mods
-            mods: data.mods, // Sending JSON object directly, backend handles it as jsonb
-
-            // Notable Features
+            mods: data.mods,
             notableFeatures: data.notableFeatures,
         };
 
@@ -294,53 +292,31 @@ export default function SellClient() {
             });
 
             const responseData = await res.json();
-
-            if (!res.ok) {
-                throw new Error(responseData.message || 'Failed to create listing');
-            }
+            if (!res.ok) throw new Error(responseData.message || 'Failed to create listing');
 
             if (responseData.status === 'PENDING_APPROVAL') {
                 toast.custom((t) => (
                     <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-sm pointer-events-auto flex flex-col border-l-4 border-yellow-500`}>
                         <div className="p-4 flex items-start gap-4">
-                            <div className="flex-shrink-0 pt-0.5">
-                                <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                                    <span className="text-xl">⏳</span>
-                                </div>
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-lg font-bold text-gray-900">Đang chờ duyệt</h3>
-                                <p className="mt-1 text-sm text-gray-600">
-                                    Bài đăng của bạn đã được gửi và đang chờ Admin kiểm duyệt trước khi hiển thị công khai.
-                                </p>
-                            </div>
-                            <button onClick={() => toast.dismiss(t.id)} className="text-gray-400 hover:text-gray-600">
-                                <span className="sr-only">Close</span>
-                                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
-                            </button>
+                            <div className="flex-shrink-0 pt-0.5"><div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center"><span className="text-xl">⏳</span></div></div>
+                            <div className="flex-1"><h3 className="text-lg font-bold text-gray-900">Đang chờ duyệt</h3><p className="mt-1 text-sm text-gray-600">Bài đăng của bạn đã được gửi và đang chờ Admin kiểm duyệt.</p></div>
+                            <button onClick={() => toast.dismiss(t.id)} className="text-gray-400 hover:text-gray-600"><span className="sr-only">Close</span><svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
                         </div>
                     </div>
                 ), { duration: 6000 });
             } else {
-                toast.success('Đăng bán thành công! Xe của bạn đã lên sàn.');
+                toast.success('Đăng bán thành công!');
             }
 
             localStorage.removeItem('sell_draft');
             router.push('/');
         } catch (error: any) {
-            // Only log actual unexpected errors to console, hide known validation errors
-            if (error.message !== 'Bạn đã có một bài đăng tương tự cho xe này. Vui lòng kiểm tra lại danh sách xe của bạn.') {
-                console.error('Error submitting:', error);
-            }
             toast.error(`Lỗi: ${error.message}`);
         } finally {
             setLoading(false);
         }
     };
 
-    // Wait for authentication check and data loading
     if (isAuthenticated === null || (!isLoaded && isAuthenticated && !isBanned)) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center">
@@ -349,28 +325,16 @@ export default function SellClient() {
         );
     }
 
-    // If not authenticated, don't render the form (user is being redirected)
-    if (!isAuthenticated) {
-        return null;
-    }
+    if (!isAuthenticated) return null;
 
     if (isBanned) {
         return (
             <div className="min-h-screen bg-white flex items-center justify-center p-4">
                 <div className="max-w-md w-full bg-red-50 border border-red-200 p-8 text-center">
-                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">🚫</span>
-                    </div>
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><span className="text-3xl">🚫</span></div>
                     <h2 className="text-2xl font-black uppercase text-red-800 mb-2">Đã bị cấm bán</h2>
-                    <p className="text-red-700 font-medium mb-6">
-                        Tài khoản của bạn đã bị cấm đăng bán xe mới. Vui lòng liên hệ Admin để biết thêm chi tiết.
-                    </p>
-                    <button
-                        onClick={() => router.push('/')}
-                        className="bg-red-700 text-white px-6 py-2 uppercase font-bold hover:bg-red-800 transition-colors"
-                    >
-                        Quay về trang chủ
-                    </button>
+                    <p className="text-red-700 font-medium mb-6">Tài khoản của bạn đã bị cấm đăng bán xe mới.</p>
+                    <button onClick={() => router.push('/')} className="bg-red-700 text-white px-6 py-2 uppercase font-bold hover:bg-red-800 transition-colors">Quay về trang chủ</button>
                 </div>
             </div>
         );
@@ -379,29 +343,15 @@ export default function SellClient() {
     return (
         <div className="min-h-screen bg-white text-black p-6 pt-24 font-sans selection:bg-red-500/30">
             <div className="max-w-4xl mx-auto flex flex-col gap-8">
-
-                {/* Main Form Area */}
                 <div className="space-y-8">
-
-                    {/* Header */}
                     <div className="border-b border-gray-200 pb-6">
                         <div className="flex justify-between items-center mb-2">
-                            <h1 className="text-2xl sm:text-4xl font-black italic uppercase tracking-tighter text-black">
-                                Đăng Bán Xe
-                            </h1>
-                            <button
-                                onClick={clearDraft}
-                                className="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-3 py-2 rounded-none text-xs font-bold uppercase transition-colors"
-                            >
-                                Xóa nháp
-                            </button>
+                            <h1 className="text-2xl sm:text-4xl font-black italic uppercase tracking-tighter text-black">Đăng Bán Xe</h1>
+                            <button onClick={clearDraft} className="bg-gray-100 hover:bg-gray-200 text-gray-700 hover:text-red-600 px-3 py-2 rounded-none text-xs font-bold uppercase transition-colors">Xóa nháp</button>
                         </div>
-                        <p className="text-gray-500 font-medium text-sm">
-                            Vui lòng cung cấp thông tin chính xác để tin đăng của bạn được duyệt nhanh chóng. Các thông tin đồi trụy, spam hoặc không liên quan có thể dẫn đến khóa tài khoản.
-                        </p>
+                        <p className="text-gray-500 font-medium text-sm">Vui lòng cung cấp thông tin chính xác để tin đăng của bạn được duyệt nhanh chóng.</p>
                     </div>
 
-                    {/* Stepper Content */}
                     <div className="bg-white rounded-none p-1 md:p-4 shadow-xl shadow-gray-200/50 border border-gray-100">
                         <div className="mb-8 overflow-x-auto pb-4 scrollbar-hide">
                             <div className="flex items-center min-w-max space-x-2">
@@ -410,33 +360,17 @@ export default function SellClient() {
                                     const isPast = step.id < currentStep;
                                     return (
                                         <div key={step.id} className="flex items-center">
-                                            <div
-                                                className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all border ${isActive
-                                                    ? 'bg-red-50 border-[var(--jdm-red)] text-[var(--jdm-red)]'
-                                                    : isPast
-                                                        ? 'bg-green-50 border-green-500/30 text-green-700'
-                                                        : 'bg-gray-100 border-gray-200 text-gray-400'
-                                                    }`}
-                                            >
-                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-[var(--jdm-red)] text-white' : isPast ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-500'
-                                                    }`}>
-                                                    {isPast ? <CheckCircle2 className="w-4 h-4" /> : step.id}
-                                                </span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-bold whitespace-nowrap">{step.title}</span>
-                                                    {isActive && <span className="text-[10px] uppercase tracking-wider opacity-70">{step.subtitle}</span>}
-                                                </div>
+                                            <div className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all border ${isActive ? 'bg-red-50 border-[var(--jdm-red)] text-[var(--jdm-red)]' : isPast ? 'bg-green-50 border-green-500/30 text-green-700' : 'bg-gray-100 border-gray-200 text-gray-400'}`}>
+                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-[var(--jdm-red)] text-white' : isPast ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-500'}`}>{isPast ? <CheckCircle2 className="w-4 h-4" /> : step.id}</span>
+                                                <div className="flex flex-col"><span className="text-sm font-bold whitespace-nowrap">{step.title}</span>{isActive && <span className="text-[10px] uppercase tracking-wider opacity-70">{step.subtitle}</span>}</div>
                                             </div>
-                                            {idx < STEPS.length - 1 && (
-                                                <div className={`w-6 h-0.5 mx-2 rounded-full ${isPast ? 'bg-green-200' : 'bg-gray-200'}`}></div>
-                                            )}
+                                            {idx < STEPS.length - 1 && <div className={`w-6 h-0.5 mx-2 rounded-full ${isPast ? 'bg-green-200' : 'bg-gray-200'}`}></div>}
                                         </div>
                                     )
                                 })}
                             </div>
                         </div>
 
-                        {/* Step Components */}
                         <div className="bg-white border border-gray-100 rounded-none p-6 md:p-10 min-h-[500px]">
                             {currentStep === 1 && <StepBasics data={data} updateData={updateData} errors={errors} />}
                             {currentStep === 2 && <StepSoul data={data} updateData={updateData} errors={errors} />}
@@ -446,42 +380,15 @@ export default function SellClient() {
                         </div>
                     </div>
 
-                    {/* Navigation Actions */}
                     <div className="flex justify-between pt-6 border-t border-gray-200">
-                        <button
-                            onClick={handleBack}
-                            disabled={currentStep === 1}
-                            className="px-8 py-4 rounded-none font-bold uppercase flex items-center gap-2 text-gray-600 bg-gray-100 hover:text-black hover:bg-gray-200 disabled:opacity-0 disabled:cursor-not-allowed transition-all tracking-wide"
-                        >
-                            <ChevronLeft className="w-5 h-5" /> Quay lại
-                        </button>
-
+                        <button onClick={handleBack} disabled={currentStep === 1} className="px-8 py-4 rounded-none font-bold uppercase flex items-center gap-2 text-gray-600 bg-gray-100 hover:text-black hover:bg-gray-200 disabled:opacity-0 disabled:cursor-not-allowed transition-all tracking-wide"><ChevronLeft className="w-5 h-5" /> Quay lại</button>
                         {currentStep < STEPS.length ? (
-                            <button
-                                onClick={handleNext}
-                                className="px-8 py-4 bg-black text-white rounded-none font-bold flex items-center gap-2 hover:bg-[var(--jdm-red)] transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-gray-900/20"
-                            >
-                                Tiếp tục <ChevronRight className="w-5 h-5" />
-                            </button>
+                            <button onClick={handleNext} className="px-8 py-4 bg-black text-white rounded-none font-bold flex items-center gap-2 hover:bg-[var(--jdm-red)] transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-gray-900/20">Tiếp tục <ChevronRight className="w-5 h-5" /></button>
                         ) : (
-                            <button
-                                onClick={handleSubmit}
-                                disabled={loading}
-                                className="px-8 py-4 bg-[var(--jdm-red)] text-white rounded-none font-bold flex items-center gap-3 hover:bg-red-700 transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-red-600/20"
-                            >
-                                {loading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <Save className="w-5 h-5" />
-                                )}
-                                Đăng bán ngay
-                            </button>
+                            <button onClick={handleSubmit} disabled={loading} className="px-8 py-4 bg-[var(--jdm-red)] text-white rounded-none font-bold flex items-center gap-3 hover:bg-red-700 transform hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-red-600/20">{loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-5 h-5" />} Đăng bán ngay</button>
                         )}
                     </div>
                 </div>
-
-
-
             </div>
         </div>
     );

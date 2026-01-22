@@ -70,7 +70,9 @@ import { ScheduleModule } from '@nestjs/schedule';
           SoldCar,
         ],
         // synchronize: true, // Auto-create tables (dev only)
-        synchronize: configService.get<string>('DB_SYNCHRONIZE') === 'true' || configService.get<string>('NODE_ENV') !== 'production', // Auto-sync if explicitly enabled or in dev
+        synchronize:
+          configService.get<string>('DB_SYNCHRONIZE') === 'true' ||
+          configService.get<string>('NODE_ENV') !== 'production', // Auto-sync if explicitly enabled or in dev
       }),
       inject: [ConfigService],
     }),
@@ -106,4 +108,4 @@ import { ScheduleModule } from '@nestjs/schedule';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

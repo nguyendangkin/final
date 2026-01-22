@@ -34,7 +34,7 @@ export class CarsService {
     private tagsService: TagsService,
     private soldCarsService: SoldCarsService,
     private uploadService: UploadService,
-  ) { }
+  ) {}
 
   async getSellerStats(
     sellerId: string,
@@ -1271,7 +1271,10 @@ export class CarsService {
       if (car.mods) {
         if (Array.isArray(car.mods)) {
           car.mods.forEach((mod: any) => {
-            const modVal = typeof mod === 'string' ? mod.trim().toUpperCase() : mod?.name?.trim().toUpperCase();
+            const modVal =
+              typeof mod === 'string'
+                ? mod.trim().toUpperCase()
+                : mod?.name?.trim().toUpperCase();
             if (modVal) {
               options.mods.add(modVal);
               // Fallback to exterior if type is unknown for flat arrays
@@ -1279,25 +1282,29 @@ export class CarsService {
             }
           });
         } else if (typeof car.mods === 'object') {
-          const modsObj = car.mods as any;
+          const modsObj = car.mods;
           if (modsObj.exterior) {
             modsObj.exterior.forEach((v: string) => {
-              if (v && typeof v === 'string') options.mods_exterior.add(v.trim().toUpperCase());
+              if (v && typeof v === 'string')
+                options.mods_exterior.add(v.trim().toUpperCase());
             });
           }
           if (modsObj.interior) {
             modsObj.interior.forEach((v: string) => {
-              if (v && typeof v === 'string') options.mods_interior.add(v.trim().toUpperCase());
+              if (v && typeof v === 'string')
+                options.mods_interior.add(v.trim().toUpperCase());
             });
           }
           if (modsObj.engine) {
             modsObj.engine.forEach((v: string) => {
-              if (v && typeof v === 'string') options.mods_engine.add(v.trim().toUpperCase());
+              if (v && typeof v === 'string')
+                options.mods_engine.add(v.trim().toUpperCase());
             });
           }
           if (modsObj.footwork) {
             modsObj.footwork.forEach((v: string) => {
-              if (v && typeof v === 'string') options.mods_footwork.add(v.trim().toUpperCase());
+              if (v && typeof v === 'string')
+                options.mods_footwork.add(v.trim().toUpperCase());
             });
           }
 
@@ -1323,42 +1330,62 @@ export class CarsService {
       }
     }
 
+    // For ranges and suggestions, we might want a BROADER search than just AVAILABLE cars
+    // to give better suggestions even if no cars are currently available.
+    // Let's find basic range info from ALL cars matching the make/model if provided
+    const rangeQuery = this.carsRepository.createQueryBuilder('car');
+    if (query.make) {
+      rangeQuery.andWhere('UPPER(car.make) = :make', {
+        make: query.make.toUpperCase(),
+      });
+    }
+    if (query.model) {
+      rangeQuery.andWhere('UPPER(car.model) = :model', {
+        model: query.model.toUpperCase(),
+      });
+    }
+
+    const stats = await rangeQuery
+      .select('MIN(car.year)', 'minYear')
+      .addSelect('MAX(car.year)', 'maxYear')
+      .getRawOne();
+
     return {
-      // Available options based on current filters
+      // Available options based on current filters (Strictly AVAILABLE cars)
       options: {
         make: Array.from(options.make).sort(),
         model: Array.from(options.model).sort(),
         trim: Array.from(options.trim).sort(),
-        year: Array.from(options.year).sort((a, b) => parseInt(b) - parseInt(a)), // Sort years DESC
+        year: Array.from(options.year).sort(
+          (a, b) => parseInt(b) - parseInt(a),
+        ), // Sort years DESC
         chassisCode: Array.from(options.chassisCode).sort(),
         engineCode: Array.from(options.engineCode).sort(),
         transmission: Array.from(options.transmission).sort(),
         drivetrain: Array.from(options.drivetrain).sort(),
         condition: Array.from(options.condition).sort(),
         paperwork: Array.from(options.paperwork).sort(),
+        location: Array.from(options.location).sort(),
+        notableFeatures: Array.from(options.notableFeatures).sort(),
         mods: Array.from(options.mods).sort(),
         mods_exterior: Array.from(options.mods_exterior).sort(),
         mods_interior: Array.from(options.mods_interior).sort(),
         mods_engine: Array.from(options.mods_engine).sort(),
         mods_footwork: Array.from(options.mods_footwork).sort(),
-        location: Array.from(options.location).sort(),
-        notableFeatures: Array.from(options.notableFeatures).sort(),
       },
-      // Ranges
+      // Ranges based on broader database context (all cars in history for suggestions)
       ranges: {
-        price: { min: minPrice === Infinity ? 0 : minPrice, max: maxPrice },
-        year: { min: minYear === Infinity ? 0 : minYear, max: maxYear },
-        mileage: {
-          min: minMileage === Infinity ? 0 : minMileage,
-          max: maxMileage,
+        price: { min: minPrice, max: maxPrice },
+        year: {
+          min: stats?.minYear || 1980,
+          max: stats?.maxYear || new Date().getFullYear(),
         },
+        mileage: { min: minMileage, max: maxMileage },
       },
-      // Result count
       count: cars.length,
-      // Current applied filters (echo back)
-      appliedFilters: Object.fromEntries(
-        Object.entries(query).filter(([, v]) => v !== undefined && v !== ''),
-      ),
+      counts: {
+        total: cars.length,
+      },
     };
   }
 
@@ -1398,12 +1425,16 @@ export class CarsService {
 
       // Check simple string fields - added .trim() for robustness
       if (car.make && car.make.trim().toUpperCase() === targetTag) return true;
-      if (car.model && car.model.trim().toUpperCase() === targetTag) return true;
+      if (car.model && car.model.trim().toUpperCase() === targetTag)
+        return true;
       if (car.chassisCode && car.chassisCode.trim().toUpperCase() === targetTag)
         return true;
       if (car.engineCode && car.engineCode.trim().toUpperCase() === targetTag)
         return true;
-      if (car.transmission && car.transmission.trim().toUpperCase() === targetTag)
+      if (
+        car.transmission &&
+        car.transmission.trim().toUpperCase() === targetTag
+      )
         return true;
       if (car.drivetrain && car.drivetrain.trim().toUpperCase() === targetTag)
         return true;
@@ -1411,7 +1442,8 @@ export class CarsService {
         return true;
       if (car.paperwork && car.paperwork.trim().toUpperCase() === targetTag)
         return true;
-      if (car.location && car.location.trim().toUpperCase() === targetTag) return true;
+      if (car.location && car.location.trim().toUpperCase() === targetTag)
+        return true;
       if (car.year && car.year.toString() === targetTag) return true;
 
       // Check mods (complex JSON structure)
@@ -1439,7 +1471,12 @@ export class CarsService {
       return false;
     });
 
-    if (verifiedCars.length === 0) return null;
+    if (verifiedCars.length === 0) {
+      // Still delete the tag from Tag table even if no cars are using it
+      // this allows "soft deletion" of unused tags
+      await this.tagsService.deleteTagByValue(tag);
+      return null;
+    }
 
     // Find initiator (already sorted by createdAt ASC)
     const initiator = verifiedCars[0].seller;
@@ -1457,6 +1494,7 @@ export class CarsService {
       await this.tagsService.deleteTagByValue(tag);
 
       // Send notification to the initiator (seller of the first car found)
+
       if (initiator) {
         await this.notificationsService.createNotification(
           initiator.id,
@@ -1660,8 +1698,7 @@ export class CarsService {
         else if (category === 'year') {
           const y = parseInt(newTag);
           if (!isNaN(y)) car.year = y;
-        }
-        else if (category === 'location') car.location = newTag;
+        } else if (category === 'location') car.location = newTag;
         else if (category === 'feature' && car.notableFeatures) {
           car.notableFeatures = car.notableFeatures.map((f) =>
             f.trim().toUpperCase() === targetTag ? newTag : f,

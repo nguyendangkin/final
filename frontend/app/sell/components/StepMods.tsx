@@ -61,10 +61,12 @@ const ModSection = ({
                         value={input}
                         onChange={setInput}
                         suggestions={suggestions}
+                        disableSort={true}
                         placeholder={placeholder}
                         maxLength={100}
                         onKeyDown={handleKeyDown}
                     />
+
                 </div>
                 <button
                     onClick={handleAdd}
@@ -103,32 +105,49 @@ export default function StepMods({ data, updateData }: StepModsProps) {
         footwork: string[];
     }>({ exterior: [], interior: [], engine: [], footwork: [] });
 
-    // Fetch mod suggestions from Tag table (includes tags from deleted cars)
+    // Fetch mod suggestions from Tag history (linked to the current Model)
     useEffect(() => {
         let active = true;
 
         const fetchModSuggestions = async () => {
             try {
                 const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                const res = await fetch(`${apiUrl}/tags/suggestions`);
-                const data = await res.json();
-                if (active && data) {
+                const modelParent = data.model ? encodeURIComponent(data.model.toUpperCase()) : '';
+                
+                // Fetch each category from tag history with model as parent
+                const fetchCat = async (cat: string) => {
+                    const url = modelParent 
+                        ? `${apiUrl}/tags/suggestions/mods_${cat}?parent=${modelParent}`
+                        : `${apiUrl}/tags/suggestions/mods_${cat}`;
+                    const res = await fetch(url);
+                    return res.json();
+                };
+
+                const [ext, int, eng, foot] = await Promise.all([
+                    fetchCat('exterior'),
+                    fetchCat('interior'),
+                    fetchCat('engine'),
+                    fetchCat('footwork')
+                ]);
+
+                if (active) {
                     setSuggestions({
-                        exterior: Array.isArray(data.mods_exterior) ? data.mods_exterior : [],
-                        interior: Array.isArray(data.mods_interior) ? data.mods_interior : [],
-                        engine: Array.isArray(data.mods_engine) ? data.mods_engine : [],
-                        footwork: Array.isArray(data.mods_footwork) ? data.mods_footwork : [],
+                        exterior: Array.isArray(ext) ? ext : [],
+                        interior: Array.isArray(int) ? int : [],
+                        engine: Array.isArray(eng) ? eng : [],
+                        footwork: Array.isArray(foot) ? foot : [],
                     });
                 }
             } catch (err) {
-                console.error('Failed to fetch mod suggestions', err);
+                console.error('Failed to fetch filtered mod suggestions from history', err);
             }
         };
 
         fetchModSuggestions();
 
         return () => { active = false; };
-    }, []);
+    }, [data.make, data.model]);
+
 
     const updateMods = (category: keyof typeof data.mods, newItems: string[]) => {
         updateData({
