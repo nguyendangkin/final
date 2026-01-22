@@ -1286,6 +1286,7 @@ export class CarsService {
       if (car.paperwork && car.paperwork.trim().toUpperCase() === targetTag)
         return true;
       if (car.location && car.location.trim().toUpperCase() === targetTag) return true;
+      if (car.year && car.year.toString() === targetTag) return true;
 
       // Check mods (complex JSON structure)
       if (car.mods) {
@@ -1480,6 +1481,8 @@ export class CarsService {
         car.paperwork?.trim().toUpperCase() === targetTag
       )
         matches = true;
+      else if (category === 'year' && car.year?.toString() === targetTag)
+        matches = true;
       else if (
         category === 'location' &&
         car.location?.trim().toUpperCase() === targetTag
@@ -1528,7 +1531,10 @@ export class CarsService {
         else if (category === 'drivetrain') car.drivetrain = newTag;
         else if (category === 'condition') car.condition = newTag;
         else if (category === 'paperwork') car.paperwork = newTag;
-        else if (category === 'year') car.year = parseInt(newTag);
+        else if (category === 'year') {
+          const y = parseInt(newTag);
+          if (!isNaN(y)) car.year = y;
+        }
         else if (category === 'location') car.location = newTag;
         else if (category === 'feature' && car.notableFeatures) {
           car.notableFeatures = car.notableFeatures.map((f) =>

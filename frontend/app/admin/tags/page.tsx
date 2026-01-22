@@ -32,16 +32,17 @@ export default function TagsManagementPage() {
         'condition': '9. Tình trạng',
         'feature': '10. Ngoại hình chú ý',
         'paperwork': '11. Loại giấy tờ',
-        'mods_exterior': '12. Mods: Ngoại thất',
-        'mods_interior': '12. Mods: Nội thất',
-        'mods_engine': '12. Mods: Máy móc và hiệu suất',
-        'mods_footwork': '12. Mods: Gầm và bánh',
+        'location': '12. Khu vực',
+        'mods_exterior': '13. Mods: Ngoại thất',
+        'mods_interior': '13. Mods: Nội thất',
+        'mods_engine': '13. Mods: Máy móc và hiệu suất',
+        'mods_footwork': '13. Mods: Gầm và bánh',
     };
 
     const sortOrder = [
         'make', 'model', 'trim', 'year', 'chassisCode', 'engineCode',
         'transmission', 'drivetrain', 'condition', 'feature', 'paperwork',
-        'mods_exterior', 'mods_interior', 'mods_engine', 'mods_footwork'
+        'location', 'mods_exterior', 'mods_interior', 'mods_engine', 'mods_footwork'
     ];
 
     const fetchTags = async (showLoading = true) => {
