@@ -34,7 +34,7 @@ export class CarsService {
     private tagsService: TagsService,
     private soldCarsService: SoldCarsService,
     private uploadService: UploadService,
-  ) {}
+  ) { }
 
   async getSellerStats(
     sellerId: string,
@@ -46,6 +46,9 @@ export class CarsService {
     return { selling, sold };
   }
 
+  /**
+   * Delete image files associated with a car from the uploads folder
+   */
   /**
    * Delete image files associated with a car from the uploads folder
    */
@@ -129,12 +132,12 @@ export class CarsService {
       });
     }
     if (query.minPrice) {
-      qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', {
+      qb.andWhere('car.price >= :minPrice', {
         minPrice: query.minPrice,
       });
     }
     if (query.maxPrice) {
-      qb.andWhere('CAST(car.price AS BIGINT) <= :maxPrice', {
+      qb.andWhere('car.price <= :maxPrice', {
         maxPrice: query.maxPrice,
       });
     }
@@ -577,8 +580,7 @@ export class CarsService {
       throw new BadRequestException('You can only delete your own listings');
     }
 
-    // Delete associated images from disk
-    // Delete associated images from disk
+    // Delete associated images from disk (including thumbnail)
     await this.deleteCarImages(car);
 
     // Send notification if deletion is by Admin and not self
@@ -607,7 +609,10 @@ export class CarsService {
       );
     }
 
-    // Per user request: Delete completely instead of archiving
+    // Create record in SoldCar table before deleting
+    await this.soldCarsService.create(car);
+
+    // Per user request: Delete completely (including all images) instead of archiving
     await this.remove(id, user);
   }
 
@@ -756,88 +761,6 @@ export class CarsService {
   }
 
   async getFiltersByBrand(make: string): Promise<any> {
-    const baseQuery = this.carsRepository
-      .createQueryBuilder('car')
-      .leftJoin('car.seller', 'seller')
-      .where('car.make ILIKE :make', { make: `%${make}%` })
-      .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-      .andWhere('car.status IN (:...statuses)', {
-        statuses: [CarStatus.AVAILABLE, CarStatus.SOLD],
-      });
-
-    // Helper to get distinct values for a column
-    const getDistinct = async (col: string) => {
-      const result = await baseQuery
-        .clone()
-        .select(`DISTINCT car.${col}`, 'val')
-        .andWhere(`car.${col} IS NOT NULL`)
-        .getRawMany();
-      return result
-        .map((r) => r.val?.toUpperCase())
-        .filter(Boolean)
-        .sort();
-    };
-
-    // Helper for year (descending)
-    const getDistinctYears = async () => {
-      const result = await baseQuery
-        .clone()
-        .select('DISTINCT car.year', 'val')
-        .orderBy('val', 'DESC')
-        .getRawMany();
-      return result.map((r) => r.val?.toString()).filter(Boolean);
-    };
-
-    // Helper for mods (Still needing some manual processing if stored as complex JSON, but let's try to minimize fetch)
-    // Optimization: Fetch only 'mods' column, not full entity
-    const getMods = async () => {
-      const result = await baseQuery
-        .clone()
-        .select('car.mods', 'mods')
-        .where('car.mods IS NOT NULL')
-        .getRawMany();
-
-      const modSet = new Set<string>();
-      result.forEach((r) => {
-        const m = r.mods;
-        if (Array.isArray(m)) {
-          m.forEach((v: any) => {
-            if (typeof v === 'string' && v.trim())
-              modSet.add(v.trim().toUpperCase());
-            else if (v && v.name) modSet.add(v.name.trim().toUpperCase());
-          });
-        } else if (typeof m === 'object') {
-          Object.values(m).forEach((values: any) => {
-            if (Array.isArray(values)) {
-              values.forEach((v: string) => {
-                if (v && typeof v === 'string')
-                  modSet.add(v.trim().toUpperCase());
-              });
-            }
-          });
-        }
-      });
-      return Array.from(modSet).sort();
-    };
-
-    // Helper for notableFeatures
-    const getNotableFeatures = async () => {
-      const result = await baseQuery
-        .clone()
-        .select('car.notableFeatures', 'nf')
-        .where('car.notableFeatures IS NOT NULL')
-        .getRawMany();
-
-      const nfSet = new Set<string>();
-      result.forEach((r) => {
-        const raw = r.nf;
-        if (typeof raw === 'string') {
-          raw.split(',').forEach((s) => nfSet.add(s.trim()));
-        }
-      });
-      return Array.from(nfSet).sort();
-    };
-
     const [
       model,
       chassisCode,
@@ -848,20 +771,26 @@ export class CarsService {
       paperwork,
       year,
       location,
-      mods,
+      mods_exterior,
+      mods_interior,
+      mods_engine,
+      mods_footwork,
       notableFeatures,
     ] = await Promise.all([
-      getDistinct('model'),
-      getDistinct('chassisCode'),
-      getDistinct('engineCode'),
-      getDistinct('transmission'),
-      getDistinct('drivetrain'),
-      getDistinct('condition'),
-      getDistinct('paperwork'),
-      getDistinctYears(),
-      getDistinct('location'),
-      getMods(),
-      getNotableFeatures(),
+      this.tagsService.getSuggestions('model', make),
+      this.tagsService.getSuggestions('chassisCode'),
+      this.tagsService.getSuggestions('engineCode'),
+      this.tagsService.getSuggestions('transmission'),
+      this.tagsService.getSuggestions('drivetrain'),
+      this.tagsService.getSuggestions('condition'),
+      this.tagsService.getSuggestions('paperwork'),
+      this.tagsService.getSuggestions('year'),
+      this.tagsService.getSuggestions('location'),
+      this.tagsService.getSuggestions('mods_exterior'),
+      this.tagsService.getSuggestions('mods_interior'),
+      this.tagsService.getSuggestions('mods_engine'),
+      this.tagsService.getSuggestions('mods_footwork'),
+      this.tagsService.getSuggestions('feature'),
     ]);
 
     return {
@@ -874,7 +803,12 @@ export class CarsService {
       paperwork,
       year,
       location,
-      mods,
+      mods: [
+        ...mods_exterior,
+        ...mods_interior,
+        ...mods_engine,
+        ...mods_footwork,
+      ],
       notableFeatures,
     };
   }
@@ -1572,26 +1506,33 @@ export class CarsService {
     const car = await this.carsRepository.findOne({ where: { id } });
     if (!car) throw new NotFoundException('Car not found');
 
-    // Fetch all available cars to calculate ranking in memory (safest for small/medium datasets)
-    const allAvailable = await this.carsRepository.find({
-      where: { status: CarStatus.AVAILABLE },
-      order: { createdAt: 'DESC' },
-    });
-
-    const globalRank = allAvailable.findIndex((c) => c.id === id) + 1;
-    const globalTotal = allAvailable.length;
-
-    const sameMake = allAvailable.filter((c) => c.make === car.make);
-    const makeRank = sameMake.findIndex((c) => c.id === id) + 1;
-    const makeTotal = sameMake.length;
+    const [globalTotal, globalRank, makeTotal, makeRank] = await Promise.all([
+      this.carsRepository.count({ where: { status: CarStatus.AVAILABLE } }),
+      this.carsRepository.count({
+        where: {
+          status: CarStatus.AVAILABLE,
+          createdAt: MoreThan(car.createdAt),
+        },
+      }),
+      this.carsRepository.count({
+        where: { status: CarStatus.AVAILABLE, make: car.make },
+      }),
+      this.carsRepository.count({
+        where: {
+          status: CarStatus.AVAILABLE,
+          make: car.make,
+          createdAt: MoreThan(car.createdAt),
+        },
+      }),
+    ]);
 
     return {
       global: {
-        rank: globalRank > 0 ? globalRank : globalTotal + 1, // Fallback if car is not AVAILABLE
+        rank: globalRank + 1,
         total: globalTotal,
       },
       make: {
-        rank: makeRank > 0 ? makeRank : makeTotal + 1,
+        rank: makeRank + 1,
         total: makeTotal,
         name: car.make,
       },

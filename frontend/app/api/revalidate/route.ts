@@ -6,6 +6,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { path } = body;
 
+    // Security check: Verify secret token
+    const secret = request.headers.get('x-revalidate-secret') || request.nextUrl.searchParams.get('secret');
+    const expectedSecret = process.env.REVALIDATE_SECRET;
+
+    if (expectedSecret && secret !== expectedSecret) {
+      return NextResponse.json({ error: 'Unauthorized revalidation' }, { status: 401 });
+    }
+
     if (!path || typeof path !== 'string') {
       return NextResponse.json({ error: 'Path is required' }, { status: 400 });
     }

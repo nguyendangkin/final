@@ -10,11 +10,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { AdminGuard } from '../auth/admin.guard';
 import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
@@ -26,12 +27,8 @@ export class UsersController {
   }
 
   @Get('search/email')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   async searchByEmail(@Req() req, @Query('q') query: string) {
-    const user = await this.usersService.findOne(req.user.id);
-    if (!user || !user.isAdmin) {
-      throw new NotFoundException('Unauthorized');
-    }
     if (!query || query.trim().length === 0) {
       return [];
     }
@@ -39,28 +36,18 @@ export class UsersController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   async findAll(
     @Req() req,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) {
-    const user = await this.usersService.findOne(req.user.id);
-    if (!user || !user.isAdmin) {
-      throw new NotFoundException('Unauthorized');
-    }
     return this.usersService.findAll(page, limit);
   }
 
   @Patch(':id/ban')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), AdminGuard)
   async toggleBan(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
-    // Check if requester is admin
-    const requestingUser = await this.usersService.findOne(req.user.id);
-    if (!requestingUser || !requestingUser.isAdmin) {
-      throw new NotFoundException('Unauthorized');
-    }
-
     return this.usersService.toggleBan(id);
   }
 
