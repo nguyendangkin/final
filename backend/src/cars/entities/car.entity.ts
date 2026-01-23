@@ -65,6 +65,7 @@ export class Car {
   mileage: number; // Stored as number, equivalent to ODO
 
   @Column({ default: 'VN' })
+  @Index()
   location: string;
 
   // JDM Specifics

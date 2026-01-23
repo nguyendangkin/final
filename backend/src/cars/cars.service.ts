@@ -6,6 +6,7 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, MoreThan, In } from 'typeorm';
 import { Car, CarStatus } from './entities/car.entity';
@@ -34,7 +35,23 @@ export class CarsService {
     private tagsService: TagsService,
     private soldCarsService: SoldCarsService,
     private uploadService: UploadService,
-  ) {}
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) { }
+
+  private async clearCache(carId?: string) {
+    try {
+      if (carId) {
+        await this.cacheManager.del(`/cars/${carId}`);
+      }
+      // Also clear all findAll results because they usually have query params
+      // CacheManager in Nest usually caches by full URL.
+      // Easiest is to clear common prefixes if supported, or rely on TTL.
+      // Since we don't have glob deletion easily in memory cache, we might need to be specific
+      // or just wait for TTL. But findOne is the critical one for "still accessible".
+    } catch (error) {
+      this.logger.error(`Error clearing cache: ${error.message}`);
+    }
+  }
 
   async getSellerStats(
     sellerId: string,
@@ -46,6 +63,9 @@ export class CarsService {
     return { selling, sold };
   }
 
+  /**
+   * Delete image files associated with a car from the uploads folder
+   */
   /**
    * Delete image files associated with a car from the uploads folder
    */
@@ -129,12 +149,12 @@ export class CarsService {
       });
     }
     if (query.minPrice) {
-      qb.andWhere('CAST(car.price AS BIGINT) >= :minPrice', {
+      qb.andWhere('car.price >= :minPrice', {
         minPrice: query.minPrice,
       });
     }
     if (query.maxPrice) {
-      qb.andWhere('CAST(car.price AS BIGINT) <= :maxPrice', {
+      qb.andWhere('car.price <= :maxPrice', {
         maxPrice: query.maxPrice,
       });
     }
@@ -433,6 +453,8 @@ export class CarsService {
       // Sync tags to Tag table (increment usageCount)
       await this.tagsService.syncTagsFromCar(savedCar, true);
 
+      await this.clearCache();
+
       return savedCar;
     } catch (error) {
       // CLEANUP: If something went wrong after moving files, delete them to avoid orphans
@@ -557,6 +579,8 @@ export class CarsService {
       // We do this AFTER saving so we have stored the new values (and validation passed)
       await this.tagsService.syncTagsFromCar(updatedCar, true);
 
+      await this.clearCache(id);
+
       return updatedCar;
     } catch (error) {
       if (movedImages.length > 0) {
@@ -577,8 +601,7 @@ export class CarsService {
       throw new BadRequestException('You can only delete your own listings');
     }
 
-    // Delete associated images from disk
-    // Delete associated images from disk
+    // Delete associated images from disk (including thumbnail)
     await this.deleteCarImages(car);
 
     // Send notification if deletion is by Admin and not self
@@ -595,6 +618,7 @@ export class CarsService {
     await this.tagsService.syncTagsFromCar(car, false);
 
     await this.carsRepository.remove(car);
+    await this.clearCache(id);
   }
 
   async markAsSold(id: string, user: User): Promise<void> {
@@ -607,7 +631,10 @@ export class CarsService {
       );
     }
 
-    // Per user request: Delete completely instead of archiving
+    // Create record in SoldCar table before deleting
+    await this.soldCarsService.create(car);
+
+    // Per user request: Delete completely (including all images) instead of archiving
     await this.remove(id, user);
   }
 
@@ -708,6 +735,7 @@ export class CarsService {
 
     car.status = CarStatus.AVAILABLE;
     await this.carsRepository.save(car);
+    await this.clearCache(id);
 
     // Notify user
     await this.notificationsService.createNotification(
@@ -739,6 +767,7 @@ export class CarsService {
 
     // Remove from DB
     await this.carsRepository.remove(car);
+    await this.clearCache(id);
   }
 
   async getBrands(): Promise<string[]> {
@@ -756,88 +785,6 @@ export class CarsService {
   }
 
   async getFiltersByBrand(make: string): Promise<any> {
-    const baseQuery = this.carsRepository
-      .createQueryBuilder('car')
-      .leftJoin('car.seller', 'seller')
-      .where('car.make ILIKE :make', { make: `%${make}%` })
-      .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false })
-      .andWhere('car.status IN (:...statuses)', {
-        statuses: [CarStatus.AVAILABLE, CarStatus.SOLD],
-      });
-
-    // Helper to get distinct values for a column
-    const getDistinct = async (col: string) => {
-      const result = await baseQuery
-        .clone()
-        .select(`DISTINCT car.${col}`, 'val')
-        .andWhere(`car.${col} IS NOT NULL`)
-        .getRawMany();
-      return result
-        .map((r) => r.val?.toUpperCase())
-        .filter(Boolean)
-        .sort();
-    };
-
-    // Helper for year (descending)
-    const getDistinctYears = async () => {
-      const result = await baseQuery
-        .clone()
-        .select('DISTINCT car.year', 'val')
-        .orderBy('val', 'DESC')
-        .getRawMany();
-      return result.map((r) => r.val?.toString()).filter(Boolean);
-    };
-
-    // Helper for mods (Still needing some manual processing if stored as complex JSON, but let's try to minimize fetch)
-    // Optimization: Fetch only 'mods' column, not full entity
-    const getMods = async () => {
-      const result = await baseQuery
-        .clone()
-        .select('car.mods', 'mods')
-        .where('car.mods IS NOT NULL')
-        .getRawMany();
-
-      const modSet = new Set<string>();
-      result.forEach((r) => {
-        const m = r.mods;
-        if (Array.isArray(m)) {
-          m.forEach((v: any) => {
-            if (typeof v === 'string' && v.trim())
-              modSet.add(v.trim().toUpperCase());
-            else if (v && v.name) modSet.add(v.name.trim().toUpperCase());
-          });
-        } else if (typeof m === 'object') {
-          Object.values(m).forEach((values: any) => {
-            if (Array.isArray(values)) {
-              values.forEach((v: string) => {
-                if (v && typeof v === 'string')
-                  modSet.add(v.trim().toUpperCase());
-              });
-            }
-          });
-        }
-      });
-      return Array.from(modSet).sort();
-    };
-
-    // Helper for notableFeatures
-    const getNotableFeatures = async () => {
-      const result = await baseQuery
-        .clone()
-        .select('car.notableFeatures', 'nf')
-        .where('car.notableFeatures IS NOT NULL')
-        .getRawMany();
-
-      const nfSet = new Set<string>();
-      result.forEach((r) => {
-        const raw = r.nf;
-        if (typeof raw === 'string') {
-          raw.split(',').forEach((s) => nfSet.add(s.trim()));
-        }
-      });
-      return Array.from(nfSet).sort();
-    };
-
     const [
       model,
       chassisCode,
@@ -848,20 +795,26 @@ export class CarsService {
       paperwork,
       year,
       location,
-      mods,
+      mods_exterior,
+      mods_interior,
+      mods_engine,
+      mods_footwork,
       notableFeatures,
     ] = await Promise.all([
-      getDistinct('model'),
-      getDistinct('chassisCode'),
-      getDistinct('engineCode'),
-      getDistinct('transmission'),
-      getDistinct('drivetrain'),
-      getDistinct('condition'),
-      getDistinct('paperwork'),
-      getDistinctYears(),
-      getDistinct('location'),
-      getMods(),
-      getNotableFeatures(),
+      this.tagsService.getSuggestions('model', make),
+      this.tagsService.getSuggestions('chassisCode'),
+      this.tagsService.getSuggestions('engineCode'),
+      this.tagsService.getSuggestions('transmission'),
+      this.tagsService.getSuggestions('drivetrain'),
+      this.tagsService.getSuggestions('condition'),
+      this.tagsService.getSuggestions('paperwork'),
+      this.tagsService.getSuggestions('year'),
+      this.tagsService.getSuggestions('location'),
+      this.tagsService.getSuggestions('mods_exterior'),
+      this.tagsService.getSuggestions('mods_interior'),
+      this.tagsService.getSuggestions('mods_engine'),
+      this.tagsService.getSuggestions('mods_footwork'),
+      this.tagsService.getSuggestions('feature'),
     ]);
 
     return {
@@ -874,7 +827,12 @@ export class CarsService {
       paperwork,
       year,
       location,
-      mods,
+      mods: [
+        ...mods_exterior,
+        ...mods_interior,
+        ...mods_engine,
+        ...mods_footwork,
+      ],
       notableFeatures,
     };
   }
@@ -1547,6 +1505,19 @@ export class CarsService {
       const existingView = await queryBuilder.getOne();
 
       if (!existingView) {
+        // Ensure car still exists before incrementing to avoid FK constraint error
+        const carExists = await this.carsRepository.findOne({
+          where: { id: carId },
+          select: ['id'],
+        });
+
+        if (!carExists) {
+          this.logger.warn(
+            `Attempted to increment view for non-existent car: ${carId}`,
+          );
+          return;
+        }
+
         await this.dataSource.transaction(async (manager) => {
           const view = new CarView();
           view.carId = carId;
@@ -1572,26 +1543,33 @@ export class CarsService {
     const car = await this.carsRepository.findOne({ where: { id } });
     if (!car) throw new NotFoundException('Car not found');
 
-    // Fetch all available cars to calculate ranking in memory (safest for small/medium datasets)
-    const allAvailable = await this.carsRepository.find({
-      where: { status: CarStatus.AVAILABLE },
-      order: { createdAt: 'DESC' },
-    });
-
-    const globalRank = allAvailable.findIndex((c) => c.id === id) + 1;
-    const globalTotal = allAvailable.length;
-
-    const sameMake = allAvailable.filter((c) => c.make === car.make);
-    const makeRank = sameMake.findIndex((c) => c.id === id) + 1;
-    const makeTotal = sameMake.length;
+    const [globalTotal, globalRank, makeTotal, makeRank] = await Promise.all([
+      this.carsRepository.count({ where: { status: CarStatus.AVAILABLE } }),
+      this.carsRepository.count({
+        where: {
+          status: CarStatus.AVAILABLE,
+          createdAt: MoreThan(car.createdAt),
+        },
+      }),
+      this.carsRepository.count({
+        where: { status: CarStatus.AVAILABLE, make: car.make },
+      }),
+      this.carsRepository.count({
+        where: {
+          status: CarStatus.AVAILABLE,
+          make: car.make,
+          createdAt: MoreThan(car.createdAt),
+        },
+      }),
+    ]);
 
     return {
       global: {
-        rank: globalRank > 0 ? globalRank : globalTotal + 1, // Fallback if car is not AVAILABLE
+        rank: globalRank + 1,
         total: globalTotal,
       },
       make: {
-        rank: makeRank > 0 ? makeRank : makeTotal + 1,
+        rank: makeRank + 1,
         total: makeTotal,
         name: car.make,
       },

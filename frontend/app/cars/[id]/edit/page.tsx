@@ -178,13 +178,19 @@ export default function EditCarPage() {
             // Revalidate cache
             await fetch('/api/revalidate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-revalidate-secret': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || ''
+                },
                 body: JSON.stringify({ path: `/cars/${slug}` })
             });
             // Also revalidate home page
             await fetch('/api/revalidate', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-revalidate-secret': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || ''
+                },
                 body: JSON.stringify({ path: '/' })
             });
             router.push(`/cars/${slug}`);

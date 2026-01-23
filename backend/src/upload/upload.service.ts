@@ -1,8 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
+import { Car } from '../cars/entities/car.entity';
+import { SoldCar } from '../sold-cars/entities/sold-car.entity';
 
 @Injectable()
 export class UploadService {
@@ -13,7 +17,14 @@ export class UploadService {
   // Files older than this (in hours) will be cleaned up
   private readonly TEMP_FILE_MAX_AGE_HOURS = 24;
 
-  constructor() {
+  constructor(
+    @InjectRepository(Car)
+    private readonly carsRepository: Repository<Car>,
+    @InjectRepository(SoldCar)
+    private readonly soldCarsRepository: Repository<SoldCar>,
+  ) {
+    // Disable sharp cache to save disk/memory on VPS
+    sharp.cache(false);
     // Ensure directories exist on startup
     this.ensureDirectoriesExist();
   }
@@ -217,6 +228,63 @@ export class UploadService {
       }
     }
     return movedFiles;
+  }
+
+  /**
+   * Deep cleanup: Delete files in uploads folder that are not referenced in the database
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async cleanupOrphanedImages(): Promise<void> {
+    this.logger.log('Starting deep cleanup of orphaned images...');
+    try {
+      if (!fs.existsSync(this.uploadsDir)) return;
+
+      // 1. Get all files on disk
+      const filesOnDisk = fs.readdirSync(this.uploadsDir);
+      if (filesOnDisk.length === 0) return;
+
+      // 2. Get all referenced images from DB
+      // We use a Set for O(1) lookup
+      const referencedFiles = new Set<string>();
+
+      // From Cars
+      const cars = await this.carsRepository.find({
+        select: ['images', 'thumbnail'],
+      });
+      cars.forEach((car) => {
+        if (car.thumbnail) referencedFiles.add(path.basename(car.thumbnail));
+        if (car.images && Array.isArray(car.images)) {
+          car.images.forEach((img) => referencedFiles.add(path.basename(img)));
+        }
+      });
+
+      // From SoldCars
+      const soldCars = await this.soldCarsRepository.find({
+        select: ['thumbnail'],
+      });
+      soldCars.forEach((sc) => {
+        if (sc.thumbnail) referencedFiles.add(path.basename(sc.thumbnail));
+      });
+
+      // 3. Identify and delete orphaned files
+      let deletedCount = 0;
+      for (const file of filesOnDisk) {
+        // Skip hidden files if any
+        if (file.startsWith('.')) continue;
+
+        if (!referencedFiles.has(file)) {
+          const filePath = path.join(this.uploadsDir, file);
+          await fs.promises.unlink(filePath);
+          deletedCount++;
+        }
+      }
+
+      this.logger.log(
+        `Deep cleanup completed. Deleted ${deletedCount} orphaned files. Checked ${filesOnDisk.length} files.`,
+      );
+    } catch (error) {
+      this.logger.error(`Deep cleanup failed: ${error.message}`);
+    }
   }
 
   getTempDir(): string {

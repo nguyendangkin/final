@@ -15,7 +15,7 @@ export class UsersService {
     @Inject(forwardRef(() => CarsService))
     private carsService: CarsService,
     private notificationsService: NotificationsService,
-  ) {}
+  ) { }
 
   async findByEmail(email: string): Promise<User | null> {
     return this.usersRepository.findOne({ where: { email } });
@@ -33,6 +33,15 @@ export class UsersService {
   async searchByEmail(email: string): Promise<User[]> {
     return this.usersRepository
       .createQueryBuilder('user')
+      .select([
+        'user.id',
+        'user.email',
+        'user.name',
+        'user.avatar',
+        'user.isAdmin',
+        'user.isSellingBanned',
+        'user.createdAt',
+      ])
       .where('LOWER(user.email) LIKE LOWER(:email)', { email: `%${email}%` })
       .orderBy('user.createdAt', 'DESC')
       .take(20)
@@ -57,6 +66,7 @@ export class UsersService {
     totalPages: number;
   }> {
     const [data, total] = await this.usersRepository.findAndCount({
+      select: ['id', 'email', 'name', 'avatar', 'isAdmin', 'isSellingBanned', 'createdAt'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },

@@ -12,7 +12,7 @@ export class FavoritesService {
     private favoritesRepository: Repository<Favorite>,
     @InjectRepository(Car)
     private carsRepository: Repository<Car>,
-  ) {}
+  ) { }
 
   async toggleFavorite(
     user: User,
@@ -48,7 +48,27 @@ export class FavoritesService {
     const skip = (page - 1) * limit;
     return this.favoritesRepository.find({
       where: { user: { id: user.id } },
-      relations: ['car', 'car.seller'], // Include car and seller details for display
+      relations: ['car', 'car.seller'],
+      select: {
+        id: true,
+        createdAt: true,
+        car: {
+          id: true,
+          make: true,
+          model: true,
+          year: true,
+          price: true,
+          trim: true,
+          images: true,
+          thumbnail: true,
+          status: true,
+          seller: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
       order: { createdAt: 'DESC' },
       skip,
       take: limit,

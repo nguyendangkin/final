@@ -6,7 +6,7 @@ import type { Metadata, ResolvingMetadata } from 'next';
 async function getCar(id: string) {
     try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const res = await fetch(`${apiUrl}/cars/${id}`, { next: { revalidate: 60 } });
+        const res = await fetch(`${apiUrl}/cars/${id}`, { cache: 'no-store' });
         if (!res.ok) return null;
         return res.json();
     } catch (error) {

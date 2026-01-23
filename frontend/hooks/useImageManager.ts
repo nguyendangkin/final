@@ -19,7 +19,7 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
       isThumbnail: false,
       uploading: false,
     }));
-    
+
     if (initialThumbnail) {
       return [
         {
@@ -41,8 +41,12 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
     const formData = new FormData();
     formData.append('file', file);
     try {
+      const token = localStorage.getItem('jwt_token');
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
@@ -58,7 +62,13 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
     if (!url.includes('/temp/')) return;
     const filename = url.split('/temp/').pop();
     try {
-      await fetch(`${apiUrl}/upload/${filename}`, { method: 'DELETE' });
+      const token = localStorage.getItem('jwt_token');
+      await fetch(`${apiUrl}/upload/${filename}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
     } catch (error) {
       console.error('Error deleting temp file:', error);
     }
@@ -78,8 +88,8 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
 
     for (let i = 0; i < files.length; i++) {
       const url = await uploadFile(files[i]);
-      setImages(prev => prev.map(img => 
-        img.id === newImages[i].id 
+      setImages(prev => prev.map(img =>
+        img.id === newImages[i].id
           ? { ...img, url: url || img.url, uploading: false, error: url ? undefined : 'Lỗi tải lên' }
           : img
       ));
