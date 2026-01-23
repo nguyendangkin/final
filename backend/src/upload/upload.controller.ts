@@ -30,11 +30,11 @@ export class UploadController {
         fileSize: 5 * 1024 * 1024, // 5MB limit
       },
       fileFilter: (req, file, cb) => {
-        // Check mime type
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+        // Check mime type (Allow more image variants)
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp|x-png|pjpeg)$/i)) {
           return cb(new Error('Only image files are allowed!'), false);
         }
-        // Check file extension (Security fix: Prevent .html/.php files with image headers)
+        // Check file extension (Case-insensitive check)
         if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           return cb(new Error('File extension not allowed!'), false);
         }

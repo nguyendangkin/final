@@ -85,7 +85,15 @@ export class UploadService {
         } else {
           // If file doesn't exist in temp, check if it's already in uploads
           // This handles re-uploads or already permanent files
-          if (url.includes('/uploads/')) {
+          const possiblePermanentUrl = url.replace('/temp/', '/uploads/');
+          const permanentPath = path.join(
+            this.uploadsDir,
+            path.basename(possiblePermanentUrl),
+          );
+
+          if (fs.existsSync(permanentPath)) {
+            permanentUrls.push(possiblePermanentUrl);
+          } else if (url.includes('/uploads/')) {
             permanentUrls.push(url);
           }
         }

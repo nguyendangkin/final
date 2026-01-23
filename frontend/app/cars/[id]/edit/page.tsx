@@ -414,7 +414,9 @@ export default function EditCarPage() {
                 throw new Error(data.message || 'Có lỗi xảy ra');
             }
 
+            router.refresh();
             router.push(`/cars/${carId}`);
+
         } catch (err: any) {
             setError(err.message);
             setSaving(false);
