@@ -8,6 +8,7 @@ import CarCardSkeleton from './CarCardSkeleton';
 
 interface CarFeedProps {
     initialCars?: any[];
+    initialMeta?: any;
     filter?: any; // { make, model, sellerId, etc. }
 }
 
@@ -15,13 +16,14 @@ import { Suspense } from 'react';
 
 // ... (keep existing imports, add Suspense if needed but i am importing it above)
 
-function CarFeedContent({ initialCars = [], filter = {} }: CarFeedProps) {
+function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedProps) {
     const [cars, setCars] = useState<any[]>(initialCars);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(initialMeta ? 2 : 1);
+    const [hasMore, setHasMore] = useState(initialMeta ? (1 < initialMeta.totalPages) : true);
     const [loading, setLoading] = useState(false);
     const [initialLoading, setInitialLoading] = useState(false);
     const observer = useRef<IntersectionObserver | null>(null);
+    const isFirstMount = useRef(true);
     const searchParams = useSearchParams();
 
     // Get all filter params from URL
@@ -53,12 +55,24 @@ function CarFeedContent({ initialCars = [], filter = {} }: CarFeedProps) {
 
     // Reset and refetch when URL params change
     useEffect(() => {
+        // Skip fetch if we have initial cars and it's the first mount from server
+        if (isFirstMount.current && initialMeta) {
+            isFirstMount.current = false;
+            return;
+        }
+
+        // If it's first mount but no initialMeta, we still mark it as not first mount anymore
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+        }
+
         setCars([]);
         setPage(1);
         setHasMore(true);
         setInitialLoading(true); // Set initial loading true when filters change
         fetchCars(1);
-    }, [filtersKey]);
+    }, [filtersKey, JSON.stringify(filter)]);
+
 
     const fetchCars = async (pageToFetch: number) => {
         setLoading(true);

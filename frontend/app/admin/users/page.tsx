@@ -309,25 +309,23 @@ export default function AdminUsers() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                {!user.isAdmin && (
-                                                    <button
-                                                        onClick={() => toggleBan(user.id, user.isSellingBanned)}
-                                                        className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${user.isSellingBanned
-                                                            ? 'bg-green-600 text-white hover:bg-green-700'
-                                                            : 'bg-red-600 text-white hover:bg-red-700'
-                                                            }`}
-                                                    >
-                                                        {user.isSellingBanned ? (
-                                                            <>
-                                                                <CheckCircle className="w-3 h-3" /> Bỏ cấm
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Ban className="w-3 h-3" /> Cấm bán
-                                                            </>
-                                                        )}
-                                                    </button>
-                                                )}
+                                                <button
+                                                    onClick={() => toggleBan(user.id, user.isSellingBanned)}
+                                                    className={`flex items-center gap-1 px-3 py-1 text-xs font-bold uppercase transition-colors ${user.isSellingBanned
+                                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                                        : 'bg-red-600 text-white hover:bg-red-700'
+                                                        }`}
+                                                >
+                                                    {user.isSellingBanned ? (
+                                                        <>
+                                                            <CheckCircle className="w-3 h-3" /> Bỏ cấm
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Ban className="w-3 h-3" /> Cấm bán
+                                                        </>
+                                                    )}
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
