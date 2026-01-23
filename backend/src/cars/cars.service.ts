@@ -64,36 +64,16 @@ export class CarsService {
       imagesToDelete.push(car.thumbnail);
     }
 
-    // Delete each image file
-    for (const imageUrl of imagesToDelete) {
-      try {
-        // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
-        // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
-        // FIX: Use path.basename to prevent Directory Traversal attacks (e.g. "../../index.js")
-        const rawFilename = imageUrl.split('/uploads/').pop();
-        if (rawFilename) {
-          const filename = path.basename(rawFilename); // Sanitize filename
-          const filePath = path.join(process.cwd(), 'uploads', filename);
+    if (imagesToDelete.length === 0) return;
 
-          // Check if file seems to be one of the excluded ones
-          // The excludeFiles list has full URLs, so we need to match carefully or just check if URL ends with filename
-          // Simple check:
-          const isExcluded = excludeFiles.some(
-            (url) => url && url.includes(filename),
-          );
+    // Filter out excluded files
+    const filteredImages = imagesToDelete.filter((imageUrl) => {
+      const filename = path.basename(imageUrl);
+      return !excludeFiles.some((exclude) => exclude && exclude.includes(filename));
+    });
 
-          // Check if file exists before deleting
-          if (fs.existsSync(filePath) && !isExcluded) {
-            fs.unlinkSync(filePath);
-            this.logger.log(`Deleted image: ${filename}`);
-          }
-        }
-      } catch (error) {
-        // Log error but don't fail the deletion
-        this.logger.warn(
-          `Failed to delete image ${imageUrl}: ${error.message}`,
-        );
-      }
+    if (filteredImages.length > 0) {
+      this.uploadService.deleteFiles(filteredImages);
     }
   }
 
@@ -420,59 +400,73 @@ export class CarsService {
     let permanentImages: string[] = [];
     let permanentThumbnail: string | undefined = createCarDto.thumbnail;
 
-    if (createCarDto.images && createCarDto.images.length > 0) {
-      permanentImages = this.uploadService.moveFilesToPermanent(
-        createCarDto.images,
-      );
-      this.logger.log(
-        `Moved ${permanentImages.length} images from temp to permanent storage`,
-      );
-    }
-
-    if (createCarDto.thumbnail) {
-      const movedThumbnails = this.uploadService.moveFilesToPermanent([
-        createCarDto.thumbnail,
-      ]);
-      if (movedThumbnails.length > 0) {
-        permanentThumbnail = movedThumbnails[0];
-        this.logger.log('Moved thumbnail from temp to permanent storage');
+    try {
+      if (createCarDto.images && createCarDto.images.length > 0) {
+        permanentImages = this.uploadService.moveFilesToPermanent(
+          createCarDto.images,
+        );
+        this.logger.log(
+          `Moved ${permanentImages.length} images from temp to permanent storage`,
+        );
       }
+
+      if (createCarDto.thumbnail) {
+        const movedThumbnails = this.uploadService.moveFilesToPermanent([
+          createCarDto.thumbnail,
+        ]);
+        if (movedThumbnails.length > 0) {
+          permanentThumbnail = movedThumbnails[0];
+          this.logger.log('Moved thumbnail from temp to permanent storage');
+        }
+      }
+
+      // Check how many approved posts this user has
+      const approvedCount = await this.carsRepository.count({
+        where: [
+          { seller: { id: seller.id }, status: CarStatus.AVAILABLE },
+          { seller: { id: seller.id }, status: CarStatus.SOLD },
+        ],
+      });
+
+      // First 3 posts must be approved manually
+      // If user is admin, skip this check
+      const initialStatus =
+        seller.isAdmin || approvedCount >= 3
+          ? CarStatus.AVAILABLE
+          : CarStatus.PENDING_APPROVAL;
+
+      const car = this.carsRepository.create({
+        ...createCarDto,
+        images: permanentImages,
+        thumbnail: permanentThumbnail,
+        seller,
+        price: createCarDto.price.toString(),
+        status: initialStatus,
+      });
+
+      this.logger.log(
+        `Creating car with notableFeatures: ${JSON.stringify(createCarDto.notableFeatures)}`,
+      );
+
+      const savedCar = await this.carsRepository.save(car);
+
+      // Sync tags to Tag table (increment usageCount)
+      await this.tagsService.syncTagsFromCar(savedCar, true);
+
+      return savedCar;
+    } catch (error) {
+      // CLEANUP: If something went wrong after moving files, delete them to avoid orphans
+      const filesToCleanup = [...permanentImages];
+      if (permanentThumbnail) filesToCleanup.push(permanentThumbnail);
+
+      if (filesToCleanup.length > 0) {
+        this.logger.warn(
+          `Cleanup: Deleting ${filesToCleanup.length} files due to create failure: ${error.message}`,
+        );
+        this.uploadService.deleteFiles(filesToCleanup);
+      }
+      throw error;
     }
-
-    // Check how many approved posts this user has
-    const approvedCount = await this.carsRepository.count({
-      where: [
-        { seller: { id: seller.id }, status: CarStatus.AVAILABLE },
-        { seller: { id: seller.id }, status: CarStatus.SOLD },
-      ],
-    });
-
-    // First 3 posts must be approved manually
-    // If user is admin, skip this check
-    const initialStatus =
-      seller.isAdmin || approvedCount >= 3
-        ? CarStatus.AVAILABLE
-        : CarStatus.PENDING_APPROVAL;
-
-    const car = this.carsRepository.create({
-      ...createCarDto,
-      images: permanentImages,
-      thumbnail: permanentThumbnail,
-      seller,
-      price: createCarDto.price.toString(),
-      status: initialStatus,
-    });
-
-    this.logger.log(
-      `Creating car with notableFeatures: ${JSON.stringify(createCarDto.notableFeatures)}`,
-    );
-
-    const savedCar = await this.carsRepository.save(car);
-
-    // Sync tags to Tag table (increment usageCount)
-    await this.tagsService.syncTagsFromCar(savedCar, true);
-
-    return savedCar;
   }
 
   async update(
@@ -485,6 +479,10 @@ export class CarsService {
       throw new BadRequestException('You can only update your own listings');
     }
 
+    // Track old images for cleanup
+    const oldImages = [...(car.images || [])];
+    const oldThumbnail = car.thumbnail;
+
     // Sync tags: Remove old tags usage
     // We do this BEFORE updating the car object so we have the old values
     await this.tagsService.syncTagsFromCar(car, false);
@@ -493,6 +491,17 @@ export class CarsService {
     const updates: any = { ...updateCarDto };
     if (updates.price) {
       updates.price = updates.price.toString();
+    }
+
+    // Handle Image Updates: Move new images from temp to permanent
+    if (updates.images && Array.isArray(updates.images)) {
+      updates.images = this.uploadService.moveFilesToPermanent(updates.images);
+    }
+    if (updates.thumbnail) {
+      const moved = this.uploadService.moveFilesToPermanent([updates.thumbnail]);
+      if (moved.length > 0) {
+        updates.thumbnail = moved[0];
+      }
     }
 
     // Track edit history
@@ -508,11 +517,31 @@ export class CarsService {
     this.logger.log(
       `Updating car ${id} with notableFeatures: ${JSON.stringify(updates.notableFeatures)}`,
     );
-    this.logger.log(
-      `Merged car object notableFeatures: ${JSON.stringify(car.notableFeatures)}`,
-    );
 
     const updatedCar = await this.carsRepository.save(car);
+
+    // CLEANUP: Delete old images that are no longer referenced
+    const currentImages = updatedCar.images || [];
+    const currentThumbnail = updatedCar.thumbnail;
+
+    const imagesToRemove = oldImages.filter(
+      (oldImg) => !currentImages.includes(oldImg),
+    );
+
+    if (
+      oldThumbnail &&
+      oldThumbnail !== currentThumbnail &&
+      !currentImages.includes(oldThumbnail)
+    ) {
+      imagesToRemove.push(oldThumbnail);
+    }
+
+    if (imagesToRemove.length > 0) {
+      this.logger.log(
+        `Cleanup: Deleting ${imagesToRemove.length} replaced images for car ${id}`,
+      );
+      this.uploadService.deleteFiles(imagesToRemove);
+    }
 
     // Sync tags: Add new tags usage
     // We do this AFTER saving so we have stored the new values (and validation passed)

@@ -147,4 +147,42 @@ export class UploadService {
   getTempDir(): string {
     return this.tempDir;
   }
+
+  /**
+   * Delete image files from disk based on their URLs
+   * @param urls Array of URLs or filenames
+   */
+  deleteFiles(urls: string[]): void {
+    for (const url of urls) {
+      if (!url) continue;
+
+      try {
+        // Extract filename from URL (handles both /temp/ and /uploads/)
+        let filename = '';
+        if (url.includes('/uploads/')) {
+          filename = url.split('/uploads/').pop() || '';
+        } else if (url.includes('/temp/')) {
+          filename = url.split('/temp/').pop() || '';
+        } else {
+          filename = url; // Assume it's just a filename
+        }
+
+        if (filename) {
+          const safeFilename = path.basename(filename);
+          const isTemp = url.includes('/temp/');
+          const filePath = path.join(
+            isTemp ? this.tempDir : this.uploadsDir,
+            safeFilename,
+          );
+
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            this.logger.log(`Deleted file: ${safeFilename} from ${isTemp ? 'temp' : 'uploads'}`);
+          }
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to delete file ${url}: ${error.message}`);
+      }
+    }
+  }
 }
