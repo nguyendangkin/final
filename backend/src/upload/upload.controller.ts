@@ -6,13 +6,18 @@ import {
   Get,
   Param,
   Res,
+  Delete,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { UploadService } from './upload.service';
 
 @Controller('upload')
 export class UploadController {
+  constructor(private readonly uploadService: UploadService) {}
+
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
@@ -30,11 +35,11 @@ export class UploadController {
         fileSize: 5 * 1024 * 1024, // 5MB limit
       },
       fileFilter: (req, file, cb) => {
-        // Check mime type
-        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+        // Check mime type (Allow more image variants)
+        if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp|x-png|pjpeg)$/i)) {
           return cb(new Error('Only image files are allowed!'), false);
         }
-        // Check file extension (Security fix: Prevent .html/.php files with image headers)
+        // Check file extension (Case-insensitive check)
         if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
           return cb(new Error('File extension not allowed!'), false);
         }
@@ -44,7 +49,16 @@ export class UploadController {
   )
   uploadFile(@UploadedFile() file: Express.Multer.File) {
     return {
-      url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/temp/${file.filename}`,
+      url: `/temp/${file.filename}`,
     };
+  }
+
+  @Delete(':filename')
+  async deleteFile(@Param('filename') filename: string) {
+    const deleted = await this.uploadService.deleteFile(filename, true);
+    if (!deleted) {
+      throw new BadRequestException('File not found or could not be deleted');
+    }
+    return { message: 'File deleted successfully' };
   }
 }

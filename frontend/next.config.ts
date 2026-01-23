@@ -21,16 +21,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
-    return [
-      {
-        source: '/uploads/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/uploads/:path*`,
-      },
-      {
-        source: '/temp/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/temp/:path*`,
-      },
-    ];
+    return [];
   },
 };
 

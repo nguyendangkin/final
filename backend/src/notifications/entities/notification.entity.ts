@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
 
@@ -26,6 +27,7 @@ export class Notification {
   @JoinColumn({ name: 'userId' })
   user: User;
 
+  @Index()
   @Column()
   userId: string;
 
@@ -42,9 +44,11 @@ export class Notification {
   @Column({ type: 'text' })
   message: string;
 
+  @Index()
   @Column({ default: false })
   isRead: boolean;
 
   @CreateDateColumn()
+  @Index(['userId', 'isRead', 'createdAt'])
   createdAt: Date;
 }

@@ -34,13 +34,25 @@ export function cn(...classes: (string | undefined | null | false)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export function getImgUrl(url: string | null | undefined): string {
+export function getImgUrl(url: string | null | undefined, version?: string | number): string {
     if (!url) return '/placeholder-car.png';
     // If it's already a full URL, return it
     if (url.startsWith('http')) return url;
-    // If it's a relative path starting with /, prefix with API URL
+
+    // If it's a relative path starting with /, prefix with API URL to load directly from backend
+    // This bypasses Next.js rewrites and prevents 404 caching issues during image move
     const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/+$/, '');
-    return `${apiUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    
+    // Ensure the url doesn't have double slashes
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    
+    // Add cache busting version if provided
+    const finalUrl = `${apiUrl}${cleanUrl}`;
+    if (version) {
+        return `${finalUrl}?v=${version}`;
+    }
+    
+    return finalUrl;
 }
 
 export function shouldOptimizeImage(url: string): boolean {

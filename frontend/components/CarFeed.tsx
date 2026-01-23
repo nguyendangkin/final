@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CarCard from './CarCard';
 import CarCardSkeleton from './CarCardSkeleton';
@@ -14,8 +14,6 @@ interface CarFeedProps {
 
 import { Suspense } from 'react';
 
-// ... (keep existing imports, add Suspense if needed but i am importing it above)
-
 function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedProps) {
     const [cars, setCars] = useState<any[]>(initialCars);
     const [page, setPage] = useState(initialMeta ? 2 : 1);
@@ -27,7 +25,7 @@ function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedP
     const searchParams = useSearchParams();
 
     // Get all filter params from URL
-    const urlFilters = {
+    const urlFilters = useMemo(() => ({
         make: searchParams.get('make'),
         model: searchParams.get('model'),
         transmission: searchParams.get('transmission'),
@@ -48,10 +46,10 @@ function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedP
         mods_footwork: searchParams.get('mods_footwork'),
         mods: searchParams.get('mods'),
         notableFeatures: searchParams.get('notableFeatures'),
-    };
+    }), [searchParams]);
 
     // Create a stable key for the filters
-    const filtersKey = JSON.stringify(urlFilters);
+    const filtersKey = useMemo(() => JSON.stringify(urlFilters), [urlFilters]);
 
     // Reset and refetch when URL params change
     useEffect(() => {
@@ -71,10 +69,10 @@ function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedP
         setHasMore(true);
         setInitialLoading(true); // Set initial loading true when filters change
         fetchCars(1);
-    }, [filtersKey, JSON.stringify(filter)]);
+    }, [filtersKey]);
 
 
-    const fetchCars = async (pageToFetch: number) => {
+    const fetchCars = useCallback(async (pageToFetch: number) => {
         setLoading(true);
         try {
             const queryParams = new URLSearchParams({
@@ -113,7 +111,7 @@ function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedP
             setLoading(false);
             setInitialLoading(false);
         }
-    };
+    }, [urlFilters, filter]);
 
     const lastCarElementRef = useCallback((node: HTMLDivElement) => {
         if (loading) return;
@@ -157,6 +155,8 @@ function CarFeedContent({ initialCars = [], initialMeta, filter = {} }: CarFeedP
     );
 }
 
+const CarFeedContentMemo = memo(CarFeedContent);
+
 export default function CarFeed(props: CarFeedProps) {
     return (
         <Suspense fallback={<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
@@ -164,7 +164,7 @@ export default function CarFeed(props: CarFeedProps) {
                 <CarCardSkeleton key={i} />
             ))}
         </div>}>
-            <CarFeedContent {...props} />
+            <CarFeedContentMemo {...props} />
         </Suspense>
     );
 }

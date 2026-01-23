@@ -48,52 +48,12 @@ export class CarsService {
 
   /**
    * Delete image files associated with a car from the uploads folder
-   * @param excludeFiles List of full URLs to exclude from deletion
    */
-  private async deleteCarImages(
-    car: Car,
-    excludeFiles: string[] = [],
-  ): Promise<void> {
-    const imagesToDelete: string[] = [];
-
-    // Collect all image URLs
-    if (car.images && Array.isArray(car.images)) {
-      imagesToDelete.push(...car.images);
-    }
-    if (car.thumbnail) {
-      imagesToDelete.push(car.thumbnail);
-    }
-
-    // Delete each image file
-    for (const imageUrl of imagesToDelete) {
-      try {
-        // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
-        // Extract filename from URL (e.g., "http://localhost:3000/uploads/abc123.jpg" -> "abc123.jpg")
-        // FIX: Use path.basename to prevent Directory Traversal attacks (e.g. "../../index.js")
-        const rawFilename = imageUrl.split('/uploads/').pop();
-        if (rawFilename) {
-          const filename = path.basename(rawFilename); // Sanitize filename
-          const filePath = path.join(process.cwd(), 'uploads', filename);
-
-          // Check if file seems to be one of the excluded ones
-          // The excludeFiles list has full URLs, so we need to match carefully or just check if URL ends with filename
-          // Simple check:
-          const isExcluded = excludeFiles.some(
-            (url) => url && url.includes(filename),
-          );
-
-          // Check if file exists before deleting
-          if (fs.existsSync(filePath) && !isExcluded) {
-            fs.unlinkSync(filePath);
-            this.logger.log(`Deleted image: ${filename}`);
-          }
-        }
-      } catch (error) {
-        // Log error but don't fail the deletion
-        this.logger.warn(
-          `Failed to delete image ${imageUrl}: ${error.message}`,
-        );
-      }
+  private async deleteCarImages(car: Car): Promise<void> {
+    const urls = [...(car.images || [])];
+    if (car.thumbnail) urls.push(car.thumbnail);
+    if (urls.length > 0) {
+      await this.uploadService.deleteFiles(urls);
     }
   }
 
@@ -420,59 +380,73 @@ export class CarsService {
     let permanentImages: string[] = [];
     let permanentThumbnail: string | undefined = createCarDto.thumbnail;
 
-    if (createCarDto.images && createCarDto.images.length > 0) {
-      permanentImages = this.uploadService.moveFilesToPermanent(
-        createCarDto.images,
-      );
-      this.logger.log(
-        `Moved ${permanentImages.length} images from temp to permanent storage`,
-      );
-    }
-
-    if (createCarDto.thumbnail) {
-      const movedThumbnails = this.uploadService.moveFilesToPermanent([
-        createCarDto.thumbnail,
-      ]);
-      if (movedThumbnails.length > 0) {
-        permanentThumbnail = movedThumbnails[0];
-        this.logger.log('Moved thumbnail from temp to permanent storage');
+    try {
+      if (createCarDto.images && createCarDto.images.length > 0) {
+        permanentImages = await this.uploadService.moveFilesToPermanent(
+          createCarDto.images,
+        );
+        this.logger.log(
+          `Moved ${permanentImages.length} images from temp to permanent storage`,
+        );
       }
+
+      if (createCarDto.thumbnail) {
+        const movedThumbnails = await this.uploadService.moveFilesToPermanent([
+          createCarDto.thumbnail,
+        ]);
+        if (movedThumbnails.length > 0) {
+          permanentThumbnail = movedThumbnails[0];
+          this.logger.log('Moved thumbnail from temp to permanent storage');
+        }
+      }
+
+      // Check how many approved posts this user has
+      const approvedCount = await this.carsRepository.count({
+        where: [
+          { seller: { id: seller.id }, status: CarStatus.AVAILABLE },
+          { seller: { id: seller.id }, status: CarStatus.SOLD },
+        ],
+      });
+
+      // First 3 posts must be approved manually
+      // If user is admin, skip this check
+      const initialStatus =
+        seller.isAdmin || approvedCount >= 3
+          ? CarStatus.AVAILABLE
+          : CarStatus.PENDING_APPROVAL;
+
+      const car = this.carsRepository.create({
+        ...createCarDto,
+        images: permanentImages,
+        thumbnail: permanentThumbnail,
+        seller,
+        price: createCarDto.price.toString(),
+        status: initialStatus,
+      });
+
+      this.logger.log(
+        `Creating car with notableFeatures: ${JSON.stringify(createCarDto.notableFeatures)}`,
+      );
+
+      const savedCar = await this.carsRepository.save(car);
+
+      // Sync tags to Tag table (increment usageCount)
+      await this.tagsService.syncTagsFromCar(savedCar, true);
+
+      return savedCar;
+    } catch (error) {
+      // CLEANUP: If something went wrong after moving files, delete them to avoid orphans
+      const filesToCleanup = [...permanentImages];
+      if (permanentThumbnail) filesToCleanup.push(permanentThumbnail);
+
+      if (filesToCleanup.length > 0) {
+        this.logger.warn(
+          `Cleanup: Deleting ${filesToCleanup.length} files due to create failure: ${error.message}`,
+        );
+        await this.uploadService.deleteFiles(filesToCleanup);
+      }
+      throw error;
     }
-
-    // Check how many approved posts this user has
-    const approvedCount = await this.carsRepository.count({
-      where: [
-        { seller: { id: seller.id }, status: CarStatus.AVAILABLE },
-        { seller: { id: seller.id }, status: CarStatus.SOLD },
-      ],
-    });
-
-    // First 3 posts must be approved manually
-    // If user is admin, skip this check
-    const initialStatus =
-      seller.isAdmin || approvedCount >= 3
-        ? CarStatus.AVAILABLE
-        : CarStatus.PENDING_APPROVAL;
-
-    const car = this.carsRepository.create({
-      ...createCarDto,
-      images: permanentImages,
-      thumbnail: permanentThumbnail,
-      seller,
-      price: createCarDto.price.toString(),
-      status: initialStatus,
-    });
-
-    this.logger.log(
-      `Creating car with notableFeatures: ${JSON.stringify(createCarDto.notableFeatures)}`,
-    );
-
-    const savedCar = await this.carsRepository.save(car);
-
-    // Sync tags to Tag table (increment usageCount)
-    await this.tagsService.syncTagsFromCar(savedCar, true);
-
-    return savedCar;
   }
 
   async update(
@@ -485,6 +459,10 @@ export class CarsService {
       throw new BadRequestException('You can only update your own listings');
     }
 
+    // Track old images for cleanup
+    const oldImages = [...(car.images || [])];
+    const oldThumbnail = car.thumbnail;
+
     // Sync tags: Remove old tags usage
     // We do this BEFORE updating the car object so we have the old values
     await this.tagsService.syncTagsFromCar(car, false);
@@ -495,30 +473,100 @@ export class CarsService {
       updates.price = updates.price.toString();
     }
 
-    // Track edit history
-    const editTimestamp = new Date().toISOString();
-    if (!car.editHistory || car.editHistory.length === 0) {
-      car.editHistory = [editTimestamp];
-    } else {
-      car.editHistory = [...car.editHistory, editTimestamp];
+    const movedImages: string[] = [];
+
+    try {
+      // Handle Image Updates: Move new images from temp to permanent
+      if (updates.images && Array.isArray(updates.images)) {
+        updates.images = await this.uploadService.moveFilesToPermanent(
+          updates.images,
+        );
+        movedImages.push(...updates.images);
+      }
+      if (updates.thumbnail) {
+        const moved = await this.uploadService.moveFilesToPermanent([
+          updates.thumbnail,
+        ]);
+        if (moved.length > 0) {
+          updates.thumbnail = moved[0];
+          movedImages.push(...moved);
+        }
+      }
+
+      // Track edit history
+      const editTimestamp = new Date().toISOString();
+      if (!car.editHistory || car.editHistory.length === 0) {
+        car.editHistory = [editTimestamp];
+      } else {
+        car.editHistory = [...car.editHistory, editTimestamp];
+      }
+
+      Object.assign(car, updates);
+
+      this.logger.log(
+        `Updating car ${id} with notableFeatures: ${JSON.stringify(updates.notableFeatures)}`,
+      );
+
+      const updatedCar = await this.carsRepository.save(car);
+
+      // CLEANUP: Delete old images that are no longer referenced
+      const currentImages = updatedCar.images || [];
+      const currentThumbnail = updatedCar.thumbnail;
+
+      // Robust comparison: compare only filenames to avoid full URL vs relative path mismatches
+      const getCurrentFilenames = (urls: string[]) =>
+        urls
+          .map((url) => {
+            try {
+              return path.basename(url);
+            } catch (e) {
+              return url;
+            }
+          })
+          .filter(Boolean);
+
+      const currentFilenames = getCurrentFilenames([
+        ...currentImages,
+        ...(currentThumbnail ? [currentThumbnail] : []),
+      ]);
+
+      const imagesToRemove = oldImages.filter((oldImg) => {
+        if (!oldImg) return false;
+        const oldFilename = path.basename(oldImg);
+        return !currentFilenames.includes(oldFilename);
+      });
+
+      if (
+        oldThumbnail &&
+        !currentFilenames.includes(path.basename(oldThumbnail))
+      ) {
+        imagesToRemove.push(oldThumbnail);
+      }
+
+      // Filter duplicates in imagesToRemove
+      const uniqueImagesToRemove = Array.from(new Set(imagesToRemove));
+
+      if (uniqueImagesToRemove.length > 0) {
+        this.logger.log(
+          `Cleanup: Deleting ${uniqueImagesToRemove.length} replaced images for car ${id}`,
+        );
+        await this.uploadService.deleteFiles(uniqueImagesToRemove);
+      }
+
+      // Sync tags: Add new tags usage
+      // We do this AFTER saving so we have stored the new values (and validation passed)
+      await this.tagsService.syncTagsFromCar(updatedCar, true);
+
+      return updatedCar;
+    } catch (error) {
+      if (movedImages.length > 0) {
+        this.logger.warn(
+          `Cleanup: Deleting ${movedImages.length} newly moved images due to update failure`,
+        );
+        await this.uploadService.deleteFiles(movedImages);
+      }
+      throw error;
     }
-
-    Object.assign(car, updates);
-
-    this.logger.log(
-      `Updating car ${id} with notableFeatures: ${JSON.stringify(updates.notableFeatures)}`,
-    );
-    this.logger.log(
-      `Merged car object notableFeatures: ${JSON.stringify(car.notableFeatures)}`,
-    );
-
-    const updatedCar = await this.carsRepository.save(car);
-
-    // Sync tags: Add new tags usage
-    // We do this AFTER saving so we have stored the new values (and validation passed)
-    await this.tagsService.syncTagsFromCar(updatedCar, true);
-
-    return updatedCar;
   }
 
   async remove(id: string, user: User): Promise<void> {
@@ -559,35 +607,8 @@ export class CarsService {
       );
     }
 
-    if (car.status === CarStatus.SOLD) {
-      throw new BadRequestException('Car is already sold');
-    }
-
-    // 1. Archive to SoldCars
-    await this.soldCarsService.create(car);
-
-    // 2. Delete the car listing (includes images deletion and tag decrement)
-    // NOTE: Our deleteCarImages logic deletes physical files.
-    // If we want to KEEP the thumbnail for history, we must be careful.
-    // The Plan said: "SoldCar... thumbnail (String)".
-    // If we delete the images from disk, the thumbnail URL in SoldCar will be broken.
-    // So we must modify deleteCarImages to NOT delete the thumbnail if we are selling it?
-    // Or deeper: "Delete and Archive" usually means we don't need the other images, but we need the main one.
-    // Let's modify logic: Copy thumbnail to a permanent location? Or just Don't delete it?
-    // Simpler: Copy the thumbnail file to a separate 'sold-history' folder? or just rename it?
-    // Or just don't delete the thumbnail file.
-
-    // Let's customize deleteCarImages or handle it here.
-    // We will call `deleteCarImages` but EXCLUDE the thumbnail loop if we are marking as sold?
-    // Accessing private method is hard inside the same class without refactoring.
-    // Let's refactor deleteCarImages to accept an exclusion list.
-    await this.deleteCarImages(car);
-
-    // Decrement tag usage counts
-    await this.tagsService.syncTagsFromCar(car, false);
-
-    // Remove from DB
-    await this.carsRepository.remove(car);
+    // Per user request: Delete completely instead of archiving
+    await this.remove(id, user);
   }
 
   async deleteAllBySeller(sellerId: string): Promise<void> {
@@ -1378,7 +1399,9 @@ export class CarsService {
 
     // Handle years sort (DESC)
     if (finalOptions.year) {
-      finalOptions.year.sort((a: string, b: string) => parseInt(b) - parseInt(a));
+      finalOptions.year.sort(
+        (a: string, b: string) => parseInt(b) - parseInt(a),
+      );
     }
 
     return {

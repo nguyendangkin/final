@@ -1,9 +1,8 @@
 import { CarSpecs } from '../types';
-import Image from 'next/image';
-import { Image as ImageIcon, Video, Plus, X, Link as LinkIcon, AlertCircle, UploadCloud, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import { useState, useEffect } from 'react';
-import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
+import { ImageIcon } from 'lucide-react';
+import { useEffect } from 'react';
+import { useImageManager } from '@/hooks/useImageManager';
+import UniversalImageManager from '@/components/UniversalImageManager';
 
 interface StepMediaProps {
     data: CarSpecs;
@@ -12,285 +11,57 @@ interface StepMediaProps {
 }
 
 export default function StepMedia({ data, updateData, errors = {} }: StepMediaProps) {
-    const [uploading, setUploading] = useState<number[]>([]); // Track which index is uploading
-    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const {
+        images,
+        addImages,
+        removeImage,
+        setThumbnail,
+        reorderImages,
+        getFinalData,
+        isUploading
+    } = useImageManager(data.images, data.thumbnail);
 
-    // Clean up empty strings from legacy data
+    // Sync back to parent state whenever images change
     useEffect(() => {
-        if (data.images.some(img => img === '')) {
-            updateData({ images: data.images.filter(img => img !== '') });
+        const { thumbnail, images: album } = getFinalData();
+        // Only update if data actually changed to avoid infinite loops
+        if (thumbnail !== data.thumbnail || JSON.stringify(album) !== JSON.stringify(data.images)) {
+            updateData({ thumbnail, images: album });
         }
-    }, [data.images, updateData]);
-
-    const uploadFile = async (file: File): Promise<string | null> => {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const response = await fetch(`${apiUrl}/upload`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error('Upload failed');
-            }
-
-            const result = await response.json();
-            return result.url;
-        } catch (error) {
-            console.error('Error uploading:', error);
-            toast.error('Tải ảnh thất bại. Vui lòng thử lại.');
-            return null;
-        }
-    };
-
-    const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            // Reuse index -1 for thumbnail loading state
-            setUploading(prev => [...prev, -1]);
-
-            const url = await uploadFile(file);
-            if (url) {
-                updateData({ thumbnail: url });
-            }
-
-            setUploading(prev => prev.filter(i => i !== -1));
-        }
-    };
-
-    const handleAlbumUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const files = Array.from(e.target.files);
-            const currentCount = data.images.length;
-            const remainingSlots = 20 - currentCount;
-
-            if (remainingSlots <= 0) {
-                toast.error('Bạn đã đạt giới hạn 20 ảnh chi tiết.');
-                return;
-            }
-
-            let filesToUpload = files;
-            if (files.length > remainingSlots) {
-                toast.error(`Bạn chỉ có thể thêm ${remainingSlots} ảnh nữa. Hệ thống sẽ chỉ tải lên ${remainingSlots} ảnh đầu tiên.`);
-                filesToUpload = files.slice(0, remainingSlots);
-            }
-
-            const startIdx = data.images.length;
-
-            // Add placeholders or loading state
-            const newLoadingIndices = filesToUpload.map((_, i) => startIdx + i);
-            setUploading(prev => [...prev, ...newLoadingIndices]);
-
-            const uploadedUrls: string[] = [];
-            for (const file of filesToUpload) {
-                const url = await uploadFile(file);
-                if (url) {
-                    uploadedUrls.push(url);
-                }
-            }
-
-            updateData({ images: [...data.images, ...uploadedUrls] });
-            setUploading(prev => prev.filter(i => !newLoadingIndices.includes(i)));
-        }
-    };
-
-    const handleRemoveImage = (index: number) => {
-        const newImages = data.images.filter((_, i) => i !== index);
-        updateData({ images: newImages });
-    };
-
-    const handleDragStart = (e: React.DragEvent, index: number) => {
-        setDraggedIndex(index);
-        e.dataTransfer.effectAllowed = 'move';
-        // Optional: set a custom drag image if needed, but default is usually fine
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault(); // Necessary to allow dropping
-        e.dataTransfer.dropEffect = 'move';
-    };
-
-    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-        e.preventDefault();
-        if (draggedIndex === null || draggedIndex === dropIndex) return;
-
-        const newImages = [...data.images];
-        const [draggedItem] = newImages.splice(draggedIndex, 1);
-        newImages.splice(dropIndex, 0, draggedItem);
-
-        updateData({ images: newImages });
-        setDraggedIndex(null);
-    };
-
-    const handleDragEnd = () => {
-        setDraggedIndex(null);
-    };
+    }, [images, getFinalData, updateData, data.thumbnail, data.images]);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-            {/* Thumbnail Section */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4" /> Ảnh đại diện (Thumbnail)
+                        <ImageIcon className="w-4 h-4" /> Hình ảnh xe
                     </label>
-                    <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded font-bold">Bắt buộc - 1 tấm</span>
+                    <span className="text-xs text-gray-400 font-medium">
+                        {images.length}/20 ảnh (Ảnh đầu tiên hoặc ảnh được đánh dấu sao sẽ làm ảnh đại diện)
+                    </span>
                 </div>
 
-                <div className="relative group">
-                    {data.thumbnail ? (
-                        <div className="relative w-full h-64 rounded-none overflow-hidden border border-gray-200 bg-gray-50 shadow-sm group-hover:border-[var(--jdm-red)] transition-all">
-                            <Image src={getImgUrl(data.thumbnail)} alt="Thumbnail Preview" fill className="object-cover" unoptimized={!shouldOptimizeImage(getImgUrl(data.thumbnail))} />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <label className="cursor-pointer px-4 py-2 bg-[var(--jdm-red)] text-white rounded-none font-bold hover:bg-red-700 transition-all shadow-lg flex items-center gap-2">
-                                    <UploadCloud className="w-5 h-5" /> Thay ảnh
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleThumbnailUpload} />
-                                </label>
-                            </div>
-                        </div>
-                    ) : uploading.includes(-1) ? (
-                        /* Skeleton loading state for thumbnail */
-                        <div className="relative w-full h-48 rounded-none overflow-hidden border-2 border-dashed border-gray-300 bg-gray-100">
-                            {/* Shimmer effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-full border-3 border-gray-300 border-t-[var(--jdm-red)] animate-spin" />
-                                    <ImageIcon className="w-6 h-6 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                                </div>
-                                <p className="text-sm text-gray-500 font-medium">Đang tải ảnh đại diện...</p>
-                            </div>
-                            {/* Progress bar */}
-                            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-200 overflow-hidden">
-                                <div className="h-full bg-[var(--jdm-red)] w-1/2" style={{
-                                    animation: 'thumbnailLoading 1.5s ease-in-out infinite',
-                                }} />
-                            </div>
-                            <style jsx>{`
-                                @keyframes thumbnailLoading {
-                                    0% { transform: translateX(-100%); }
-                                    100% { transform: translateX(300%); }
-                                }
-                            `}</style>
-                        </div>
-                    ) : (
-                        <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-none cursor-pointer hover:bg-gray-50 hover:border-[var(--jdm-red)] transition-all bg-gray-50 group">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <UploadCloud className="w-10 h-10 mb-3 text-gray-400 group-hover:text-[var(--jdm-red)] transition-colors" />
-                                <p className="mb-2 text-sm text-gray-500 group-hover:text-[var(--jdm-red)] font-medium">
-                                    Nhấn để tải ảnh hoặc kéo thả
-                                </p>
-                                <p className="text-xs text-gray-400">SVG, PNG, JPG (Tối đa 5MB)</p>
-                            </div>
-                            <input type="file" className="hidden" accept="image/*" onChange={handleThumbnailUpload} />
-                        </label>
-                    )}
-                </div>
-                {errors.thumbnail && <p className="text-red-500 text-xs mt-2">{errors.thumbnail}</p>}
-            </div>
-
-            {/* Album Section */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4" /> Album ảnh (Gầm, Máy, Nội thất...) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400 font-medium">
-                            {data.images.length}/20 ảnh
-                        </span>
-                        <label className={`cursor-pointer text-sm font-medium flex items-center gap-1 transition-colors ${data.images.length >= 20 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-[var(--jdm-red)]'
-                            }`}>
-                            <Plus className="w-4 h-4" /> Thêm ảnh
-                            <input
-                                type="file"
-                                multiple
-                                className="hidden"
-                                accept="image/*"
-                                onChange={handleAlbumUpload}
-                                disabled={data.images.length >= 20}
-                            />
-                        </label>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {/* Render uploaded images */}
-                    {data.images.map((img, idx) => (
-                        <div
-                            key={`img-${idx}`}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, idx)}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, idx)}
-                            onDragEnd={handleDragEnd}
-                            className={`relative aspect-square rounded-none overflow-hidden border border-gray-200 group hover:border-[var(--jdm-red)] transition-all cursor-move ${draggedIndex === idx ? 'opacity-50 ring-2 ring-[var(--jdm-red)]' : 'bg-white'
-                                }`}
-                        >
-                            {img ? (
-                                <Image src={getImgUrl(img)} alt={`Album ${idx}`} fill className="object-cover" unoptimized={!shouldOptimizeImage(getImgUrl(img))} />
-                            ) : (
-                                <div className="w-full h-full bg-gray-50 flex items-center justify-center">
-                                    <Loader2 className="w-6 h-6 text-gray-300 animate-spin" />
-                                </div>
-                            )}
-                            <button
-                                onClick={() => handleRemoveImage(idx)}
-                                className="absolute top-2 right-2 p-1.5 bg-[var(--jdm-red)] text-white rounded-none transition-all hover:bg-red-700 shadow-sm cursor-pointer"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ))}
-
-                    {/* Skeleton placeholders for uploading images */}
-                    {uploading.filter(i => i >= 0).map((loadingIdx) => (
-                        <div
-                            key={`skeleton-${loadingIdx}`}
-                            className="relative aspect-square rounded-none overflow-hidden border border-gray-200 bg-gray-100"
-                        >
-                            {/* Shimmer skeleton effect */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
-                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                                <div className="relative">
-                                    <div className="w-10 h-10 rounded-full border-2 border-gray-300 border-t-[var(--jdm-red)] animate-spin" />
-                                    <ImageIcon className="w-5 h-5 text-gray-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                                </div>
-                                <span className="text-xs text-gray-500 font-medium">Đang tải...</span>
-                            </div>
-                            {/* Progress bar animation */}
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 overflow-hidden">
-                                <div className="h-full bg-[var(--jdm-red)] animate-[loading_1.5s_ease-in-out_infinite] w-1/2" style={{
-                                    animation: 'loading 1.5s ease-in-out infinite',
-                                }} />
-                            </div>
-                            <style jsx>{`
-                                @keyframes loading {
-                                    0% { transform: translateX(-100%); }
-                                    100% { transform: translateX(300%); }
-                                }
-                            `}</style>
-                        </div>
-                    ))}
-
-                    {/* Add more button */}
-                    {data.images.length + uploading.filter(i => i >= 0).length < 20 && (
-                        <label className="aspect-square border-2 border-dashed border-gray-300 rounded-none flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[var(--jdm-red)] transition-all bg-gray-50 text-gray-400 hover:text-[var(--jdm-red)]">
-                            <UploadCloud className="w-8 h-8 mb-2" />
-                            <span className="text-xs font-medium">Thêm ảnh</span>
-                            <input type="file" multiple className="hidden" accept="image/*" onChange={handleAlbumUpload} />
-                        </label>
-                    )}
-                </div>
-                {errors.images && <p className="text-red-500 text-xs mt-2">{errors.images}</p>}
+                <UniversalImageManager
+                    images={images}
+                    onAddImages={addImages}
+                    onRemoveImage={removeImage}
+                    onSetThumbnail={setThumbnail}
+                    onReorder={reorderImages}
+                />
+                
+                {(errors.thumbnail || errors.images) && (
+                    <p className="text-red-500 text-xs mt-2">{errors.thumbnail || errors.images}</p>
+                )}
+                
+                {isUploading && (
+                    <p className="text-blue-500 text-xs animate-pulse">Đang tải ảnh lên máy chủ, vui lòng đợi...</p>
+                )}
             </div>
 
             {/* Contact Info Section */}
             <div className="space-y-4">
+
                 <h3 className="font-bold text-gray-900 border-b border-gray-100 pb-2 mb-4">Thông tin liên hệ & Chi tiết bổ sung</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
