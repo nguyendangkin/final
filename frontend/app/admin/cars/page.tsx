@@ -153,6 +153,15 @@ export default function AdminCars() {
             if (res.ok) {
                 setCars(prev => prev.filter(c => c.id !== carId));
                 toast.success('Đã xóa xe thành công.');
+                // Revalidate home page cache
+                fetch('/api/revalidate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-revalidate-secret': process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || ''
+                    },
+                    body: JSON.stringify({ path: '/' })
+                }).catch(err => console.error('Revalidation failed:', err));
             } else {
                 toast.error('Có lỗi xảy ra khi xóa xe.');
             }
