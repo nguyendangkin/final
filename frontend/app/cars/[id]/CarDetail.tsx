@@ -21,6 +21,11 @@ export default function CarDetail({ car }: CarDetailProps) {
     const [currentUser, setCurrentUser] = useState<any>(null);
     const isOwner = currentUser && car.seller?.id === currentUser.id;
 
+    // Use updatedAt or latest editHistory for cache busting
+    const lastModified = car.editHistory && car.editHistory.length > 0 
+        ? new Date(car.editHistory[car.editHistory.length - 1]).getTime() 
+        : (car.updatedAt ? new Date(car.updatedAt).getTime() : Date.now());
+
     useEffect(() => {
         const token = localStorage.getItem('jwt_token');
         if (token) {
@@ -58,8 +63,10 @@ export default function CarDetail({ car }: CarDetailProps) {
     // MERGE: Ensure thumbnail is the first image if it exists
     const rawImages = Array.isArray(car.images) && car.images.length > 0 ? car.images : [];
 
-    // Process images with thumbnail priority
-    let images = car.thumbnail ? [car.thumbnail, ...rawImages.filter((img: string) => img !== car.thumbnail)] : rawImages;
+    // Process images with thumbnail priority and cache busting
+    let baseImages = car.thumbnail ? [car.thumbnail, ...rawImages.filter((img: string) => img !== car.thumbnail)] : rawImages;
+    
+    let images = baseImages.map((img: string) => getImgUrl(img, lastModified));
 
     // Fallback if no images
     if (images.length === 0) {

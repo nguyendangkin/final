@@ -309,7 +309,7 @@ export default function SellClient() {
             }
 
             localStorage.removeItem('sell_draft');
-            router.push('/');
+            window.location.href = '/';
         } catch (error: any) {
             toast.error(`Lỗi: ${error.message}`);
         } finally {

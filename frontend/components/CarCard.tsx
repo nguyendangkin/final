@@ -8,13 +8,15 @@ interface CarCardProps {
 }
 
 export default function CarCard({ car }: CarCardProps) {
+    const lastModified = car.updatedAt ? new Date(car.updatedAt).getTime() : '';
+
     return (
         <Link href={`/cars/${generateCarSlug(car)}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-[var(--jdm-red)] h-full flex flex-col">
             {/* Image Container */}
             <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
                 {car.thumbnail || (car.images && car.images.length > 0) ? (
                     <Image
-                        src={getImgUrl(car.thumbnail || car.images[0])}
+                        src={getImgUrl(car.thumbnail || car.images[0], lastModified)}
                         alt={`${car.make} ${car.model}`}
                         fill
                         className="object-cover transition duration-700 group-hover:scale-110"

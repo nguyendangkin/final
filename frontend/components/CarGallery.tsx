@@ -18,17 +18,17 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
                 <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide aspect-[4/3] bg-gray-100">
                     {images.map((img: string, idx: number) => (
                         <div key={idx}
-                            className="min-w-full snap-center relative cursor-pointer aspect-[4/3]"
+                            className="min-w-full snap-center relative cursor-pointer aspect-[4/3] w-full h-full"
                             onClick={() => onOpenLightbox(idx)}
                         >
                             <Image
-                                src={getImgUrl(img)}
+                                src={img}
                                 alt={`Car image ${idx + 1}`}
                                 fill
                                 className="object-cover"
                                 sizes="(max-width: 1024px) 100vw, 50vw"
                                 priority={idx === 0}
-                                unoptimized={!shouldOptimizeImage(getImgUrl(img))}
+                                unoptimized={!shouldOptimizeImage(img)}
                             />
                         </div>
                     ))}
@@ -49,57 +49,57 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
             {/* DESKTOP: Masonry Grid */}
             <div className="hidden lg:grid grid-cols-4 grid-rows-2 gap-1 h-[400px] xl:h-[450px] cursor-pointer" onClick={() => onOpenLightbox(0)}>
                 {images.length === 1 && (
-                    <div className="col-span-4 row-span-2 relative group overflow-hidden">
-                        <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car" sizes="100vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                    <div className="col-span-4 row-span-2 relative group overflow-hidden w-full h-full">
+                        <Image src={images[0]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car" sizes="100vw" priority unoptimized={!shouldOptimizeImage(images[0])} />
                     </div>
                 )}
 
                 {images.length === 2 && (
                     <>
-                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                        <div className="col-span-2 row-span-2 relative group overflow-hidden w-full h-full">
+                            <Image src={images[0]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(images[0])} />
                         </div>
-                        <div className="col-span-2 row-span-2 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
-                            <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="50vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
+                        <div className="col-span-2 row-span-2 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
+                            <Image src={images[1]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="50vw" unoptimized={!shouldOptimizeImage(images[1])} />
                         </div>
                     </>
                 )}
 
                 {images.length === 3 && (
                     <>
-                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                        <div className="col-span-2 row-span-2 relative group overflow-hidden w-full h-full">
+                            <Image src={images[0]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(images[0])} />
                         </div>
-                        <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
-                            <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="25vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
+                        <div className="col-span-2 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
+                            <Image src={images[1]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="25vw" unoptimized={!shouldOptimizeImage(images[1])} />
                         </div>
-                        <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(2); }}>
-                            <Image src={getImgUrl(images[2])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" sizes="25vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[2]))} />
+                        <div className="col-span-2 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(2); }}>
+                            <Image src={images[2]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" sizes="25vw" unoptimized={!shouldOptimizeImage(images[2])} />
                         </div>
                     </>
                 )}
 
                 {images.length === 4 && (
                     <>
-                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                        <div className="col-span-2 row-span-2 relative group overflow-hidden w-full h-full">
+                            <Image src={images[0]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(images[0])} />
                         </div>
-                        <div className="col-span-2 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
-                            <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="25vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
+                        <div className="col-span-2 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
+                            <Image src={images[1]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="25vw" unoptimized={!shouldOptimizeImage(images[1])} />
                         </div>
-                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(2); }}>
-                            <Image src={getImgUrl(images[2])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" sizes="12vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[2]))} />
+                        <div className="col-span-1 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(2); }}>
+                            <Image src={images[2]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" sizes="12vw" unoptimized={!shouldOptimizeImage(images[2])} />
                         </div>
-                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(3); }}>
-                            <Image src={getImgUrl(images[3])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 4" sizes="12vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[3]))} />
+                        <div className="col-span-1 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(3); }}>
+                            <Image src={images[3]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 4" sizes="12vw" unoptimized={!shouldOptimizeImage(images[3])} />
                         </div>
                     </>
                 )}
 
                 {images.length >= 5 && (
                     <>
-                        <div className="col-span-2 row-span-2 relative group overflow-hidden">
-                            <Image src={getImgUrl(images[0])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(getImgUrl(images[0]))} />
+                        <div className="col-span-2 row-span-2 relative group overflow-hidden w-full h-full">
+                            <Image src={images[0]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 1" sizes="50vw" priority unoptimized={!shouldOptimizeImage(images[0])} />
                             {status === 'SOLD' && (
                                 <div className="absolute top-4 left-4 z-10">
                                     <span className="bg-emerald-600 text-white px-3 py-1 text-xs font-bold uppercase tracking-wider rounded shadow-sm">
@@ -108,17 +108,17 @@ export default function CarGallery({ images, status, onOpenLightbox }: CarGaller
                                 </div>
                             )}
                         </div>
-                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
-                            <Image src={getImgUrl(images[1])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="12vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[1]))} />
+                        <div className="col-span-1 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(1); }}>
+                            <Image src={images[1]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 2" sizes="12vw" unoptimized={!shouldOptimizeImage(images[1])} />
                         </div>
-                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(2); }}>
-                            <Image src={getImgUrl(images[2])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" sizes="12vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[2]))} />
+                        <div className="col-span-1 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(2); }}>
+                            <Image src={images[2]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 3" sizes="12vw" unoptimized={!shouldOptimizeImage(images[2])} />
                         </div>
-                        <div className="col-span-1 row-span-1 relative group overflow-hidden" onClick={(e) => { e.stopPropagation(); onOpenLightbox(3); }}>
-                            <Image src={getImgUrl(images[3])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 4" sizes="12vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[3]))} />
+                        <div className="col-span-1 row-span-1 relative group overflow-hidden w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(3); }}>
+                            <Image src={images[3]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 4" sizes="12vw" unoptimized={!shouldOptimizeImage(images[3])} />
                         </div>
-                        <div className="col-span-1 row-span-1 relative group overflow-hidden cursor-pointer" onClick={(e) => { e.stopPropagation(); onOpenLightbox(4); }}>
-                            <Image src={getImgUrl(images[4])} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 5" sizes="12vw" unoptimized={!shouldOptimizeImage(getImgUrl(images[4]))} />
+                        <div className="col-span-1 row-span-1 relative group overflow-hidden cursor-pointer w-full h-full" onClick={(e) => { e.stopPropagation(); onOpenLightbox(4); }}>
+                            <Image src={images[4]} fill className="object-cover transition-transform duration-700 group-hover:scale-105" alt="Car 5" sizes="12vw" unoptimized={!shouldOptimizeImage(images[4])} />
                             {images.length > 5 && (
                                 <div className="absolute inset-0 bg-black/50 hover:bg-black/40 transition-colors flex items-center justify-center z-10">
                                     <span className="text-white font-bold text-xl flex items-center gap-1">

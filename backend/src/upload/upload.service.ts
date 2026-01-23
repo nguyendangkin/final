@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import * as fs from 'fs';
 import * as path from 'path';
+import sharp from 'sharp';
 
 @Injectable()
 export class UploadService {
@@ -28,97 +29,117 @@ export class UploadService {
     }
   }
 
+  private async deleteFileWithRetry(
+    filePath: string,
+    maxRetries = 3,
+  ): Promise<void> {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        await fs.promises.unlink(filePath);
+        return;
+      } catch (error: any) {
+        if (i === maxRetries - 1) {
+          this.logger.warn(
+            `Failed to delete ${path.basename(filePath)} after ${maxRetries} retries: ${error.message}`,
+          );
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 100 * (i + 1)));
+      }
+    }
+  }
+
   /**
-   * Move a single file from temp to uploads folder
+   * Optimize and move a single file from temp to uploads folder
    * @param tempFilename The filename in the temp folder
    * @returns The new permanent URL or null if failed
    */
-  moveFileToPermanent(tempFilename: string): string | null {
+  async moveAndOptimizeFile(tempFilename: string): Promise<string | null> {
     try {
-      // Sanitize filename to prevent directory traversal
       const safeFilename = path.basename(tempFilename);
       const tempPath = path.join(this.tempDir, safeFilename);
-      const permanentPath = path.join(this.uploadsDir, safeFilename);
+
+      // Use webp for better compression
+      const outputFilename = `${path.parse(safeFilename).name}.webp`;
+      const permanentPath = path.join(this.uploadsDir, outputFilename);
 
       if (!fs.existsSync(tempPath)) {
         this.logger.warn(`Temp file not found: ${safeFilename}`);
         return null;
       }
 
-      // Copy file then delete original (works across different volumes/devices)
-      // standard fs.rename fails with EXDEV across docker volumes
-      fs.copyFileSync(tempPath, permanentPath);
-      fs.unlinkSync(tempPath);
+      await sharp(tempPath)
+        .resize(1200, 1200, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .webp({ quality: 80 })
+        .toFile(permanentPath);
 
-      this.logger.log(`Moved file to permanent storage: ${safeFilename}`);
+      if (fs.existsSync(permanentPath)) {
+        await this.deleteFileWithRetry(tempPath);
+        this.logger.log(
+          `Optimized and moved to permanent storage: ${outputFilename}`,
+        );
+        return outputFilename;
+      }
 
-      return safeFilename;
+      return null;
     } catch (error) {
       this.logger.error(
-        `Failed to move file ${tempFilename}: ${error.message}`,
+        `Failed to process image ${tempFilename}: ${error.message}`,
       );
       return null;
     }
   }
 
   /**
-   * Move multiple files from temp to uploads folder
-   * @param urls Array of temp URLs (e.g., "http://localhost:3000/temp/abc123.jpg")
-   * @returns Array of permanent URLs (e.g., "http://localhost:3000/uploads/abc123.jpg")
+   * Synchronize images: move new ones to permanent, delete removed ones
    */
-  moveFilesToPermanent(urls: string[]): string[] {
-    const permanentUrls: string[] = [];
+  async syncImages(
+    oldUrls: string[] = [],
+    newUrls: string[] = [],
+  ): Promise<string[]> {
+    const finalUrls: string[] = [];
 
-    for (const url of urls) {
+    // 1. Process new images (those with /temp/ prefix)
+    for (const url of newUrls) {
       if (!url) continue;
 
-      // Extract filename from URL
-      // URL format: "http://domain/temp/filename.jpg" -> "filename.jpg"
-      const tempMatch = url.split('/temp/').pop();
-      if (tempMatch) {
-        const filename = path.basename(tempMatch);
-        const moved = this.moveFileToPermanent(filename);
-        if (moved) {
-          // Replace /temp/ with /uploads/ in the URL
-          const permanentUrl = url.replace('/temp/', '/uploads/');
-          permanentUrls.push(permanentUrl);
-        } else {
-          // If file doesn't exist in temp, check if it's already in uploads
-          // This handles re-uploads or already permanent files
-          const possiblePermanentUrl = url.replace('/temp/', '/uploads/');
-          const permanentPath = path.join(
-            this.uploadsDir,
-            path.basename(possiblePermanentUrl),
-          );
-
-          if (fs.existsSync(permanentPath)) {
-            permanentUrls.push(possiblePermanentUrl);
-          } else if (url.includes('/uploads/')) {
-            permanentUrls.push(url);
+      if (url.includes('/temp/')) {
+        const tempFilename = url.split('/temp/').pop();
+        if (tempFilename) {
+          const processedName = await this.moveAndOptimizeFile(tempFilename);
+          if (processedName) {
+            finalUrls.push(`/uploads/${processedName}`);
           }
         }
       } else if (url.includes('/uploads/')) {
-        // Already a permanent URL
-        permanentUrls.push(url);
+        // Keep existing permanent images
+        finalUrls.push(url);
       }
     }
 
-    return permanentUrls;
+    // 2. Identify and delete removed images
+    const newFilenames = finalUrls.map((url) => path.basename(url));
+    const imagesToDelete = oldUrls.filter((oldUrl) => {
+      if (!oldUrl) return false;
+      const oldFilename = path.basename(oldUrl);
+      return !newFilenames.includes(oldFilename);
+    });
+
+    if (imagesToDelete.length > 0) {
+      await this.deleteFiles(imagesToDelete);
+    }
+
+    return finalUrls;
   }
 
-  /**
-   * Cron job to clean up old temporary files
-   * Runs every 6 hours
-   */
   @Cron(CronExpression.EVERY_6_HOURS)
   async cleanupTempFiles(): Promise<void> {
     this.logger.log('Starting temp files cleanup...');
-
     try {
-      if (!fs.existsSync(this.tempDir)) {
-        this.logger.log('Temp directory does not exist, skipping cleanup');
-        return;
-      }
+      if (!fs.existsSync(this.tempDir)) return;
 
       const files = fs.readdirSync(this.tempDir);
       const now = Date.now();
@@ -126,23 +147,13 @@ export class UploadService {
       let deletedCount = 0;
 
       for (const file of files) {
-        try {
-          const filePath = path.join(this.tempDir, file);
-          const stats = fs.statSync(filePath);
-
-          // Check if file is older than max age
-          if (now - stats.mtimeMs > maxAgeMs) {
-            fs.unlinkSync(filePath);
-            deletedCount++;
-            this.logger.log(`Deleted old temp file: ${file}`);
-          }
-        } catch (error) {
-          this.logger.warn(
-            `Failed to process temp file ${file}: ${error.message}`,
-          );
+        const filePath = path.join(this.tempDir, file);
+        const stats = fs.statSync(filePath);
+        if (now - stats.mtimeMs > maxAgeMs) {
+          await fs.promises.unlink(filePath);
+          deletedCount++;
         }
       }
-
       this.logger.log(`Temp cleanup completed. Deleted ${deletedCount} files.`);
     } catch (error) {
       this.logger.error(`Temp cleanup failed: ${error.message}`);
@@ -150,47 +161,65 @@ export class UploadService {
   }
 
   /**
-   * Get the temp directory path
+   * Delete a single file by filename from temp or uploads
    */
-  getTempDir(): string {
-    return this.tempDir;
+  async deleteFile(filename: string, isTemp = true): Promise<boolean> {
+    try {
+      const safeName = path.basename(filename);
+      const filePath = path.join(
+        isTemp ? this.tempDir : this.uploadsDir,
+        safeName,
+      );
+      if (fs.existsSync(filePath)) {
+        await this.deleteFileWithRetry(filePath);
+        this.logger.log(
+          `Deleted ${isTemp ? 'temp' : 'permanent'} file: ${safeName}`,
+        );
+        return true;
+      }
+      return false;
+    } catch (error) {
+      this.logger.warn(`Failed to delete file ${filename}: ${error.message}`);
+      return false;
+    }
+  }
+
+  async deleteFiles(urls: string[]): Promise<void> {
+    for (const url of urls) {
+      if (!url) continue;
+      const filename = path.basename(url);
+      const isTemp = url.includes('/temp/');
+      await this.deleteFile(filename, isTemp);
+    }
   }
 
   /**
-   * Delete image files from disk based on their URLs
-   * @param urls Array of URLs or filenames
+   * Move multiple files from temp to permanent storage
+   * @param filenames Array of filenames or URLs
+   * @returns Array of permanent URLs
    */
-  deleteFiles(urls: string[]): void {
-    for (const url of urls) {
-      if (!url) continue;
+  async moveFilesToPermanent(filenames: string[]): Promise<string[]> {
+    const movedFiles: string[] = [];
+    for (const filename of filenames) {
+      if (!filename) continue;
 
-      try {
-        // Extract filename from URL (handles both /temp/ and /uploads/)
-        let filename = '';
-        if (url.includes('/uploads/')) {
-          filename = url.split('/uploads/').pop() || '';
-        } else if (url.includes('/temp/')) {
-          filename = url.split('/temp/').pop() || '';
-        } else {
-          filename = url; // Assume it's just a filename
-        }
+      // If it's already a permanent URL, keep it
+      if (filename.includes('/uploads/')) {
+        movedFiles.push(filename);
+        continue;
+      }
 
-        if (filename) {
-          const safeFilename = path.basename(filename);
-          const isTemp = url.includes('/temp/');
-          const filePath = path.join(
-            isTemp ? this.tempDir : this.uploadsDir,
-            safeFilename,
-          );
-
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            this.logger.log(`Deleted file: ${safeFilename} from ${isTemp ? 'temp' : 'uploads'}`);
-          }
-        }
-      } catch (error) {
-        this.logger.warn(`Failed to delete file ${url}: ${error.message}`);
+      // Extract filename if it was a URL
+      const baseName = path.basename(filename);
+      const moved = await this.moveAndOptimizeFile(baseName);
+      if (moved) {
+        movedFiles.push(`/uploads/${moved}`);
       }
     }
+    return movedFiles;
+  }
+
+  getTempDir(): string {
+    return this.tempDir;
   }
 }

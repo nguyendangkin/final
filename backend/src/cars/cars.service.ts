@@ -48,32 +48,12 @@ export class CarsService {
 
   /**
    * Delete image files associated with a car from the uploads folder
-   * @param excludeFiles List of full URLs to exclude from deletion
    */
-  private async deleteCarImages(
-    car: Car,
-    excludeFiles: string[] = [],
-  ): Promise<void> {
-    const imagesToDelete: string[] = [];
-
-    // Collect all image URLs
-    if (car.images && Array.isArray(car.images)) {
-      imagesToDelete.push(...car.images);
-    }
-    if (car.thumbnail) {
-      imagesToDelete.push(car.thumbnail);
-    }
-
-    if (imagesToDelete.length === 0) return;
-
-    // Filter out excluded files
-    const filteredImages = imagesToDelete.filter((imageUrl) => {
-      const filename = path.basename(imageUrl);
-      return !excludeFiles.some((exclude) => exclude && exclude.includes(filename));
-    });
-
-    if (filteredImages.length > 0) {
-      this.uploadService.deleteFiles(filteredImages);
+  private async deleteCarImages(car: Car): Promise<void> {
+    const urls = [...(car.images || [])];
+    if (car.thumbnail) urls.push(car.thumbnail);
+    if (urls.length > 0) {
+      await this.uploadService.deleteFiles(urls);
     }
   }
 
@@ -402,7 +382,7 @@ export class CarsService {
 
     try {
       if (createCarDto.images && createCarDto.images.length > 0) {
-        permanentImages = this.uploadService.moveFilesToPermanent(
+        permanentImages = await this.uploadService.moveFilesToPermanent(
           createCarDto.images,
         );
         this.logger.log(
@@ -411,7 +391,7 @@ export class CarsService {
       }
 
       if (createCarDto.thumbnail) {
-        const movedThumbnails = this.uploadService.moveFilesToPermanent([
+        const movedThumbnails = await this.uploadService.moveFilesToPermanent([
           createCarDto.thumbnail,
         ]);
         if (movedThumbnails.length > 0) {
@@ -463,7 +443,7 @@ export class CarsService {
         this.logger.warn(
           `Cleanup: Deleting ${filesToCleanup.length} files due to create failure: ${error.message}`,
         );
-        this.uploadService.deleteFiles(filesToCleanup);
+        await this.uploadService.deleteFiles(filesToCleanup);
       }
       throw error;
     }
@@ -495,10 +475,14 @@ export class CarsService {
 
     // Handle Image Updates: Move new images from temp to permanent
     if (updates.images && Array.isArray(updates.images)) {
-      updates.images = this.uploadService.moveFilesToPermanent(updates.images);
+      updates.images = await this.uploadService.moveFilesToPermanent(
+        updates.images,
+      );
     }
     if (updates.thumbnail) {
-      const moved = this.uploadService.moveFilesToPermanent([updates.thumbnail]);
+      const moved = await this.uploadService.moveFilesToPermanent([
+        updates.thumbnail,
+      ]);
       if (moved.length > 0) {
         updates.thumbnail = moved[0];
       }
@@ -524,23 +508,44 @@ export class CarsService {
     const currentImages = updatedCar.images || [];
     const currentThumbnail = updatedCar.thumbnail;
 
-    const imagesToRemove = oldImages.filter(
-      (oldImg) => !currentImages.includes(oldImg),
-    );
+    // Robust comparison: compare only filenames to avoid full URL vs relative path mismatches
+    const getCurrentFilenames = (urls: string[]) =>
+      urls
+        .map((url) => {
+          try {
+            return path.basename(url);
+          } catch (e) {
+            return url;
+          }
+        })
+        .filter(Boolean);
+
+    const currentFilenames = getCurrentFilenames([
+      ...currentImages,
+      ...(currentThumbnail ? [currentThumbnail] : []),
+    ]);
+
+    const imagesToRemove = oldImages.filter((oldImg) => {
+      if (!oldImg) return false;
+      const oldFilename = path.basename(oldImg);
+      return !currentFilenames.includes(oldFilename);
+    });
 
     if (
       oldThumbnail &&
-      oldThumbnail !== currentThumbnail &&
-      !currentImages.includes(oldThumbnail)
+      !currentFilenames.includes(path.basename(oldThumbnail))
     ) {
       imagesToRemove.push(oldThumbnail);
     }
 
-    if (imagesToRemove.length > 0) {
+    // Filter duplicates in imagesToRemove
+    const uniqueImagesToRemove = Array.from(new Set(imagesToRemove));
+
+    if (uniqueImagesToRemove.length > 0) {
       this.logger.log(
-        `Cleanup: Deleting ${imagesToRemove.length} replaced images for car ${id}`,
+        `Cleanup: Deleting ${uniqueImagesToRemove.length} replaced images for car ${id}`,
       );
-      this.uploadService.deleteFiles(imagesToRemove);
+      await this.uploadService.deleteFiles(uniqueImagesToRemove);
     }
 
     // Sync tags: Add new tags usage
@@ -588,35 +593,8 @@ export class CarsService {
       );
     }
 
-    if (car.status === CarStatus.SOLD) {
-      throw new BadRequestException('Car is already sold');
-    }
-
-    // 1. Archive to SoldCars
-    await this.soldCarsService.create(car);
-
-    // 2. Delete the car listing (includes images deletion and tag decrement)
-    // NOTE: Our deleteCarImages logic deletes physical files.
-    // If we want to KEEP the thumbnail for history, we must be careful.
-    // The Plan said: "SoldCar... thumbnail (String)".
-    // If we delete the images from disk, the thumbnail URL in SoldCar will be broken.
-    // So we must modify deleteCarImages to NOT delete the thumbnail if we are selling it?
-    // Or deeper: "Delete and Archive" usually means we don't need the other images, but we need the main one.
-    // Let's modify logic: Copy thumbnail to a permanent location? Or just Don't delete it?
-    // Simpler: Copy the thumbnail file to a separate 'sold-history' folder? or just rename it?
-    // Or just don't delete the thumbnail file.
-
-    // Let's customize deleteCarImages or handle it here.
-    // We will call `deleteCarImages` but EXCLUDE the thumbnail loop if we are marking as sold?
-    // Accessing private method is hard inside the same class without refactoring.
-    // Let's refactor deleteCarImages to accept an exclusion list.
-    await this.deleteCarImages(car);
-
-    // Decrement tag usage counts
-    await this.tagsService.syncTagsFromCar(car, false);
-
-    // Remove from DB
-    await this.carsRepository.remove(car);
+    // Per user request: Delete completely instead of archiving
+    await this.remove(id, user);
   }
 
   async deleteAllBySeller(sellerId: string): Promise<void> {
@@ -1407,7 +1385,9 @@ export class CarsService {
 
     // Handle years sort (DESC)
     if (finalOptions.year) {
-      finalOptions.year.sort((a: string, b: string) => parseInt(b) - parseInt(a));
+      finalOptions.year.sort(
+        (a: string, b: string) => parseInt(b) - parseInt(a),
+      );
     }
 
     return {
