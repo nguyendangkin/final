@@ -473,86 +473,100 @@ export class CarsService {
       updates.price = updates.price.toString();
     }
 
-    // Handle Image Updates: Move new images from temp to permanent
-    if (updates.images && Array.isArray(updates.images)) {
-      updates.images = await this.uploadService.moveFilesToPermanent(
-        updates.images,
-      );
-    }
-    if (updates.thumbnail) {
-      const moved = await this.uploadService.moveFilesToPermanent([
-        updates.thumbnail,
-      ]);
-      if (moved.length > 0) {
-        updates.thumbnail = moved[0];
+    const movedImages: string[] = [];
+
+    try {
+      // Handle Image Updates: Move new images from temp to permanent
+      if (updates.images && Array.isArray(updates.images)) {
+        updates.images = await this.uploadService.moveFilesToPermanent(
+          updates.images,
+        );
+        movedImages.push(...updates.images);
       }
-    }
+      if (updates.thumbnail) {
+        const moved = await this.uploadService.moveFilesToPermanent([
+          updates.thumbnail,
+        ]);
+        if (moved.length > 0) {
+          updates.thumbnail = moved[0];
+          movedImages.push(...moved);
+        }
+      }
 
-    // Track edit history
-    const editTimestamp = new Date().toISOString();
-    if (!car.editHistory || car.editHistory.length === 0) {
-      car.editHistory = [editTimestamp];
-    } else {
-      car.editHistory = [...car.editHistory, editTimestamp];
-    }
+      // Track edit history
+      const editTimestamp = new Date().toISOString();
+      if (!car.editHistory || car.editHistory.length === 0) {
+        car.editHistory = [editTimestamp];
+      } else {
+        car.editHistory = [...car.editHistory, editTimestamp];
+      }
 
-    Object.assign(car, updates);
+      Object.assign(car, updates);
 
-    this.logger.log(
-      `Updating car ${id} with notableFeatures: ${JSON.stringify(updates.notableFeatures)}`,
-    );
-
-    const updatedCar = await this.carsRepository.save(car);
-
-    // CLEANUP: Delete old images that are no longer referenced
-    const currentImages = updatedCar.images || [];
-    const currentThumbnail = updatedCar.thumbnail;
-
-    // Robust comparison: compare only filenames to avoid full URL vs relative path mismatches
-    const getCurrentFilenames = (urls: string[]) =>
-      urls
-        .map((url) => {
-          try {
-            return path.basename(url);
-          } catch (e) {
-            return url;
-          }
-        })
-        .filter(Boolean);
-
-    const currentFilenames = getCurrentFilenames([
-      ...currentImages,
-      ...(currentThumbnail ? [currentThumbnail] : []),
-    ]);
-
-    const imagesToRemove = oldImages.filter((oldImg) => {
-      if (!oldImg) return false;
-      const oldFilename = path.basename(oldImg);
-      return !currentFilenames.includes(oldFilename);
-    });
-
-    if (
-      oldThumbnail &&
-      !currentFilenames.includes(path.basename(oldThumbnail))
-    ) {
-      imagesToRemove.push(oldThumbnail);
-    }
-
-    // Filter duplicates in imagesToRemove
-    const uniqueImagesToRemove = Array.from(new Set(imagesToRemove));
-
-    if (uniqueImagesToRemove.length > 0) {
       this.logger.log(
-        `Cleanup: Deleting ${uniqueImagesToRemove.length} replaced images for car ${id}`,
+        `Updating car ${id} with notableFeatures: ${JSON.stringify(updates.notableFeatures)}`,
       );
-      await this.uploadService.deleteFiles(uniqueImagesToRemove);
+
+      const updatedCar = await this.carsRepository.save(car);
+
+      // CLEANUP: Delete old images that are no longer referenced
+      const currentImages = updatedCar.images || [];
+      const currentThumbnail = updatedCar.thumbnail;
+
+      // Robust comparison: compare only filenames to avoid full URL vs relative path mismatches
+      const getCurrentFilenames = (urls: string[]) =>
+        urls
+          .map((url) => {
+            try {
+              return path.basename(url);
+            } catch (e) {
+              return url;
+            }
+          })
+          .filter(Boolean);
+
+      const currentFilenames = getCurrentFilenames([
+        ...currentImages,
+        ...(currentThumbnail ? [currentThumbnail] : []),
+      ]);
+
+      const imagesToRemove = oldImages.filter((oldImg) => {
+        if (!oldImg) return false;
+        const oldFilename = path.basename(oldImg);
+        return !currentFilenames.includes(oldFilename);
+      });
+
+      if (
+        oldThumbnail &&
+        !currentFilenames.includes(path.basename(oldThumbnail))
+      ) {
+        imagesToRemove.push(oldThumbnail);
+      }
+
+      // Filter duplicates in imagesToRemove
+      const uniqueImagesToRemove = Array.from(new Set(imagesToRemove));
+
+      if (uniqueImagesToRemove.length > 0) {
+        this.logger.log(
+          `Cleanup: Deleting ${uniqueImagesToRemove.length} replaced images for car ${id}`,
+        );
+        await this.uploadService.deleteFiles(uniqueImagesToRemove);
+      }
+
+      // Sync tags: Add new tags usage
+      // We do this AFTER saving so we have stored the new values (and validation passed)
+      await this.tagsService.syncTagsFromCar(updatedCar, true);
+
+      return updatedCar;
+    } catch (error) {
+      if (movedImages.length > 0) {
+        this.logger.warn(
+          `Cleanup: Deleting ${movedImages.length} newly moved images due to update failure`,
+        );
+        await this.uploadService.deleteFiles(movedImages);
+      }
+      throw error;
     }
-
-    // Sync tags: Add new tags usage
-    // We do this AFTER saving so we have stored the new values (and validation passed)
-    await this.tagsService.syncTagsFromCar(updatedCar, true);
-
-    return updatedCar;
   }
 
   async remove(id: string, user: User): Promise<void> {

@@ -65,11 +65,12 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
   };
 
   const addImages = useCallback(async (files: File[]) => {
+    const hasExistingThumbnail = images.some(img => img.isThumbnail);
     const newImages: ManagedImage[] = files.map((file, idx) => ({
       id: `new-${Date.now()}-${idx}`,
       url: URL.createObjectURL(file), // Local preview
       isNew: true,
-      isThumbnail: false,
+      isThumbnail: !hasExistingThumbnail && idx === 0,
       uploading: true,
     }));
 
