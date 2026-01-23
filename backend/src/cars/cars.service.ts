@@ -6,6 +6,7 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, MoreThan, In } from 'typeorm';
 import { Car, CarStatus } from './entities/car.entity';
@@ -34,7 +35,23 @@ export class CarsService {
     private tagsService: TagsService,
     private soldCarsService: SoldCarsService,
     private uploadService: UploadService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
+
+  private async clearCache(carId?: string) {
+    try {
+      if (carId) {
+        await this.cacheManager.del(`/cars/${carId}`);
+      }
+      // Also clear all findAll results because they usually have query params
+      // CacheManager in Nest usually caches by full URL.
+      // Easiest is to clear common prefixes if supported, or rely on TTL.
+      // Since we don't have glob deletion easily in memory cache, we might need to be specific
+      // or just wait for TTL. But findOne is the critical one for "still accessible".
+    } catch (error) {
+      this.logger.error(`Error clearing cache: ${error.message}`);
+    }
+  }
 
   async getSellerStats(
     sellerId: string,
@@ -436,6 +453,8 @@ export class CarsService {
       // Sync tags to Tag table (increment usageCount)
       await this.tagsService.syncTagsFromCar(savedCar, true);
 
+      await this.clearCache();
+
       return savedCar;
     } catch (error) {
       // CLEANUP: If something went wrong after moving files, delete them to avoid orphans
@@ -560,6 +579,8 @@ export class CarsService {
       // We do this AFTER saving so we have stored the new values (and validation passed)
       await this.tagsService.syncTagsFromCar(updatedCar, true);
 
+      await this.clearCache(id);
+
       return updatedCar;
     } catch (error) {
       if (movedImages.length > 0) {
@@ -597,6 +618,7 @@ export class CarsService {
     await this.tagsService.syncTagsFromCar(car, false);
 
     await this.carsRepository.remove(car);
+    await this.clearCache(id);
   }
 
   async markAsSold(id: string, user: User): Promise<void> {
@@ -713,6 +735,7 @@ export class CarsService {
 
     car.status = CarStatus.AVAILABLE;
     await this.carsRepository.save(car);
+    await this.clearCache(id);
 
     // Notify user
     await this.notificationsService.createNotification(
@@ -744,6 +767,7 @@ export class CarsService {
 
     // Remove from DB
     await this.carsRepository.remove(car);
+    await this.clearCache(id);
   }
 
   async getBrands(): Promise<string[]> {
@@ -1481,6 +1505,19 @@ export class CarsService {
       const existingView = await queryBuilder.getOne();
 
       if (!existingView) {
+        // Ensure car still exists before incrementing to avoid FK constraint error
+        const carExists = await this.carsRepository.findOne({
+          where: { id: carId },
+          select: ['id'],
+        });
+
+        if (!carExists) {
+          this.logger.warn(
+            `Attempted to increment view for non-existent car: ${carId}`,
+          );
+          return;
+        }
+
         await this.dataSource.transaction(async (manager) => {
           const view = new CarView();
           view.carId = carId;
