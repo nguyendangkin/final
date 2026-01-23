@@ -20,12 +20,12 @@ async function getCars(searchParams: any) {
     }
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/cars?${params.toString()}`, { cache: 'no-store' });
-    if (!res.ok) return [];
+    if (!res.ok) return { data: [], meta: { totalPages: 0 } };
     const data = await res.json();
-    return data.data || [];
+    return data;
   } catch (error) {
     console.error("Failed to fetch cars", error);
-    return [];
+    return { data: [], meta: { totalPages: 0 } };
   }
 }
 
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const resolvedSearchParams = await searchParams;
-  const cars = await getCars(resolvedSearchParams);
+  const carResponse = await getCars(resolvedSearchParams);
 
   return (
     <div className="min-h-screen bg-white text-black p-6 pt-20 selection:bg-red-500/30">
@@ -49,8 +49,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ [
       <div className="max-w-7xl mx-auto">
 
 
-        <CarFeed initialCars={cars} />
+        <CarFeed initialCars={carResponse.data} initialMeta={carResponse.meta} />
       </div>
     </div>
   );
 }
+

@@ -22,6 +22,7 @@ function HeaderContent() {
     const [isBrandsOpen, setIsBrandsOpen] = useState(false);
     const [isSearchOptionsOpen, setIsSearchOptionsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
 
@@ -43,7 +44,7 @@ function HeaderContent() {
 
 
     // Fetch smart filters based on current selections
-    const fetchSmartFilters = async (filters: Record<string, string>, price?: { min: string; max: string }) => {
+    const fetchSmartFilters = async (filters: Record<string, string>, price?: { min: string; max: string }, query?: string) => {
         setIsLoading(true);
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
@@ -52,7 +53,7 @@ function HeaderContent() {
         // Add price range if set
         if (price?.min) params.append('minPrice', price.min);
         if (price?.max) params.append('maxPrice', price.max);
-        if (searchQuery) params.append('q', searchQuery);
+        if (query) params.append('q', query);
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
@@ -68,7 +69,7 @@ function HeaderContent() {
     // Initial load - get all available options
     useEffect(() => {
         if (isSearchOptionsOpen && !smartFilters) {
-            fetchSmartFilters({}, debouncedPriceRange);
+            fetchSmartFilters({}, debouncedPriceRange, debouncedSearchQuery);
         }
     }, [isSearchOptionsOpen]);
 
@@ -81,12 +82,22 @@ function HeaderContent() {
         return () => clearTimeout(timer);
     }, [priceRange]);
 
-    // Re-fetch when filters or debounced price range change
+    // Debounce search query
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // Re-fetch when filters, debounced price range or debounced search query change
     useEffect(() => {
         if (isSearchOptionsOpen || isMobileFilterOpen) {
-            fetchSmartFilters(selectedFilters, debouncedPriceRange);
+            fetchSmartFilters(selectedFilters, debouncedPriceRange, debouncedSearchQuery);
         }
-    }, [selectedFilters, debouncedPriceRange]);
+    }, [selectedFilters, debouncedPriceRange, debouncedSearchQuery]);
+
 
     // Select a filter value
     const selectFilter = (category: string, value: string) => {

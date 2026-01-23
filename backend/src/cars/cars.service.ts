@@ -1207,184 +1207,199 @@ export class CarsService {
       });
     }
 
-    const cars = await qb.getMany();
+    // --- OPTIMIZATION: Use SQL Aggregation instead of loading all entities ---
+    // 1. Get total count and ranges
+    const statsQuery = qb
+      .clone()
+      .select('COUNT(car.id)', 'total')
+      .addSelect('MIN(CAST(car.price AS BIGINT))', 'minPrice')
+      .addSelect('MAX(CAST(car.price AS BIGINT))', 'maxPrice')
+      .addSelect('MIN(car.year)', 'minYear')
+      .addSelect('MAX(car.year)', 'maxYear')
+      .addSelect('MIN(car.mileage)', 'minMileage')
+      .addSelect('MAX(car.mileage)', 'maxMileage');
 
-    // Collect all unique values for each field
-    const options: Record<string, Set<string>> = {
-      make: new Set(),
-      model: new Set(),
-      trim: new Set(),
-      year: new Set(),
-      chassisCode: new Set(),
-      engineCode: new Set(),
-      transmission: new Set(),
-      drivetrain: new Set(),
-      condition: new Set(),
-      paperwork: new Set(),
-      mods: new Set(),
-      mods_exterior: new Set(),
-      mods_interior: new Set(),
-      mods_engine: new Set(),
-      mods_footwork: new Set(),
-      location: new Set(),
-      notableFeatures: new Set(),
+    const stats = await statsQuery.getRawOne();
+    const totalCount = parseInt(stats.total || '0');
+
+    if (totalCount === 0) {
+      return {
+        options: {
+          make: [],
+          model: [],
+          trim: [],
+          year: [],
+          chassisCode: [],
+          engineCode: [],
+          transmission: [],
+          drivetrain: [],
+          condition: [],
+          paperwork: [],
+          location: [],
+          notableFeatures: [],
+          mods: [],
+          mods_exterior: [],
+          mods_interior: [],
+          mods_engine: [],
+          mods_footwork: [],
+        },
+        ranges: {
+          price: { min: 0, max: 0 },
+          year: { min: 1980, max: new Date().getFullYear() },
+          mileage: { min: 0, max: 0 },
+        },
+        count: 0,
+        counts: { total: 0 },
+      };
+    }
+
+    // 2. Get distinct values for simple columns using parallel queries
+    const simpleColumns = [
+      'make',
+      'model',
+      'trim',
+      'year',
+      'chassisCode',
+      'engineCode',
+      'transmission',
+      'drivetrain',
+      'condition',
+      'paperwork',
+      'location',
+    ];
+
+    const getDistinctValues = async (column: string) => {
+      const res = await qb
+        .clone()
+        .select(`DISTINCT car.${column}`, 'value')
+        .where(`car.${column} IS NOT NULL`)
+        // Re-apply common filters from qb
+        .getRawMany();
+      return {
+        column,
+        values: res
+          .map((r) => r.value?.toString().toUpperCase())
+          .filter(Boolean)
+          .sort(),
+      };
     };
 
-    let minPrice = Infinity;
-    let maxPrice = 0;
-    let minYear = Infinity;
-    let maxYear = 0;
-    let minMileage = Infinity;
-    let maxMileage = 0;
+    // 3. Special handling for array/JSON columns
+    const getNotableFeatures = async () => {
+      // In Postgres, we can use unnest for simple-array (which is stored as text with comma)
+      // but simple-array is tricky in raw SQL. Let's use getRawMany for just this column.
+      const res = await qb
+        .clone()
+        .select('car.notableFeatures', 'nf')
+        .where('car.notableFeatures IS NOT NULL')
+        .getRawMany();
 
-    for (const car of cars) {
-      if (car.make) options.make.add(car.make.toUpperCase());
-      if (car.model) options.model.add(car.model.toUpperCase());
-      if (car.trim) options.trim.add(car.trim.toUpperCase());
-      if (car.year) options.year.add(car.year.toString());
-      if (car.chassisCode)
-        options.chassisCode.add(car.chassisCode.toUpperCase());
-      if (car.engineCode) options.engineCode.add(car.engineCode.toUpperCase());
-      if (car.transmission)
-        options.transmission.add(car.transmission.toUpperCase());
-      if (car.drivetrain) options.drivetrain.add(car.drivetrain.toUpperCase());
-      if (car.condition) options.condition.add(car.condition.toUpperCase());
-      if (car.paperwork) options.paperwork.add(car.paperwork.toUpperCase());
-      if (car.location) options.location.add(car.location.toUpperCase());
+      const set = new Set<string>();
+      res.forEach((r) => {
+        if (typeof r.nf === 'string') {
+          r.nf.split(',').forEach((s) => {
+            const val = s.trim().toUpperCase();
+            if (val) set.add(val);
+          });
+        }
+      });
+      return Array.from(set).sort();
+    };
 
-      // Track ranges
-      const price = parseInt(car.price);
-      if (!isNaN(price)) {
-        if (price < minPrice) minPrice = price;
-        if (price > maxPrice) maxPrice = price;
-      }
-      if (car.year) {
-        if (car.year < minYear) minYear = car.year;
-        if (car.year > maxYear) maxYear = car.year;
-      }
-      if (car.mileage) {
-        if (car.mileage < minMileage) minMileage = car.mileage;
-        if (car.mileage > maxMileage) maxMileage = car.mileage;
-      }
+    const getModsStats = async () => {
+      const res = await qb
+        .clone()
+        .select('car.mods', 'mods')
+        .where('car.mods IS NOT NULL')
+        .getRawMany();
 
-      // Handle mods
-      if (car.mods) {
-        if (Array.isArray(car.mods)) {
-          car.mods.forEach((mod: any) => {
-            const modVal =
+      const options = {
+        mods: new Set<string>(),
+        mods_exterior: new Set<string>(),
+        mods_interior: new Set<string>(),
+        mods_engine: new Set<string>(),
+        mods_footwork: new Set<string>(),
+      };
+
+      res.forEach((r) => {
+        const mods = r.mods;
+        if (Array.isArray(mods)) {
+          mods.forEach((mod: any) => {
+            const val =
               typeof mod === 'string'
                 ? mod.trim().toUpperCase()
                 : mod?.name?.trim().toUpperCase();
-            if (modVal) {
-              options.mods.add(modVal);
-              // Fallback to exterior if type is unknown for flat arrays
-              options.mods_exterior.add(modVal);
+            if (val) {
+              options.mods.add(val);
+              options.mods_exterior.add(val);
             }
           });
-        } else if (typeof car.mods === 'object') {
-          const modsObj = car.mods;
-          if (modsObj.exterior) {
-            modsObj.exterior.forEach((v: string) => {
-              if (v && typeof v === 'string')
-                options.mods_exterior.add(v.trim().toUpperCase());
-            });
-          }
-          if (modsObj.interior) {
-            modsObj.interior.forEach((v: string) => {
-              if (v && typeof v === 'string')
-                options.mods_interior.add(v.trim().toUpperCase());
-            });
-          }
-          if (modsObj.engine) {
-            modsObj.engine.forEach((v: string) => {
-              if (v && typeof v === 'string')
-                options.mods_engine.add(v.trim().toUpperCase());
-            });
-          }
-          if (modsObj.footwork) {
-            modsObj.footwork.forEach((v: string) => {
-              if (v && typeof v === 'string')
-                options.mods_footwork.add(v.trim().toUpperCase());
-            });
-          }
-
-          // Also add to generic mods for backward compatibility/global search
-          Object.values(car.mods).forEach((values: any) => {
-            if (Array.isArray(values)) {
-              values.forEach((v: string) => {
-                if (v && typeof v === 'string') {
-                  options.mods.add(v.trim().toUpperCase());
+        } else if (typeof mods === 'object' && mods !== null) {
+          const categories = ['exterior', 'interior', 'engine', 'footwork'];
+          categories.forEach((cat) => {
+            const field = `mods_${cat}` as keyof typeof options;
+            if (Array.isArray(mods[cat])) {
+              mods[cat].forEach((v: any) => {
+                if (typeof v === 'string' && v.trim()) {
+                  const val = v.trim().toUpperCase();
+                  options[field].add(val);
+                  options.mods.add(val);
                 }
               });
             }
           });
         }
-      }
-
-      // Handle notableFeatures
-      if (car.notableFeatures && Array.isArray(car.notableFeatures)) {
-        car.notableFeatures.forEach((f) => {
-          if (f && f.trim())
-            options.notableFeatures.add(f.trim().toUpperCase());
-        });
-      }
-    }
-
-    // For ranges and suggestions, we might want a BROADER search than just AVAILABLE cars
-    // to give better suggestions even if no cars are currently available.
-    // Let's find basic range info from ALL cars matching the make/model if provided
-    const rangeQuery = this.carsRepository.createQueryBuilder('car');
-    if (query.make) {
-      rangeQuery.andWhere('UPPER(car.make) = :make', {
-        make: query.make.toUpperCase(),
       });
-    }
-    if (query.model) {
-      rangeQuery.andWhere('UPPER(car.model) = :model', {
-        model: query.model.toUpperCase(),
-      });
-    }
 
-    const stats = await rangeQuery
-      .select('MIN(car.year)', 'minYear')
-      .addSelect('MAX(car.year)', 'maxYear')
-      .getRawOne();
-
-    return {
-      // Available options based on current filters (Strictly AVAILABLE cars)
-      options: {
-        make: Array.from(options.make).sort(),
-        model: Array.from(options.model).sort(),
-        trim: Array.from(options.trim).sort(),
-        year: Array.from(options.year).sort(
-          (a, b) => parseInt(b) - parseInt(a),
-        ), // Sort years DESC
-        chassisCode: Array.from(options.chassisCode).sort(),
-        engineCode: Array.from(options.engineCode).sort(),
-        transmission: Array.from(options.transmission).sort(),
-        drivetrain: Array.from(options.drivetrain).sort(),
-        condition: Array.from(options.condition).sort(),
-        paperwork: Array.from(options.paperwork).sort(),
-        location: Array.from(options.location).sort(),
-        notableFeatures: Array.from(options.notableFeatures).sort(),
+      return {
         mods: Array.from(options.mods).sort(),
         mods_exterior: Array.from(options.mods_exterior).sort(),
         mods_interior: Array.from(options.mods_interior).sort(),
         mods_engine: Array.from(options.mods_engine).sort(),
         mods_footwork: Array.from(options.mods_footwork).sort(),
-      },
-      // Ranges based on broader database context (all cars in history for suggestions)
+      };
+    };
+
+    // Execute everything in parallel
+    const [distinctResults, nfResults, modsResults] = await Promise.all([
+      Promise.all(simpleColumns.map((col) => getDistinctValues(col))),
+      getNotableFeatures(),
+      getModsStats(),
+    ]);
+
+    const finalOptions: any = {
+      notableFeatures: nfResults,
+      ...modsResults,
+    };
+
+    distinctResults.forEach((res) => {
+      finalOptions[res.column] = res.values;
+    });
+
+    // Handle years sort (DESC)
+    if (finalOptions.year) {
+      finalOptions.year.sort((a: string, b: string) => parseInt(b) - parseInt(a));
+    }
+
+    return {
+      options: finalOptions,
       ranges: {
-        price: { min: minPrice, max: maxPrice },
-        year: {
-          min: stats?.minYear || 1980,
-          max: stats?.maxYear || new Date().getFullYear(),
+        price: {
+          min: parseInt(stats.minPrice || '0'),
+          max: parseInt(stats.maxPrice || '0'),
         },
-        mileage: { min: minMileage, max: maxMileage },
+        year: {
+          min: stats.minYear || 1980,
+          max: stats.maxYear || new Date().getFullYear(),
+        },
+        mileage: {
+          min: stats.minMileage || 0,
+          max: stats.maxMileage || 0,
+        },
       },
-      count: cars.length,
+      count: totalCount,
       counts: {
-        total: cars.length,
+        total: totalCount,
       },
     };
   }
@@ -1413,67 +1428,44 @@ export class CarsService {
   // Or simply, Since `deleteTagWithPenalty` is complex, let's put it in the service but return the userId to ban.
 
   async deleteTagWithPenalty(tag: string): Promise<string | null> {
-    // 1. Find all cars (Fetch ALL to ensure we don't miss any due to JSON/SQL quirks)
-    const allCars = await this.carsRepository.find({
-      relations: ['seller'],
-      order: { createdAt: 'ASC' },
+    const targetTag = tag.trim().toUpperCase();
+
+    // 1. Find all cars with this tag using a more efficient SQL-first approach
+    // We search across all relevant columns. This is still a broad search but better than loading EVERYTHING.
+    const qb = this.carsRepository.createQueryBuilder('car');
+    qb.leftJoinAndSelect('car.seller', 'seller');
+
+    // Simple columns
+    const columns = [
+      'make',
+      'model',
+      'chassisCode',
+      'engineCode',
+      'transmission',
+      'drivetrain',
+      'condition',
+      'paperwork',
+      'location',
+    ];
+    const whereConditions = columns.map((col) => `UPPER(car.${col}) = :tag`);
+    whereConditions.push('CAST(car.year AS TEXT) = :tag');
+
+    // JSON/Array columns search using ILIKE for robustness (Postgres specific optimization could be better but this is safe)
+    // We search for the tag wrapped in quotes if it's in a JSON array or as a standalone string
+    qb.where(`(${whereConditions.join(' OR ')})`, { tag: targetTag });
+    qb.orWhere('car.notableFeatures ILIKE :tagPattern', {
+      tagPattern: `%${targetTag}%`,
+    });
+    qb.orWhere('CAST(car.mods AS TEXT) ILIKE :tagPattern', {
+      tagPattern: `%${targetTag}%`,
     });
 
-    // Match in memory across ALL fields (same logic as getTagsStats)
-    const verifiedCars = allCars.filter((car) => {
-      const targetTag = tag.trim().toUpperCase();
+    qb.orderBy('car.createdAt', 'ASC');
 
-      // Check simple string fields - added .trim() for robustness
-      if (car.make && car.make.trim().toUpperCase() === targetTag) return true;
-      if (car.model && car.model.trim().toUpperCase() === targetTag)
-        return true;
-      if (car.chassisCode && car.chassisCode.trim().toUpperCase() === targetTag)
-        return true;
-      if (car.engineCode && car.engineCode.trim().toUpperCase() === targetTag)
-        return true;
-      if (
-        car.transmission &&
-        car.transmission.trim().toUpperCase() === targetTag
-      )
-        return true;
-      if (car.drivetrain && car.drivetrain.trim().toUpperCase() === targetTag)
-        return true;
-      if (car.condition && car.condition.trim().toUpperCase() === targetTag)
-        return true;
-      if (car.paperwork && car.paperwork.trim().toUpperCase() === targetTag)
-        return true;
-      if (car.location && car.location.trim().toUpperCase() === targetTag)
-        return true;
-      if (car.year && car.year.toString() === targetTag) return true;
-
-      // Check mods (complex JSON structure)
-      if (car.mods) {
-        if (Array.isArray(car.mods)) {
-          for (const mod of car.mods) {
-            const t = typeof mod === 'string' ? mod : mod?.name || '';
-            if (t && t.trim().toUpperCase() === targetTag) return true;
-          }
-        } else if (typeof car.mods === 'object') {
-          for (const values of Object.values(car.mods)) {
-            if (Array.isArray(values)) {
-              for (const v of values as string[]) {
-                if (
-                  v &&
-                  typeof v === 'string' &&
-                  v.trim().toUpperCase() === targetTag
-                )
-                  return true;
-              }
-            }
-          }
-        }
-      }
-      return false;
-    });
+    const verifiedCars = await qb.getMany();
 
     if (verifiedCars.length === 0) {
       // Still delete the tag from Tag table even if no cars are using it
-      // this allows "soft deletion" of unused tags
       await this.tagsService.deleteTagByValue(tag);
       return null;
     }
@@ -1482,27 +1474,25 @@ export class CarsService {
     const initiator = verifiedCars[0].seller;
 
     // Delete ALL cars with this tag
-    if (verifiedCars.length > 0) {
-      // Delete images and decrement tags for each car
-      for (const car of verifiedCars) {
-        await this.deleteCarImages(car);
-        await this.tagsService.syncTagsFromCar(car, false);
-      }
-      await this.carsRepository.remove(verifiedCars);
+    // Delete images and decrement tags for each car
+    for (const car of verifiedCars) {
+      await this.deleteCarImages(car);
+      await this.tagsService.syncTagsFromCar(car, false);
+    }
 
-      // Permanently remove the tag from Tag table so it doesn't show in suggestions
-      await this.tagsService.deleteTagByValue(tag);
+    await this.carsRepository.remove(verifiedCars);
 
-      // Send notification to the initiator (seller of the first car found)
+    // Permanently remove the tag from Tag table so it doesn't show in suggestions
+    await this.tagsService.deleteTagByValue(tag);
 
-      if (initiator) {
-        await this.notificationsService.createNotification(
-          initiator.id,
-          NotificationType.POST_DELETED,
-          'Bài đăng bị xóa hàng loạt',
-          `Hệ thống phát hiện spam tag "${tag}". Các bài đăng liên quan đã bị xóa và tài khoản có thể bị xử lý.`,
-        );
-      }
+    // Send notification to the initiator
+    if (initiator) {
+      await this.notificationsService.createNotification(
+        initiator.id,
+        NotificationType.POST_DELETED,
+        'Bài đăng bị xóa hàng loạt',
+        `Hệ thống phát hiện spam tag "${tag}". Các bài đăng liên quan đã bị xóa và tài khoản có thể bị xử lý.`,
+      );
     }
 
     return initiator ? initiator.id : null;

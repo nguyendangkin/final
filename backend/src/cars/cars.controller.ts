@@ -32,6 +32,7 @@ export class CarsController {
   ) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
   findAll(@Query() query: any) {
     return this.carsService.findAll(query);
   }
@@ -93,6 +94,7 @@ export class CarsController {
   }
 
   @Get(':id')
+  @UseInterceptors(CacheInterceptor)
   async findOne(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
     // Optimistically try to get user IF token is present and VALID
     const user: any = null;
