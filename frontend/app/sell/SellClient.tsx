@@ -306,6 +306,12 @@ export default function SellClient() {
                 ), { duration: 6000 });
             } else {
                 toast.success('Đăng bán thành công!');
+                // Revalidate cache
+                await fetch('/api/revalidate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: '/' })
+                });
             }
 
             localStorage.removeItem('sell_draft');

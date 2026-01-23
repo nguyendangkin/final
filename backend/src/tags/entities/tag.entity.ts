@@ -9,6 +9,7 @@ import {
 
 @Entity()
 @Unique(['category', 'value', 'parent'])
+@Index(['category', 'value', 'parent'])
 export class Tag {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -25,6 +26,7 @@ export class Tag {
   parent: string; // The parent tag value (e.g. Make for Model, Model for ChassisCode)
 
   @Column({ default: 0 })
+  @Index()
   usageCount: number;
 
   @CreateDateColumn()

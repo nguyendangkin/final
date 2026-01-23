@@ -175,6 +175,18 @@ export default function EditCarPage() {
             }
 
             toast.success('Cập nhật thành công!');
+            // Revalidate cache
+            await fetch('/api/revalidate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: `/cars/${slug}` })
+            });
+            // Also revalidate home page
+            await fetch('/api/revalidate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: '/' })
+            });
             router.push(`/cars/${slug}`);
             router.refresh();
         } catch (err: any) {

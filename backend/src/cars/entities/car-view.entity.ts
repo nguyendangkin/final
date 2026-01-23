@@ -32,5 +32,6 @@ export class CarView {
   userAgent: string | null;
 
   @CreateDateColumn()
+  @Index(['carId', 'viewedAt'])
   viewedAt: Date;
 }

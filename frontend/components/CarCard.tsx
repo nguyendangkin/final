@@ -2,13 +2,16 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { GitFork, FileText, CheckCircle2, AlertTriangle, Calendar, Disc, Eye } from 'lucide-react';
 import { generateCarSlug, shouldOptimizeImage, getImgUrl } from '@/lib/utils';
+import { memo, useMemo } from 'react';
 
 interface CarCardProps {
     car: any;
 }
 
-export default function CarCard({ car }: CarCardProps) {
-    const lastModified = car.updatedAt ? new Date(car.updatedAt).getTime() : '';
+function CarCard({ car }: CarCardProps) {
+    const lastModified = useMemo(() => car.updatedAt ? new Date(car.updatedAt).getTime() : '', [car.updatedAt]);
+
+    const currencyFormatter = useMemo(() => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }), []);
 
     return (
         <Link href={`/cars/${generateCarSlug(car)}`} className="group block bg-white rounded-none overflow-hidden shadow-sm hover:shadow-xl transition duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-[var(--jdm-red)] h-full flex flex-col">
@@ -44,7 +47,7 @@ export default function CarCard({ car }: CarCardProps) {
                     <div>
                         {/* Price */}
                         <p className="text-xl font-black text-white leading-none">
-                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(car.price))}
+                            {currencyFormatter.format(Number(car.price))}
                         </p>
                         {/* Negotiable Indicator */}
                         {car.isNegotiable && (
@@ -121,3 +124,5 @@ export default function CarCard({ car }: CarCardProps) {
         </Link>
     );
 }
+
+export default memo(CarCard);

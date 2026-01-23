@@ -3,6 +3,7 @@ import {
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity()
@@ -11,8 +12,10 @@ export class Transaction {
   id: number;
 
   @Column({ type: 'bigint', unique: true })
+  @Index()
   orderCode: number; // PayOS order code
 
+  @Index()
   @Column()
   userId: string;
 
@@ -20,6 +23,7 @@ export class Transaction {
   amount: number; // The amount user gets
 
   @Column({ default: 'PENDING' })
+  @Index()
   status: string;
 
   @Column({ default: 'DEPOSIT' })

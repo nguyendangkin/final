@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Phone, MessageCircle, Facebook, ShieldCheck, Pencil, CheckCircle2, Camera, Flag, ChevronRight, AlertTriangle, Heart, Trash2 } from 'lucide-react';
@@ -73,9 +73,9 @@ export default function CarActionCard({
         }
     };
 
-    const formatMoney = (amount: number) => {
+    const formatMoney = useMemo(() => (amount: number) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
-    };
+    }, []);
 
     // Report Logic
     const submitReport = async (reason: string, carId: string) => {
@@ -270,6 +270,12 @@ export default function CarActionCard({
 
                                                                 if (res.ok) {
                                                                     toast.success('Đã đánh dấu ĐÃ BÁN và lưu trữ thành công!', { id: toastId });
+                                                                    // Revalidate cache
+                                                                    await fetch('/api/revalidate', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ path: '/' })
+                                                                    });
                                                                     router.push(`/seller/${generateSellerSlug(car.seller)}`);
                                                                 } else {
                                                                     const err = await res.json();
@@ -340,6 +346,12 @@ export default function CarActionCard({
 
                                                                 if (res.ok) {
                                                                     toast.success('Đã xóa bài đăng thành công!', { id: toastId });
+                                                                    // Revalidate cache
+                                                                    await fetch('/api/revalidate', {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ path: '/' })
+                                                                    });
                                                                     router.push(`/seller/${generateSellerSlug(car.seller)}`);
                                                                 } else {
                                                                     const err = await res.json();

@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, ChevronRight, Maximize2, CheckCircle2, Box, Hammer, Armchair, Disc, FileText, Youtube, PlayCircle, Facebook, Car, Pencil, History, Flag, AlertTriangle, Camera, Download } from 'lucide-react';
 import Lightbox from '@/components/Lightbox';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug, getImgUrl } from '@/lib/utils';
-import { QRCodeSVG } from 'qrcode.react';
-import { toPng } from 'html-to-image';
+
+const QRCodeSVG = dynamic(() => import('qrcode.react').then(m => m.QRCodeSVG), { ssr: false });
+
 import CarGallery from '@/components/CarGallery';
 import CarActionCard from '@/components/CarActionCard';
 
@@ -22,9 +24,9 @@ export default function CarDetail({ car }: CarDetailProps) {
     const isOwner = currentUser && car.seller?.id === currentUser.id;
 
     // Use updatedAt or latest editHistory for cache busting
-    const lastModified = car.editHistory && car.editHistory.length > 0 
+    const lastModified = useMemo(() => car.editHistory && car.editHistory.length > 0 
         ? new Date(car.editHistory[car.editHistory.length - 1]).getTime() 
-        : (car.updatedAt ? new Date(car.updatedAt).getTime() : Date.now());
+        : (car.updatedAt ? new Date(car.updatedAt).getTime() : Date.now()), [car.editHistory, car.updatedAt]);
 
     useEffect(() => {
         const token = localStorage.getItem('jwt_token');
@@ -45,6 +47,7 @@ export default function CarDetail({ car }: CarDetailProps) {
     const [qrUrl, setQrUrl] = useState('');
     const posterRef = useRef<HTMLDivElement>(null);
     const hasIncremented = useRef(false);
+    const [toPng, setToPng] = useState<any>(null);
 
     useEffect(() => {
         if (hasIncremented.current) return;
@@ -78,14 +81,24 @@ export default function CarDetail({ car }: CarDetailProps) {
         setQrUrl(`${window.location.origin}/cars/${generateCarSlug(car)}`);
     }, [car]);
 
+    // Lazy load html-to-image only when needed
+    useEffect(() => {
+        import('html-to-image').then(m => {
+            setToPng(() => m.toPng);
+        });
+    }, []);
+
     const openLightbox = (index: number) => {
         setLightboxIndex(index);
         setIsLightboxOpen(true);
     };
 
     // Generate Poster function
-    const generatePoster = async () => {
-        if (!posterRef.current) return;
+    const generatePoster = useCallback(async () => {
+        if (!posterRef.current || !toPng) {
+            toast.error('Đang tải thư viện tạo poster, vui lòng thử lại sau.');
+            return;
+        }
 
         setIsGeneratingPoster(true);
         const loadingToast = toast.loading('Đang tạo poster...');
@@ -109,12 +122,13 @@ export default function CarDetail({ car }: CarDetailProps) {
         } finally {
             setIsGeneratingPoster(false);
         }
-    };
+    }, [toPng, posterRef, car.make, car.model, car.year, car.price, car.isNegotiable, qrUrl, car.phoneNumber, car.zaloLink, car.seller, car.location, car.paperwork, car.trim, car.chassisCode, car.engineCode, car.transmission, car.drivetrain, car.mileage, car.mods]);
 
-    // Fix Currency to VND
-    const formatMoney = (amount: number) => {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(amount);
-    };
+    const currencyFormatter = useMemo(() => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }), []);
+
+    const formatMoney = useCallback((amount: number) => {
+        return currencyFormatter.format(amount);
+    }, [currencyFormatter]);
 
     // Format date for edit history
     const formatDate = (dateString: string) => {
@@ -454,7 +468,7 @@ export default function CarDetail({ car }: CarDetailProps) {
                                 boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                             }}>
                                 <span style={{ fontSize: '42px', fontWeight: 900, color: 'white' }}>
-                                    {formatMoney(Number(car.price))}
+                                    {currencyFormatter.format(Number(car.price))}
                                 </span>
                                 {car.isNegotiable && (
                                     <span style={{ fontSize: '16px', color: 'rgba(255,255,255,0.9)', marginLeft: '12px', fontWeight: 600 }}>

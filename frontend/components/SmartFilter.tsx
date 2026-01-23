@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { X } from 'lucide-react';
 
 interface SmartFilterProps {
@@ -65,19 +65,21 @@ export default function SmartFilter({
     const minPriceRef = useRef<HTMLInputElement>(null);
     const maxPriceRef = useRef<HTMLInputElement>(null);
 
+    const priceFormatter = useMemo(() => new Intl.NumberFormat('vi-VN'), []);
+
     // Format price for display
-    const formatPrice = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
+    const formatPrice = (num: number) => priceFormatter.format(num);
 
     // Display formatted price in input
-    const displayFormattedPrice = (value: string) => {
+    const displayFormattedPrice = useCallback((value: string) => {
         if (!value) return '';
         const num = parseInt(value);
         if (isNaN(num)) return '';
-        return new Intl.NumberFormat('vi-VN').format(num);
-    };
+        return priceFormatter.format(num);
+    }, [priceFormatter]);
 
     // Handle price input with cursor management
-    const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>, field: 'min' | 'max') => {
+    const handlePriceInput = useCallback((e: React.ChangeEvent<HTMLInputElement>, field: 'min' | 'max') => {
         const input = e.target;
         const cursorPos = input.selectionStart || 0;
         const oldValue = input.value;
@@ -102,7 +104,7 @@ export default function SmartFilter({
                 ref.current.setSelectionRange(newPos, newPos);
             }
         }, 0);
-    };
+    }, [minPriceRef, maxPriceRef, priceRange, onPriceChange]);
 
     return (
         <div className="bg-white">
