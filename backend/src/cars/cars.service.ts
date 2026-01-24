@@ -1543,24 +1543,38 @@ export class CarsService {
     const car = await this.carsRepository.findOne({ where: { id } });
     if (!car) throw new NotFoundException('Car not found');
 
+    const publicStatuses = [CarStatus.AVAILABLE, CarStatus.SOLD];
+
+    // Helper to create base query with consistent filters (Public status + No banned sellers)
+    const createBaseQb = (alias: string) => {
+      return this.carsRepository
+        .createQueryBuilder(alias)
+        .leftJoin(`${alias}.seller`, 'seller')
+        .where(`${alias}.status IN (:...statuses)`, { statuses: publicStatuses })
+        .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
+    };
+
     const [globalTotal, globalRank, makeTotal, makeRank] = await Promise.all([
-      this.carsRepository.count({ where: { status: CarStatus.AVAILABLE } }),
-      this.carsRepository.count({
-        where: {
-          status: CarStatus.AVAILABLE,
-          createdAt: MoreThan(car.createdAt),
-        },
-      }),
-      this.carsRepository.count({
-        where: { status: CarStatus.AVAILABLE, make: car.make },
-      }),
-      this.carsRepository.count({
-        where: {
-          status: CarStatus.AVAILABLE,
-          make: car.make,
-          createdAt: MoreThan(car.createdAt),
-        },
-      }),
+      // 1. All public cars
+      createBaseQb('car').getCount(),
+
+      // 2. Public cars newer than current car (to determine rank)
+      createBaseQb('car')
+        .andWhere('car.createdAt > :createdAt', { createdAt: car.createdAt })
+        .andWhere('car.id != :id', { id: car.id })
+        .getCount(),
+
+      // 3. All public cars of same make
+      createBaseQb('car')
+        .andWhere('car.make = :make', { make: car.make })
+        .getCount(),
+
+      // 4. Public cars of same make newer than current car
+      createBaseQb('car')
+        .andWhere('car.make = :make', { make: car.make })
+        .andWhere('car.createdAt > :createdAt', { createdAt: car.createdAt })
+        .andWhere('car.id != :id', { id: car.id })
+        .getCount(),
     ]);
 
     return {
