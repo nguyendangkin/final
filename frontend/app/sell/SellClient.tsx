@@ -303,9 +303,9 @@ export default function SellClient() {
                             <button onClick={() => toast.dismiss(t.id)} className="text-gray-400 hover:text-gray-600"><span className="sr-only">Close</span><svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg></button>
                         </div>
                     </div>
-                ), { duration: 6000 });
+                ), { duration: 3000 });
             } else {
-                toast.success('Đăng bán thành công!');
+                toast.success('Đăng bán thành công!', { duration: 3000 });
                 // Revalidate cache
                 await fetch('/api/revalidate', {
                     method: 'POST',
@@ -318,7 +318,7 @@ export default function SellClient() {
             }
 
             localStorage.removeItem('sell_draft');
-            window.location.href = '/';
+            router.push('/');
         } catch (error: any) {
             toast.error(`Lỗi: ${error.message}`);
         } finally {
