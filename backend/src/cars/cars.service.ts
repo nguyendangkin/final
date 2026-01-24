@@ -666,44 +666,6 @@ export class CarsService {
     await this.carsRepository.remove(car);
   }
 
-  async buy(id: string, buyerId: string): Promise<Car> {
-    return this.dataSource.transaction(async (manager) => {
-      const car = await manager.findOne(Car, {
-        where: { id },
-        relations: ['seller'],
-      });
-      if (!car) throw new NotFoundException('Car not found');
-      if (car.status !== CarStatus.AVAILABLE)
-        throw new BadRequestException('Car is not available');
-      if (car.seller.id === buyerId)
-        throw new BadRequestException('Cannot buy your own car');
-
-      const buyer = await manager.findOne(User, { where: { id: buyerId } });
-      if (!buyer) throw new NotFoundException('Buyer not found');
-
-      const price = BigInt(car.price);
-      const buyerBalance = BigInt(buyer.balance);
-
-      if (buyerBalance < price) {
-        throw new BadRequestException('Insufficient balance');
-      }
-
-      const seller = await manager.findOne(User, {
-        where: { id: car.seller.id },
-      });
-      if (!seller) throw new NotFoundException('Seller not found');
-
-      buyer.balance = (buyerBalance - price).toString();
-      const sellerBalance = BigInt(seller.balance);
-      seller.balance = (sellerBalance + price).toString();
-
-      car.status = CarStatus.SOLD;
-
-      await manager.save(buyer);
-      await manager.save(seller);
-      return await manager.save(car);
-    });
-  }
 
   async getPendingCars(
     page: number = 1,
