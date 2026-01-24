@@ -94,7 +94,7 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
           : img
       ));
     }
-  }, [apiUrl]);
+  }, [apiUrl, images]);
 
   const removeImage = useCallback(async (id: string) => {
     const imgToRemove = images.find(img => img.id === id);
