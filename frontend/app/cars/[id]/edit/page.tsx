@@ -174,7 +174,7 @@ export default function EditCarPage() {
                 throw new Error(errorData.message || 'Lỗi khi cập nhật');
             }
 
-            toast.success('Cập nhật thành công!');
+            toast.success('Cập nhật thành công!', { duration: 3000 });
             // Revalidate cache
             await fetch('/api/revalidate', {
                 method: 'POST',

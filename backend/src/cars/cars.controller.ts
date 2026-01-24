@@ -29,7 +29,7 @@ export class CarsController {
     private readonly carsService: CarsService,
     @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   @Get()
   findAll(@Query() query: any) {
@@ -162,11 +162,6 @@ export class CarsController {
     return this.carsService.remove(id, req.user);
   }
 
-  @Post(':id/buy')
-  @UseGuards(AuthGuard('jwt'))
-  buy(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
-    return this.carsService.buy(id, req.user.id);
-  }
 
   @Post(':id/sold')
   @UseGuards(AuthGuard('jwt'))

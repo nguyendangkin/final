@@ -666,44 +666,6 @@ export class CarsService {
     await this.carsRepository.remove(car);
   }
 
-  async buy(id: string, buyerId: string): Promise<Car> {
-    return this.dataSource.transaction(async (manager) => {
-      const car = await manager.findOne(Car, {
-        where: { id },
-        relations: ['seller'],
-      });
-      if (!car) throw new NotFoundException('Car not found');
-      if (car.status !== CarStatus.AVAILABLE)
-        throw new BadRequestException('Car is not available');
-      if (car.seller.id === buyerId)
-        throw new BadRequestException('Cannot buy your own car');
-
-      const buyer = await manager.findOne(User, { where: { id: buyerId } });
-      if (!buyer) throw new NotFoundException('Buyer not found');
-
-      const price = BigInt(car.price);
-      const buyerBalance = BigInt(buyer.balance);
-
-      if (buyerBalance < price) {
-        throw new BadRequestException('Insufficient balance');
-      }
-
-      const seller = await manager.findOne(User, {
-        where: { id: car.seller.id },
-      });
-      if (!seller) throw new NotFoundException('Seller not found');
-
-      buyer.balance = (buyerBalance - price).toString();
-      const sellerBalance = BigInt(seller.balance);
-      seller.balance = (sellerBalance + price).toString();
-
-      car.status = CarStatus.SOLD;
-
-      await manager.save(buyer);
-      await manager.save(seller);
-      return await manager.save(car);
-    });
-  }
 
   async getPendingCars(
     page: number = 1,
@@ -1543,24 +1505,38 @@ export class CarsService {
     const car = await this.carsRepository.findOne({ where: { id } });
     if (!car) throw new NotFoundException('Car not found');
 
+    const publicStatuses = [CarStatus.AVAILABLE, CarStatus.SOLD];
+
+    // Helper to create base query with consistent filters (Public status + No banned sellers)
+    const createBaseQb = (alias: string) => {
+      return this.carsRepository
+        .createQueryBuilder(alias)
+        .leftJoin(`${alias}.seller`, 'seller')
+        .where(`${alias}.status IN (:...statuses)`, { statuses: publicStatuses })
+        .andWhere('seller.isSellingBanned = :isBanned', { isBanned: false });
+    };
+
     const [globalTotal, globalRank, makeTotal, makeRank] = await Promise.all([
-      this.carsRepository.count({ where: { status: CarStatus.AVAILABLE } }),
-      this.carsRepository.count({
-        where: {
-          status: CarStatus.AVAILABLE,
-          createdAt: MoreThan(car.createdAt),
-        },
-      }),
-      this.carsRepository.count({
-        where: { status: CarStatus.AVAILABLE, make: car.make },
-      }),
-      this.carsRepository.count({
-        where: {
-          status: CarStatus.AVAILABLE,
-          make: car.make,
-          createdAt: MoreThan(car.createdAt),
-        },
-      }),
+      // 1. All public cars
+      createBaseQb('car').getCount(),
+
+      // 2. Public cars newer than current car (to determine rank)
+      createBaseQb('car')
+        .andWhere('car.createdAt > :createdAt', { createdAt: car.createdAt })
+        .andWhere('car.id != :id', { id: car.id })
+        .getCount(),
+
+      // 3. All public cars of same make
+      createBaseQb('car')
+        .andWhere('car.make = :make', { make: car.make })
+        .getCount(),
+
+      // 4. Public cars of same make newer than current car
+      createBaseQb('car')
+        .andWhere('car.make = :make', { make: car.make })
+        .andWhere('car.createdAt > :createdAt', { createdAt: car.createdAt })
+        .andWhere('car.id != :id', { id: car.id })
+        .getCount(),
     ]);
 
     return {
