@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug } from '@/lib/utils';
 import { MapPin, User, TrendingDown } from 'lucide-react';
 import ListingRanking from './ListingRanking';
+import { authFetch } from '@/lib/api';
 
 interface CarActionCardProps {
     car: any;
@@ -32,11 +33,7 @@ export default function CarActionCard({
 
     useEffect(() => {
         if (currentUser && car) {
-            const token = localStorage.getItem('jwt_token');
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            fetch(`${apiUrl}/favorites/check/${car.id}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
+            authFetch(`/favorites/check/${car.id}`)
                 .then(res => res.json())
                 .then(data => setIsFavorited(data.isFavorited))
                 .catch(err => console.error("Error checking favorite:", err));
@@ -51,14 +48,9 @@ export default function CarActionCard({
         if (isLoadingFav) return;
         setIsLoadingFav(true);
 
-        const token = localStorage.getItem('jwt_token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         try {
-            const res = await fetch(`${apiUrl}/favorites/toggle/${car.id}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const res = await authFetch(`/favorites/toggle/${car.id}`, {
+                method: 'POST'
             });
             if (res.ok) {
                 const data = await res.json();
@@ -79,19 +71,11 @@ export default function CarActionCard({
 
     // Report Logic
     const submitReport = async (reason: string, carId: string) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         const toastId = toast.loading('Đang gửi báo cáo...');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
         try {
-            const res = await fetch(`${apiUrl}/reports`, {
+            const res = await authFetch('/reports', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ carId, reason })
             });
 
@@ -258,14 +242,8 @@ export default function CarActionCard({
                                                             toast.dismiss(t.id);
                                                             const toastId = toast.loading('Đang xử lý...');
                                                             try {
-                                                                const token = localStorage.getItem('jwt_token');
-                                                                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                                                                const res = await fetch(`${apiUrl}/cars/${car.id}/sold`, {
-                                                                    method: 'POST',
-                                                                    headers: {
-                                                                        'Content-Type': 'application/json',
-                                                                        'Authorization': `Bearer ${token}`
-                                                                    }
+                                                                const res = await authFetch(`/cars/${car.id}/sold`, {
+                                                                    method: 'POST'
                                                                 });
 
                                                                 if (res.ok) {
@@ -338,13 +316,8 @@ export default function CarActionCard({
                                                             toast.dismiss(t.id);
                                                             const toastId = toast.loading('Đang xóa...');
                                                             try {
-                                                                const token = localStorage.getItem('jwt_token');
-                                                                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                                                                const res = await fetch(`${apiUrl}/cars/${car.id}`, {
-                                                                    method: 'DELETE',
-                                                                    headers: {
-                                                                        'Authorization': `Bearer ${token}`
-                                                                    }
+                                                                const res = await authFetch(`/cars/${car.id}`, {
+                                                                    method: 'DELETE'
                                                                 });
 
                                                                 if (res.ok) {

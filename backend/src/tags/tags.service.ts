@@ -2,13 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { Tag } from './entities/tag.entity';
-import { Car } from '../cars/entities/car.entity';
+import { Car, CarStatus } from '../cars/entities/car.entity';
 
 @Injectable()
 export class TagsService {
   constructor(
     @InjectRepository(Tag)
     private tagsRepository: Repository<Tag>,
+    @InjectRepository(Car)
+    private carsRepository: Repository<Car>,
   ) {}
 
   /**
@@ -350,11 +352,12 @@ export class TagsService {
   }
 
   /**
-   * Get suggestions for a specific category (for autocomplete - returns ALL tags regardless of usageCount)
+   * Get suggestions for a specific category (for autocomplete)
+   * Only returns tags with usageCount > 0 (from approved cars)
    * Optional parent filter (e.g. get models for make 'Toyota')
    */
   async getSuggestions(category: string, parent?: string): Promise<string[]> {
-    const whereClause: any = { category };
+    const whereClause: any = { category, usageCount: MoreThan(0) };
     if (parent) {
       // Use case-insensitive matching for parent if possible, or ensure it's uppercased
       whereClause.parent = parent.trim().toUpperCase();
@@ -362,16 +365,18 @@ export class TagsService {
 
     const tags = await this.tagsRepository.find({
       where: whereClause,
-      order: { usageCount: 'DESC', value: 'ASC' }, // Active tags first
+      order: { usageCount: 'DESC', value: 'ASC' },
     });
     return tags.map((t) => t.value);
   }
 
   /**
    * Get all suggestions grouped by category (for sell/edit pages)
+   * Only returns tags with usageCount > 0 (from approved cars)
    */
   async getAllSuggestions(): Promise<Record<string, string[]>> {
     const tags = await this.tagsRepository.find({
+      where: { usageCount: MoreThan(0) },
       order: { usageCount: 'DESC', value: 'ASC' },
     });
 

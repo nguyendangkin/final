@@ -24,4 +24,5 @@ export class TagsController {
   ) {
     return this.tagsService.getSuggestions(category, parent);
   }
+
 }

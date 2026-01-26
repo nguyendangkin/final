@@ -8,6 +8,7 @@ import CarCard from '@/components/CarCard';
 import CarCardSkeleton from '@/components/CarCardSkeleton';
 import { Heart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { authFetch } from '@/lib/api';
 
 export default function FavoritesPage() {
     const [favorites, setFavorites] = useState<any[]>([]);
@@ -30,40 +31,32 @@ export default function FavoritesPage() {
 
     useEffect(() => {
         const fetchFavorites = async () => {
-            const token = localStorage.getItem('jwt_token');
-            if (!token) {
-                router.push('/login');
-                return;
-            }
-
             setIsLoading(true);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                const res = await fetch(`${apiUrl}/favorites?page=${page}&limit=12`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const res = await authFetch(`/favorites?page=${page}&limit=12`);
+
+                if (!res.ok) {
+                    router.push('/login');
+                    return;
+                }
+
+                const data = await res.json();
+                // Data comes as object with id, car, etc.
+                const newCars = data.map((item: any) => ({
+                    ...item.car,
+                    favoritedAt: item.createdAt,
+                    seller: item.car.seller
+                }));
+
+                setFavorites(prev => {
+                    // Combine and remove duplicates just in case
+                    const combined = [...prev, ...newCars];
+                    const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+                    return unique;
                 });
 
-                if (res.ok) {
-                    const data = await res.json();
-                    // Data comes as object with id, car, etc.
-                    const newCars = data.map((item: any) => ({
-                        ...item.car,
-                        favoritedAt: item.createdAt,
-                        seller: item.car.seller
-                    }));
-
-                    setFavorites(prev => {
-                        // Combine and remove duplicates just in case
-                        const combined = [...prev, ...newCars];
-                        const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
-                        return unique;
-                    });
-
-                    if (newCars.length < 12) {
-                        setHasMore(false);
-                    }
-                } else {
-                    toast.error("Lỗi tải danh sách yêu thích");
+                if (newCars.length < 12) {
+                    setHasMore(false);
                 }
             } catch (error) {
                 console.error(error);

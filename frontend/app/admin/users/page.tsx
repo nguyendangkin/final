@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import Pagination from '@/components/Pagination';
 import TableSkeleton from '@/components/TableSkeleton';
 import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
+import { authFetch } from '@/lib/api';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState<any[]>([]);
@@ -25,16 +26,8 @@ export default function AdminUsers() {
 
     const fetchUsers = (currentPage: number) => {
         setLoading(true);
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/users?page=${currentPage}&limit=12`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        authFetch(`/users?page=${currentPage}&limit=12`)
             .then(res => {
                 if (!res.ok) throw new Error('Unauthorized');
                 return res.json();
@@ -45,7 +38,7 @@ export default function AdminUsers() {
                 setLoading(false);
             })
             .catch(() => {
-                router.push('/');
+                router.push('/login');
             });
     };
 
@@ -58,19 +51,10 @@ export default function AdminUsers() {
             return;
         }
 
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
         // Check if searching by email (contains @)
         if (query.includes('@')) {
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                const res = await fetch(`${apiUrl}/users/search/email?q=${encodeURIComponent(query)}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await authFetch(`/users/search/email?q=${encodeURIComponent(query)}`);
                 if (!res.ok) {
                     setError('Lỗi khi tìm kiếm người dùng.');
                     return;
@@ -119,9 +103,6 @@ export default function AdminUsers() {
     };
 
     const toggleBan = (userId: string, currentStatus: boolean) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         toast.custom((t) => (
             <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
                 <div className="p-6">
@@ -151,7 +132,7 @@ export default function AdminUsers() {
                     <button
                         onClick={() => {
                             toast.dismiss(t.id);
-                            executeBan(userId, currentStatus, token);
+                            executeBan(userId, currentStatus);
                         }}
                         className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
                     >
@@ -162,15 +143,10 @@ export default function AdminUsers() {
         ), { duration: 5000 });
     };
 
-    const executeBan = async (userId: string, currentStatus: boolean, token: string) => {
+    const executeBan = async (userId: string, currentStatus: boolean) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/users/${userId}/ban`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const res = await authFetch(`/users/${userId}/ban`, {
+                method: 'PATCH'
             });
 
             if (res.ok) {

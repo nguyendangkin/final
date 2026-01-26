@@ -7,6 +7,7 @@ import { ChevronLeft, Plus, Edit, Trash2, Clock, Save, X, Eye, FileText } from '
 import AnnouncementSkeleton from '@/components/AnnouncementSkeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { authFetch } from '@/lib/api';
 
 interface Announcement {
     id: string;
@@ -48,23 +49,14 @@ export default function AdminAnnouncementsPage() {
 
     // Auth check
     useEffect(() => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/users/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        authFetch('/auth/me')
             .then(res => res.json())
             .then(data => {
-                if (!data.isAdmin) {
+                if (!data.user?.isAdmin) {
                     router.push('/');
                     return;
                 }
-                setUser(data);
+                setUser(data.user);
                 setLoading(false);
             })
             .catch(() => {
@@ -74,15 +66,11 @@ export default function AdminAnnouncementsPage() {
 
     // Fetch announcements
     const fetchAnnouncements = useCallback(async (pageNum: number, reset: boolean = false) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token || historyLoading) return;
+        if (historyLoading) return;
 
         setHistoryLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/admin/announcements?page=${pageNum}&limit=10`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await authFetch(`/admin/announcements?page=${pageNum}&limit=10`);
             if (res.ok) {
                 const data = await res.json();
                 setAnnouncements(prev => reset ? data.items : [...prev, ...data.items]);
@@ -130,23 +118,15 @@ export default function AdminAnnouncementsPage() {
         e.preventDefault();
         if (!title.trim() || !content.trim()) return;
 
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         setIsSubmitting(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const url = editingId
-                ? `${apiUrl}/admin/announcements/${editingId}`
-                : `${apiUrl}/admin/announcements`;
+                ? `/admin/announcements/${editingId}`
+                : `/admin/announcements`;
             const method = editingId ? 'PUT' : 'POST';
 
-            const res = await fetch(url, {
+            const res = await authFetch(url, {
                 method,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
                 body: JSON.stringify({ title: title.trim(), content: content.trim(), isGlobal })
             });
 
@@ -186,14 +166,9 @@ export default function AdminAnnouncementsPage() {
     const handleDelete = async (id: string) => {
         if (!confirm('Bạn có chắc muốn xóa thông báo này?')) return;
 
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/admin/announcements/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const res = await authFetch(`/admin/announcements/${id}`, {
+                method: 'DELETE'
             });
 
             if (res.ok) {

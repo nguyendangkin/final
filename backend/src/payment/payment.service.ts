@@ -1,10 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PayOS } from '@payos/node';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
 import { Repository, DataSource } from 'typeorm';
 import { Transaction } from './transaction.entity';
+
+// Maximum payment limit (100 million VND)
+const MAX_PAYMENT_AMOUNT = 100_000_000;
+const MIN_PAYMENT_AMOUNT = 2000;
+const TRANSACTION_FEE = 2000;
 
 @Injectable()
 export class PaymentService {
@@ -31,12 +36,16 @@ export class PaymentService {
     userId: string,
     description: string = 'Nap tien',
   ) {
-    if (amount < 2000) {
-      throw new Error('Số tiền nạp tối thiểu là 2000 VNĐ');
+    // Validate amount
+    if (amount < MIN_PAYMENT_AMOUNT) {
+      throw new BadRequestException(`Số tiền nạp tối thiểu là ${MIN_PAYMENT_AMOUNT.toLocaleString('vi-VN')} VNĐ`);
     }
 
-    const fee = 2000;
-    const totalAmount = amount + fee;
+    if (amount > MAX_PAYMENT_AMOUNT) {
+      throw new BadRequestException(`Số tiền nạp tối đa là ${MAX_PAYMENT_AMOUNT.toLocaleString('vi-VN')} VNĐ`);
+    }
+
+    const totalAmount = amount + TRANSACTION_FEE;
 
     // Use full timestamp + random to ensure uniqueness/entropy
     // Max Safe Integer is 9007199254740991 (16 digits). Date.now() is 13 digits.
@@ -60,7 +69,7 @@ export class PaymentService {
         {
           name: 'Phí giao dịch',
           quantity: 1,
-          price: fee,
+          price: TRANSACTION_FEE,
         },
       ],
     };

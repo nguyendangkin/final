@@ -11,6 +11,7 @@ import StepMedia from './components/StepMedia';
 
 import { ChevronRight, ChevronLeft, Save, Trash2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { authFetch } from '@/lib/api';
 
 const STEPS = [
     { id: 1, title: 'Định danh', subtitle: 'Cơ bản' },
@@ -66,33 +67,23 @@ export default function SellClient() {
     useEffect(() => {
         if (hasRedirected.current) return;
 
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            hasRedirected.current = true;
-            setIsAuthenticated(false);
-            router.push('/login?redirect=/sell');
-        } else {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            fetch(`${apiUrl}/users/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+        authFetch('/auth/me')
+            .then(res => {
+                if (res.ok) return res.json();
+                throw new Error('Unauthorized');
             })
-                .then(res => {
-                    if (res.ok) return res.json();
-                    throw new Error('Unauthorized');
-                })
-                .then(user => {
-                    setIsAuthenticated(true);
-                    if (user.isSellingBanned) {
-                        setIsBanned(true);
-                    }
-                })
-                .catch(() => {
-                    localStorage.removeItem('jwt_token');
-                    setIsAuthenticated(false);
-                    router.push('/login?redirect=/sell');
-                });
-        }
-    }, []);
+            .then(data => {
+                setIsAuthenticated(true);
+                if (data.user?.isSellingBanned) {
+                    setIsBanned(true);
+                }
+            })
+            .catch(() => {
+                hasRedirected.current = true;
+                setIsAuthenticated(false);
+                router.push('/login?redirect=/sell');
+            });
+    }, [router]);
 
     // Load from LocalStorage
     useEffect(() => {
@@ -243,13 +234,6 @@ export default function SellClient() {
         setErrors({});
         setLoading(true);
 
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            setLoading(false);
-            router.push('/login?redirect=/sell');
-            return;
-        }
-
         const payload = {
             make: data.make,
             model: data.model,
@@ -281,18 +265,21 @@ export default function SellClient() {
         };
 
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/cars`, {
+            const res = await authFetch('/cars', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify(payload)
             });
 
+            if (!res.ok) {
+                if (res.status === 401) {
+                    router.push('/login?redirect=/sell');
+                    return;
+                }
+                const responseData = await res.json();
+                throw new Error(responseData.message || 'Failed to create listing');
+            }
+
             const responseData = await res.json();
-            if (!res.ok) throw new Error(responseData.message || 'Failed to create listing');
 
             if (responseData.status === 'PENDING_APPROVAL') {
                 toast.custom((t) => (

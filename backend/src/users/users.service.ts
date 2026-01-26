@@ -1,8 +1,13 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 
+// Note: CarsService has a circular dependency with UsersService.
+// UsersService needs CarsService for deleteAllBySeller (when banning user).
+// CarsService needs UsersService for admin checks (via forwardRef in CarsModule).
+// Both use forwardRef(() => ...) to resolve this at runtime.
+// Alternative: Extract shared logic to a separate service if this grows.
 import { CarsService } from '../cars/cars.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
@@ -83,7 +88,7 @@ export class UsersService {
   async toggleBan(id: string): Promise<User> {
     const user = await this.findOne(id);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
     user.isSellingBanned = !user.isSellingBanned;

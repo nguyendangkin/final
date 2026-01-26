@@ -9,6 +9,7 @@ import { Trash2, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
 import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
+import { authFetch } from '@/lib/api';
 
 export default function AdminCars() {
     const [cars, setCars] = useState<any[]>([]);
@@ -24,26 +25,18 @@ export default function AdminCars() {
     }, [page]);
 
     const fetchCars = (currentPage: number) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
         setLoading(true);
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/users/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        authFetch('/auth/me')
             .then(res => res.json())
             .then(data => {
-                if (!data.isAdmin) {
+                if (!data.user?.isAdmin) {
                     router.push('/');
                     return;
                 }
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
                 // Fetch cars including hidden ones (if any left, though we are moving to delete)
-                // We keep 'includeHidden=true' for now if the backend still supports it or just to be safe, 
+                // We keep 'includeHidden=true' for now if the backend still supports it or just to be safe,
                 // but effectively we just want all cars.
                 return fetch(`${apiUrl}/cars?page=${currentPage}&limit=12&includeHidden=true`);
             })
@@ -56,7 +49,7 @@ export default function AdminCars() {
                 setLoading(false);
             })
             .catch(() => {
-                router.push('/');
+                router.push('/login');
             });
     };
 
@@ -97,9 +90,6 @@ export default function AdminCars() {
     };
 
     const handleDelete = (carId: string) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         toast.custom((t) => (
             <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
                 <div className="p-6">
@@ -129,7 +119,7 @@ export default function AdminCars() {
                     <button
                         onClick={() => {
                             toast.dismiss(t.id);
-                            executeDelete(carId, token);
+                            executeDelete(carId);
                         }}
                         className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
                     >
@@ -140,14 +130,10 @@ export default function AdminCars() {
         ), { duration: 5000 });
     };
 
-    const executeDelete = async (carId: string, token: string) => {
+    const executeDelete = async (carId: string) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/cars/${carId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const res = await authFetch(`/cars/${carId}`, {
+                method: 'DELETE'
             });
 
             if (res.ok) {

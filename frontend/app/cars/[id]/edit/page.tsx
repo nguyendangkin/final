@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import { CarSpecs, initialCarSpecs } from '../../../sell/types';
 import { ArrowLeft, Save, Loader2, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getCarIdFromSlug } from '@/lib/utils';
+import { authFetch } from '@/lib/api';
 
 import StepBasics from '../../../sell/components/StepBasics';
 import StepSoul from '../../../sell/components/StepSoul';
@@ -124,9 +125,6 @@ export default function EditCarPage() {
         }
         setSaving(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const token = localStorage.getItem('jwt_token');
-
             // Define allowed fields based on UpdateCarDto
             const allowedFields = [
                 'make', 'model', 'year', 'trim', 'price', 'isNegotiable',
@@ -160,12 +158,8 @@ export default function EditCarPage() {
                 }
             }
 
-            const res = await fetch(`${apiUrl}/cars/${id}`, {
+            const res = await authFetch(`/cars/${id}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify(payload)
             });
 

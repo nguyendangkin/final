@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import AdminDashboardSkeleton from '@/components/AdminDashboardSkeleton';
+import { authFetch } from '@/lib/api';
 
 export default function AdminDashboard() {
     const [user, setUser] = useState<any>(null);
@@ -11,29 +12,27 @@ export default function AdminDashboard() {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/users/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
-            .then(res => res.json())
+        authFetch('/auth/me')
+            .then(res => {
+                if (!res.ok) {
+                    router.push('/login');
+                    return null;
+                }
+                return res.json();
+            })
             .then(data => {
-                if (!data.isAdmin) {
+                if (!data) return;
+                if (!data.user?.isAdmin) {
                     router.push('/');
                     return;
                 }
-                setUser(data);
+                setUser(data.user);
                 setLoading(false);
             })
             .catch(() => {
                 router.push('/login');
             });
-    }, []);
+    }, [router]);
 
     if (loading) {
         return <AdminDashboardSkeleton />;

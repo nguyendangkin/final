@@ -95,5 +95,9 @@ export class ReportsService {
 
     // Delete the car
     await this.carsService.forceDelete(carId);
+
+    // Update report status to RESOLVED after successfully deleting the car
+    report.status = ReportStatus.RESOLVED;
+    await this.reportsRepository.save(report);
   }
 }
