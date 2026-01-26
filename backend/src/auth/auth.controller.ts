@@ -25,13 +25,33 @@ export class AuthController {
   ) {}
 
   private getCookieOptions(isProduction: boolean) {
-    return {
+    const baseOptions = {
       httpOnly: true, // Prevents JavaScript access - critical for security
       secure: isProduction, // HTTPS only in production
       sameSite: isProduction ? ('strict' as const) : ('lax' as const),
       maxAge: COOKIE_MAX_AGE,
       path: '/',
     };
+
+    // In production, set domain to allow cookie sharing between subdomains
+    if (isProduction) {
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+      if (frontendUrl) {
+        try {
+          const hostname = new URL(frontendUrl).hostname;
+          // Extract root domain (e.g., "4gach.com" from "4gach.com" or "www.4gach.com")
+          const parts = hostname.split('.');
+          const rootDomain = parts.length >= 2
+            ? `.${parts.slice(-2).join('.')}`
+            : hostname;
+          return { ...baseOptions, domain: rootDomain };
+        } catch {
+          // If URL parsing fails, skip domain setting
+        }
+      }
+    }
+
+    return baseOptions;
   }
 
   @Get('google')
