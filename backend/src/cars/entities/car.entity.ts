@@ -20,6 +20,16 @@ export enum CarStatus {
   REJECTED = 'REJECTED',
 }
 
+/**
+ * Interface for car modifications organized by category
+ */
+export interface CarMods {
+  exterior?: string[];
+  interior?: string[];
+  engine?: string[];
+  footwork?: string[];
+}
+
 @Entity()
 @Index(['make', 'model']) // Compound index for make+model search
 @Index(['status', 'createdAt']) // For sorting and filtering by status
@@ -121,7 +131,7 @@ export class Car {
 
   @Column('jsonb', { nullable: true })
   @Index()
-  mods: any;
+  mods: CarMods;
 
   @Column({
     type: 'enum',

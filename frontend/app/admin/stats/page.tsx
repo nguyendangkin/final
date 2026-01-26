@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import StatsSkeleton from '@/components/StatsSkeleton';
+import { authFetch } from '@/lib/api';
 
 export default function AdminStatsPage() {
     const [stats, setStats] = useState<any>(null);
@@ -11,17 +12,8 @@ export default function AdminStatsPage() {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
         // Fetch stats
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        authFetch('/stats')
             .then(res => {
                 if (res.status === 401 || res.status === 403) {
                     router.push('/');
@@ -36,6 +28,7 @@ export default function AdminStatsPage() {
             .catch(err => {
                 console.error('Error fetching stats:', err);
                 setLoading(false);
+                router.push('/login');
             });
     }, []);
 

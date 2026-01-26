@@ -9,9 +9,45 @@ import {
   Max,
   Min,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CarStatus } from '../entities/car.entity';
+
+/**
+ * Interface for car modifications organized by category
+ */
+export interface CarMods {
+  exterior?: string[];
+  interior?: string[];
+  engine?: string[];
+  footwork?: string[];
+}
+
+/**
+ * DTO for car modifications
+ */
+export class CarModsDto {
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  exterior?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  interior?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  engine?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  footwork?: string[];
+}
 
 export class CreateCarDto {
   @IsString()
@@ -108,9 +144,11 @@ export class CreateCarDto {
   @IsOptional()
   plateNumber?: string;
 
-  // Mods can be complex object, allow any for now or specific structure
+  // Mods organized by category
   @IsOptional()
-  mods?: any;
+  @ValidateNested()
+  @Type(() => CarModsDto)
+  mods?: CarMods;
 
   @IsArray()
   @IsString({ each: true })
@@ -227,7 +265,9 @@ export class UpdateCarDto {
   plateNumber?: string;
 
   @IsOptional()
-  mods?: any;
+  @ValidateNested()
+  @Type(() => CarModsDto)
+  mods?: CarMods;
 
   @IsOptional()
   @IsArray()

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, ArrowUpRight, ArrowDownLeft, ArrowLeft, History } from 'lucide-react';
 import WalletSkeleton from '@/components/WalletSkeleton';
+import { authFetch } from '@/lib/api';
 
 export default function WalletPage() {
     const [balance, setBalance] = useState<number | null>(null);
@@ -11,18 +12,12 @@ export default function WalletPage() {
 
     useEffect(() => {
         const fetchUser = async () => {
-            const token = localStorage.getItem('jwt_token');
-            if (!token) return;
-
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                const res = await fetch(`${apiUrl}/users/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await authFetch('/auth/me');
                 if (res.ok) {
                     const data = await res.json();
-                    setUser(data);
-                    setBalance(Number(data.balance));
+                    setUser(data.user);
+                    setBalance(Number(data.user?.balance || 0));
                 }
             } catch (error) {
                 console.error("Failed to fetch user data", error);

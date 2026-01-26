@@ -9,6 +9,7 @@ import { Flag, XCircle, CheckCircle, Eye, EyeOff, User, AlertTriangle, Ban, Tras
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, shouldOptimizeImage, getImgUrl } from '@/lib/utils';
 import ReportsSkeleton from '@/components/ReportsSkeleton';
+import { authFetch } from '@/lib/api';
 
 export default function AdminReports() {
     const [reports, setReports] = useState<any[]>([]);
@@ -23,18 +24,9 @@ export default function AdminReports() {
     }, [page]);
 
     const fetchReports = (currentPage: number) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
         setLoading(true);
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/reports?page=${currentPage}&limit=10&status=PENDING`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        authFetch(`/reports?page=${currentPage}&limit=10&status=PENDING`)
             .then(res => {
                 if (res.status === 403) {
                     router.push('/');
@@ -54,16 +46,14 @@ export default function AdminReports() {
             .catch(() => {
                 setLoading(false);
                 toast.error('Lỗi tải danh sách báo cáo');
+                router.push('/login');
             });
     };
 
     const handleIgnore = async (reportId: string) => {
-        const token = localStorage.getItem('jwt_token');
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/reports/${reportId}/ignore`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const res = await authFetch(`/reports/${reportId}/ignore`, {
+                method: 'PATCH'
             });
             if (res.ok) {
                 toast.success('Đã bỏ qua báo cáo');
@@ -77,12 +67,9 @@ export default function AdminReports() {
     };
 
     const handleResolve = async (reportId: string) => {
-        const token = localStorage.getItem('jwt_token');
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/reports/${reportId}/resolve`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const res = await authFetch(`/reports/${reportId}/resolve`, {
+                method: 'PATCH'
             });
             if (res.ok) {
                 toast.success('Đã XÓA xe và xử lý báo cáo');
@@ -138,12 +125,9 @@ export default function AdminReports() {
     };
 
     const handleBanReporter = async (userId: string) => {
-        const token = localStorage.getItem('jwt_token');
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/users/${userId}/ban`, {
-                method: 'PATCH',
-                headers: { 'Authorization': `Bearer ${token}` }
+            const res = await authFetch(`/users/${userId}/ban`, {
+                method: 'PATCH'
             });
             if (res.ok) {
                 // Update local state directly to avoid flicker

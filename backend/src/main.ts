@@ -3,9 +3,13 @@ import { AppModule } from './app.module';
 import compression from 'compression';
 import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Cookie Parser - Required for HTTP-only cookie authentication
+  app.use(cookieParser());
 
   // Security Headers
   app.use(

@@ -1,29 +1,60 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-
 import { Suspense } from 'react';
 
 function LoginPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') || '/';
+    const loginStatus = searchParams.get('login');
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-    // Check if already logged in
+    // Check if already logged in via /auth/me endpoint (cookie-based)
     useEffect(() => {
-        const token = localStorage.getItem('jwt_token');
-        if (token) {
-            router.push(redirectTo);
+        const checkAuth = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/auth/me`, {
+                    credentials: 'include', // Important: include cookies
+                });
+
+                if (res.ok) {
+                    // User is authenticated, redirect
+                    const storedRedirect = sessionStorage.getItem('login_redirect') || redirectTo;
+                    sessionStorage.removeItem('login_redirect');
+                    router.push(storedRedirect);
+                    return;
+                }
+            } catch (error) {
+                // Not authenticated, stay on login page
+            }
+            setIsCheckingAuth(false);
+        };
+
+        // If we just came back from OAuth with success, check auth
+        if (loginStatus === 'success') {
+            checkAuth();
+        } else {
+            checkAuth();
         }
-    }, [router, redirectTo]);
+    }, [router, redirectTo, loginStatus]);
 
     const handleGoogleLogin = () => {
         // Store the redirect URL to use after login
-        localStorage.setItem('login_redirect', redirectTo);
+        sessionStorage.setItem('login_redirect', redirectTo);
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
         window.location.href = `${apiUrl}/auth/google`;
     };
+
+    if (isCheckingAuth) {
+        return (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <div className="text-gray-500">Checking authentication...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white flex items-center justify-center p-6">

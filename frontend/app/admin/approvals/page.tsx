@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 import TableSkeleton from '@/components/TableSkeleton';
 import Pagination from '@/components/Pagination';
 import { shouldOptimizeImage, getImgUrl } from '@/lib/utils';
+import { authFetch } from '@/lib/api';
 
 export default function AdminApprovals() {
     const [cars, setCars] = useState<any[]>([]);
@@ -25,30 +26,19 @@ export default function AdminApprovals() {
     }, [page]);
 
     const fetchPendingCars = useCallback(async (pageNum: number) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
         setLoading(true);
 
         try {
             // First verify admin status (could be optimized to not do this every time if we trust token but good for security)
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const userRes = await fetch(`${apiUrl}/users/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const userRes = await authFetch('/auth/me');
             const userData = await userRes.json();
 
-            if (!userData.isAdmin) {
+            if (!userData.user?.isAdmin) {
                 router.push('/');
                 return;
             }
 
-            const pendingRes = await fetch(`${apiUrl}/cars/admin/pending?page=${pageNum}&limit=${LIMIT}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const pendingRes = await authFetch(`/cars/admin/pending?page=${pageNum}&limit=${LIMIT}`);
             const data = await pendingRes.json();
 
             if (data && data.data) {
@@ -60,22 +50,16 @@ export default function AdminApprovals() {
         } catch (error) {
             console.error("Error fetching approvals:", error);
             toast.error("Lỗi tải danh sách.");
+            router.push('/login');
         } finally {
             setLoading(false);
         }
     }, [router]);
 
     const handleApprove = async (carId: string) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/cars/admin/cars/${carId}/approve`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const res = await authFetch(`/cars/admin/cars/${carId}/approve`, {
+                method: 'PATCH'
             });
 
             if (res.ok) {
@@ -139,16 +123,9 @@ export default function AdminApprovals() {
     };
 
     const executeReject = async (carId: string) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/cars/admin/cars/${carId}/reject`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            const res = await authFetch(`/cars/admin/cars/${carId}/reject`, {
+                method: 'PATCH'
             });
 
             if (res.ok) {
@@ -169,9 +146,6 @@ export default function AdminApprovals() {
     };
 
     const toggleBan = (userId: string, currentStatus: boolean) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         toast.custom((t) => (
             <div className={`${t.visible ? 'animate-enter' : 'hidden'} max-w-md w-full bg-white shadow-2xl rounded-none pointer-events-auto flex flex-col`}>
                 <div className="p-6">
@@ -202,7 +176,7 @@ export default function AdminApprovals() {
                     <button
                         onClick={() => {
                             toast.dismiss(t.id);
-                            executeBan(userId, currentStatus, token);
+                            executeBan(userId, currentStatus);
                         }}
                         className="w-1/2 p-4 flex items-center justify-center text-sm font-black text-white bg-black hover:bg-[var(--jdm-red)] focus:outline-none uppercase transition-all"
                     >
@@ -213,15 +187,10 @@ export default function AdminApprovals() {
         ), { duration: 5000 });
     };
 
-    const executeBan = async (userId: string, currentStatus: boolean, token: string) => {
+    const executeBan = async (userId: string, currentStatus: boolean) => {
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/users/${userId}/ban`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+            const res = await authFetch(`/users/${userId}/ban`, {
+                method: 'PATCH'
             });
 
             if (res.ok) {

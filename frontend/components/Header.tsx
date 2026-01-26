@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Menu, X, User, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Info, Heart, Bell } from 'lucide-react';
+import { Menu, X, LogOut, Wallet, ChevronDown, Search, SlidersHorizontal, Heart, Bell } from 'lucide-react';
 import { generateSellerSlug } from '@/lib/utils';
 import SmartFilter from './SmartFilter';
 
@@ -138,66 +138,46 @@ function HeaderContent() {
 
 
     useEffect(() => {
-        // Check for token in URL (from Google Auth callback)
-        const tokenParam = searchParams.get('token');
-        if (tokenParam) {
-            localStorage.setItem('jwt_token', tokenParam);
-            window.history.replaceState({}, document.title, window.location.pathname);
-            fetchUser(tokenParam);
-        } else {
-            const storedToken = localStorage.getItem('jwt_token');
-            if (storedToken) {
-                fetchUser(storedToken);
-            } else {
+        // Check authentication via /auth/me endpoint (cookie-based)
+        const checkAuth = async () => {
+            try {
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                const res = await fetch(`${apiUrl}/auth/me`, {
+                    credentials: 'include', // Include HTTP-only cookies
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setUser(data.user);
+                    setBalance(data.user.balance ? Number(data.user.balance) : 0);
+                    // Fetch notification count
+                    fetchNotificationCount();
+                } else {
+                    setUser(null);
+                }
+            } catch (e) {
+                console.error("Failed to fetch user", e);
+                setUser(null);
+            } finally {
                 setIsAuthChecking(false);
             }
-        }
-    }, [searchParams]);
+        };
 
-    const fetchUser = async (token: string) => {
-        try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/users/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setUser(data);
-                setBalance(data.balance ? Number(data.balance) : 0);
-                // Fetch notification count
-                fetchNotificationCount(token);
-            } else {
-                // Token might be expired
-                localStorage.removeItem('jwt_token');
-                setUser(null);
-            }
-        } catch (e) {
-            console.error("Failed to fetch user", e);
-        } finally {
-            setIsAuthChecking(false);
-        }
-    };
+        checkAuth();
 
-    const handleLogin = () => {
-        setIsMenuOpen(false);
-        router.push('/login');
-    };
+        // Listen for auth changes (e.g., after OAuth login)
+        const handleAuthChange = () => checkAuth();
+        window.addEventListener('auth-change', handleAuthChange);
 
-    const handleLogout = () => {
-        localStorage.removeItem('jwt_token');
-        setUser(null);
-        setBalance(null);
-        setNotificationCount(0);
-        setIsMenuOpen(false);
-        setIsUserMenuOpen(false);
-        router.push('/');
-    };
+        return () => {
+            window.removeEventListener('auth-change', handleAuthChange);
+        };
+    }, []);
 
-    const fetchNotificationCount = async (token: string) => {
+    const fetchNotificationCount = async () => {
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
             const res = await fetch(`${apiUrl}/notifications/unread-count`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                credentials: 'include', // Include HTTP-only cookies
             });
             if (res.ok) {
                 const data = await res.json();
@@ -206,6 +186,29 @@ function HeaderContent() {
         } catch (e) {
             console.error('Failed to fetch notification count', e);
         }
+    };
+
+    const handleLogin = () => {
+        setIsMenuOpen(false);
+        router.push('/login');
+    };
+
+    const handleLogout = async () => {
+        try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            await fetch(`${apiUrl}/auth/logout`, {
+                method: 'POST',
+                credentials: 'include', // Include HTTP-only cookies
+            });
+        } catch (e) {
+            console.error('Logout error', e);
+        }
+        setUser(null);
+        setBalance(null);
+        setNotificationCount(0);
+        setIsMenuOpen(false);
+        setIsUserMenuOpen(false);
+        router.push('/');
     };
 
     return (

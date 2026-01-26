@@ -8,6 +8,7 @@ import { MapPin, Calendar, Gauge, ShieldCheck, User, Phone, MessageCircle, Chevr
 import Lightbox from '@/components/Lightbox';
 import { toast } from 'react-hot-toast';
 import { generateCarSlug, generateSellerSlug, getImgUrl } from '@/lib/utils';
+import { authFetch } from '@/lib/api';
 
 const QRCodeSVG = dynamic(() => import('qrcode.react').then(m => m.QRCodeSVG), { ssr: false });
 
@@ -29,16 +30,10 @@ export default function CarDetail({ car }: CarDetailProps) {
         : (car.updatedAt ? new Date(car.updatedAt).getTime() : Date.now()), [car.editHistory, car.updatedAt]);
 
     useEffect(() => {
-        const token = localStorage.getItem('jwt_token');
-        if (token) {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            fetch(`${apiUrl}/users/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-                .then(res => res.ok ? res.json() : null)
-                .then(data => setCurrentUser(data))
-                .catch(() => setCurrentUser(null));
-        }
+        authFetch('/auth/me')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => setCurrentUser(data?.user || null))
+            .catch(() => setCurrentUser(null));
     }, []);
 
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -53,13 +48,8 @@ export default function CarDetail({ car }: CarDetailProps) {
         if (hasIncremented.current) return;
         hasIncremented.current = true;
 
-        const token = localStorage.getItem('jwt_token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/cars/${car.id}/view`, {
-            method: 'POST',
-            headers: {
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            }
+        authFetch(`/cars/${car.id}/view`, {
+            method: 'POST'
         }).catch(err => console.error('Failed to increment view:', err));
     }, [car.id]);
 

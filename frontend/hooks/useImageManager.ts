@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
+import { authFetch } from '@/lib/api';
 
 export interface ManagedImage {
   id: string;
@@ -35,18 +36,14 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
     return album;
   });
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
   const uploadFile = async (file: File): Promise<string | null> => {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const token = localStorage.getItem('jwt_token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
       const response = await fetch(`${apiUrl}/upload`, {
         method: 'POST',
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
+        credentials: 'include',
         body: formData,
       });
       if (!response.ok) throw new Error('Upload failed');
@@ -62,12 +59,8 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
     if (!url.includes('/temp/')) return;
     const filename = url.split('/temp/').pop();
     try {
-      const token = localStorage.getItem('jwt_token');
-      await fetch(`${apiUrl}/upload/${filename}`, {
-        method: 'DELETE',
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        }
+      await authFetch(`/upload/${filename}`, {
+        method: 'DELETE'
       });
     } catch (error) {
       console.error('Error deleting temp file:', error);
@@ -94,7 +87,7 @@ export function useImageManager(initialImages: string[] = [], initialThumbnail: 
           : img
       ));
     }
-  }, [apiUrl, images]);
+  }, [images]);
 
   const removeImage = useCallback(async (id: string) => {
     const imgToRemove = images.find(img => img.id === id);

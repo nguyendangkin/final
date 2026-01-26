@@ -7,6 +7,7 @@ import Link from 'next/link';
 import NotificationSkeleton from '@/components/NotificationSkeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { authFetch } from '@/lib/api';
 
 interface UserNotification {
     id: string;
@@ -57,19 +58,10 @@ export default function NotificationsPage() {
 
     // Auth check
     useEffect(() => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        fetch(`${apiUrl}/users/me`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        })
+        authFetch('/auth/me')
             .then(res => res.json())
             .then(data => {
-                setUser(data);
+                setUser(data.user);
                 setLoading(false);
             })
             .catch(() => {
@@ -79,14 +71,8 @@ export default function NotificationsPage() {
 
     // Fetch unread counts
     const fetchUnreadCounts = useCallback(async () => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/notifications/unread-count`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await authFetch('/notifications/unread-count');
             if (res.ok) {
                 const data = await res.json();
                 setUnreadCounts(data);
@@ -98,15 +84,11 @@ export default function NotificationsPage() {
 
     // Fetch user notifications
     const fetchUserNotifications = useCallback(async (page: number, reset: boolean = false) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token || userLoading) return;
+        if (userLoading) return;
 
         setUserLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/notifications?type=user&page=${page}&limit=10`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await authFetch(`/notifications?type=user&page=${page}&limit=10`);
             if (res.ok) {
                 const data = await res.json();
                 setUserNotifications(prev => reset ? data.items : [...prev, ...data.items]);
@@ -121,15 +103,11 @@ export default function NotificationsPage() {
 
     // Fetch system announcements
     const fetchSystemAnnouncements = useCallback(async (page: number, reset: boolean = false) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token || systemLoading) return;
+        if (systemLoading) return;
 
         setSystemLoading(true);
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/notifications?type=system&page=${page}&limit=10`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await authFetch(`/notifications?type=system&page=${page}&limit=10`);
             if (res.ok) {
                 const data = await res.json();
                 setSystemAnnouncements(prev => reset ? data.items : [...prev, ...data.items]);
@@ -178,14 +156,9 @@ export default function NotificationsPage() {
 
     // Mark notification as read
     const markAsRead = async (id: string, type: TabType) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            await fetch(`${apiUrl}/notifications/${id}/read?type=${type}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await authFetch(`/notifications/${id}/read?type=${type}`, {
+                method: 'PUT'
             });
 
             if (type === 'user') {
@@ -205,14 +178,9 @@ export default function NotificationsPage() {
 
     // Mark all as read
     const markAllAsRead = async (type: TabType) => {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) return;
-
         try {
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            await fetch(`${apiUrl}/notifications/mark-all-read?type=${type}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
+            await authFetch(`/notifications/mark-all-read?type=${type}`, {
+                method: 'PUT'
             });
 
             if (type === 'user') {

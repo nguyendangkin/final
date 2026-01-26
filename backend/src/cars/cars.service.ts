@@ -38,16 +38,30 @@ export class CarsService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) { }
 
+  /**
+   * Cache Strategy Documentation:
+   *
+   * This service uses in-memory caching via @nestjs/cache-manager.
+   * Cache is automatically applied at the controller level via CacheInterceptor.
+   *
+   * Cache invalidation strategy:
+   * - clearCache(carId?) is called after any mutation (create, update, delete)
+   * - Individual car cache is cleared by key `/cars/{id}`
+   * - List caches rely on TTL expiration (typically 60s) since glob deletion
+   *   is not easily supported by the default in-memory store
+   *
+   * For production with high traffic, consider:
+   * - Using Redis with cache-manager-redis-store for more control
+   * - Implementing cache tags/prefixes for bulk invalidation
+   * - Adding cache warming for popular listings
+   */
   private async clearCache(carId?: string) {
     try {
       if (carId) {
         await this.cacheManager.del(`/cars/${carId}`);
       }
-      // Also clear all findAll results because they usually have query params
-      // CacheManager in Nest usually caches by full URL.
-      // Easiest is to clear common prefixes if supported, or rely on TTL.
-      // Since we don't have glob deletion easily in memory cache, we might need to be specific
-      // or just wait for TTL. But findOne is the critical one for "still accessible".
+      // List caches rely on TTL expiration since we can't easily do glob deletion
+      // with the default in-memory cache. For Redis, consider using patterns/tags.
     } catch (error) {
       this.logger.error(`Error clearing cache: ${error.message}`);
     }
@@ -515,12 +529,15 @@ export class CarsService {
         }
       }
 
-      // Track edit history
+      // Track edit history (limit to 100 entries to prevent unbounded growth)
       const editTimestamp = new Date().toISOString();
+      const MAX_EDIT_HISTORY = 100;
       if (!car.editHistory || car.editHistory.length === 0) {
         car.editHistory = [editTimestamp];
       } else {
-        car.editHistory = [...car.editHistory, editTimestamp];
+        const newHistory = [...car.editHistory, editTimestamp];
+        // Keep only the most recent entries if exceeding limit
+        car.editHistory = newHistory.slice(-MAX_EDIT_HISTORY);
       }
 
       Object.assign(car, updates);
@@ -1561,12 +1578,55 @@ export class CarsService {
       `Editing tag: category=${category}, old=${oldTag}, new=${newTag}`,
     );
 
-    // Find all cars to check for this tag
-    const allCars = await this.carsRepository.find();
     const targetTag = oldTag.trim().toUpperCase();
     let updatedCount = 0;
 
-    for (const car of allCars) {
+    // Build optimized query based on category to avoid loading ALL cars
+    const qb = this.carsRepository.createQueryBuilder('car');
+
+    // Add WHERE clause based on category for efficient filtering
+    if (category === 'make') {
+      qb.where('UPPER(car.make) = :tag', { tag: targetTag });
+    } else if (category === 'model') {
+      qb.where('UPPER(car.model) = :tag', { tag: targetTag });
+    } else if (category === 'trim') {
+      qb.where('UPPER(car.trim) = :tag', { tag: targetTag });
+    } else if (category === 'chassisCode') {
+      qb.where('UPPER(car.chassisCode) = :tag', { tag: targetTag });
+    } else if (category === 'engineCode') {
+      qb.where('UPPER(car.engineCode) = :tag', { tag: targetTag });
+    } else if (category === 'transmission') {
+      qb.where('UPPER(car.transmission) = :tag', { tag: targetTag });
+    } else if (category === 'drivetrain') {
+      qb.where('UPPER(car.drivetrain) = :tag', { tag: targetTag });
+    } else if (category === 'condition') {
+      qb.where('UPPER(car.condition) = :tag', { tag: targetTag });
+    } else if (category === 'paperwork') {
+      qb.where('UPPER(car.paperwork) = :tag', { tag: targetTag });
+    } else if (category === 'year') {
+      qb.where('CAST(car.year AS TEXT) = :tag', { tag: targetTag });
+    } else if (category === 'location') {
+      qb.where('UPPER(car.location) = :tag', { tag: targetTag });
+    } else if (category === 'feature') {
+      // notableFeatures is simple-array, search with ILIKE
+      qb.where('car.notableFeatures ILIKE :tagPattern', {
+        tagPattern: `%${targetTag}%`,
+      });
+    } else if (category.startsWith('mods')) {
+      // mods is JSONB, search with ILIKE on cast
+      qb.where('CAST(car.mods AS TEXT) ILIKE :tagPattern', {
+        tagPattern: `%"${targetTag}"%`,
+      });
+    } else {
+      // Unknown category, return early
+      this.logger.warn(`Unknown category: ${category}`);
+      return;
+    }
+
+    const matchingCars = await qb.getMany();
+    this.logger.log(`Found ${matchingCars.length} cars matching tag in category ${category}`);
+
+    for (const car of matchingCars) {
       let matches = false;
 
       // Check if car matches the tag in the specific category
@@ -1672,27 +1732,16 @@ export class CarsService {
           );
         } else if (category.startsWith('mods') && car.mods) {
           // Clone mods object to ensure TypeORM detects change
-          const modsClone = JSON.parse(JSON.stringify(car.mods));
+          const modsClone = JSON.parse(JSON.stringify(car.mods)) as Record<string, string[]>;
 
-          if (Array.isArray(modsClone)) {
-            car.mods = modsClone.map((m: any) => {
-              if (typeof m === 'string') {
-                return m.trim().toUpperCase() === targetTag ? newTag : m;
-              } else if (m && m.name) {
-                if (m.name.trim().toUpperCase() === targetTag) m.name = newTag;
-                return m;
-              }
-              return m;
-            });
-          } else if (typeof modsClone === 'object') {
-            const modType = category.replace('mods_', '');
-            if (modsClone[modType] && Array.isArray(modsClone[modType])) {
-              modsClone[modType] = modsClone[modType].map((m: string) =>
-                m.trim().toUpperCase() === targetTag ? newTag : m,
-              );
-              // Reassign to trigger update
-              car.mods = modsClone;
-            }
+          // Handle object-based mods structure
+          const modType = category.replace('mods_', '') as keyof typeof modsClone;
+          if (modsClone[modType] && Array.isArray(modsClone[modType])) {
+            modsClone[modType] = modsClone[modType].map((m: string) =>
+              m.trim().toUpperCase() === targetTag ? newTag : m,
+            );
+            // Reassign to trigger update
+            car.mods = modsClone;
           }
         }
 

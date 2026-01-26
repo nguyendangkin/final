@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { authFetch } from '@/lib/api';
 
 export default function DepositPage() {
     const [amount, setAmount] = useState<number>(50000);
@@ -23,25 +24,19 @@ export default function DepositPage() {
         setError(null);
 
         try {
-            const token = localStorage.getItem('jwt_token');
-            if (!token) {
-                router.push('/');
-                return;
-            }
-
-            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-            const res = await fetch(`${apiUrl}/payment/create`, {
+            const res = await authFetch('/payment/create', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({ amount })
             });
 
+            if (!res.ok) {
+                router.push('/login');
+                return;
+            }
+
             const data = await res.json();
 
-            if (res.ok && data.error === 0 && data.data?.checkoutUrl) {
+            if (data.error === 0 && data.data?.checkoutUrl) {
                 window.location.href = data.data.checkoutUrl;
             } else {
                 setError(data.message || 'Có lỗi xảy ra khi tạo giao dịch');

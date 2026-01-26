@@ -1,29 +1,25 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
 function TokenLogic() {
     const searchParams = useSearchParams();
-    const router = useRouter();
 
     useEffect(() => {
-        const tokenParam = searchParams.get('token');
-        if (tokenParam) {
-            localStorage.setItem('jwt_token', tokenParam);
-            // Remove token from URL to clean it up
+        // Check for login success from OAuth callback (now using cookies)
+        const loginStatus = searchParams.get('login');
+        if (loginStatus === 'success') {
+            // Token is now in HTTP-only cookie, just clean up the URL
             const url = new URL(window.location.href);
-            url.searchParams.delete('token');
+            url.searchParams.delete('login');
             window.history.replaceState({}, '', url.toString());
 
-            // Force reload to ensure header picks up the token if needed, 
-            // or just rely on state if the app is reactive enough.
-            // Based on previous logic, a reload or hard set might be desired,
-            // but let's try a cleaner replaceState first. 
-            // If the header relies on a window event or polling, we might need dispatchEvent.
-            window.dispatchEvent(new Event('storage'));
+            // Trigger a reload to refresh auth state across the app
+            window.dispatchEvent(new Event('auth-change'));
         }
-    }, [searchParams, router]);
+    }, [searchParams]);
 
     return null;
 }
