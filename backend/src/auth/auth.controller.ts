@@ -80,13 +80,11 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) res: Response) {
     const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
 
-    // Clear the JWT cookie
-    res.clearCookie(COOKIE_NAME, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? ('strict' as const) : ('lax' as const),
-      path: '/',
-    });
+    // Clear the JWT cookie with same options as set (including domain in production)
+    const cookieOptions = this.getCookieOptions(isProduction);
+    // Remove maxAge for clearCookie (not needed when clearing)
+    const { maxAge, ...clearOptions } = cookieOptions;
+    res.clearCookie(COOKIE_NAME, clearOptions);
 
     return { message: 'Logged out successfully' };
   }
