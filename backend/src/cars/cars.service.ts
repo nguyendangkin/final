@@ -464,8 +464,11 @@ export class CarsService {
 
       const savedCar = await this.carsRepository.save(car);
 
-      // Sync tags to Tag table (increment usageCount)
-      await this.tagsService.syncTagsFromCar(savedCar, true);
+      // Sync tags to Tag table (increment usageCount) - only for approved cars
+      // Pending cars will have tags synced when approved
+      if (savedCar.status === CarStatus.AVAILABLE) {
+        await this.tagsService.syncTagsFromCar(savedCar, true);
+      }
 
       await this.clearCache();
 
@@ -499,9 +502,11 @@ export class CarsService {
     const oldImages = [...(car.images || [])];
     const oldThumbnail = car.thumbnail;
 
-    // Sync tags: Remove old tags usage
+    // Sync tags: Remove old tags usage (only if approved)
     // We do this BEFORE updating the car object so we have the old values
-    await this.tagsService.syncTagsFromCar(car, false);
+    if (car.status === CarStatus.AVAILABLE) {
+      await this.tagsService.syncTagsFromCar(car, false);
+    }
 
     // Handle price conversion if it's in the DTO
     const updates: any = { ...updateCarDto };
@@ -592,9 +597,11 @@ export class CarsService {
         await this.uploadService.deleteFiles(uniqueImagesToRemove);
       }
 
-      // Sync tags: Add new tags usage
+      // Sync tags: Add new tags usage (only if approved)
       // We do this AFTER saving so we have stored the new values (and validation passed)
-      await this.tagsService.syncTagsFromCar(updatedCar, true);
+      if (updatedCar.status === CarStatus.AVAILABLE) {
+        await this.tagsService.syncTagsFromCar(updatedCar, true);
+      }
 
       await this.clearCache(id);
 
@@ -631,8 +638,10 @@ export class CarsService {
       );
     }
 
-    // Decrement tag usage counts before removing car
-    await this.tagsService.syncTagsFromCar(car, false);
+    // Decrement tag usage counts before removing car (only if approved)
+    if (car.status === CarStatus.AVAILABLE) {
+      await this.tagsService.syncTagsFromCar(car, false);
+    }
 
     await this.carsRepository.remove(car);
     await this.clearCache(id);
@@ -661,10 +670,12 @@ export class CarsService {
       where: { seller: { id: sellerId } },
     });
 
-    // Delete images and decrement tags for each car
+    // Delete images and decrement tags for each car (only if approved)
     for (const car of cars) {
       await this.deleteCarImages(car);
-      await this.tagsService.syncTagsFromCar(car, false);
+      if (car.status === CarStatus.AVAILABLE) {
+        await this.tagsService.syncTagsFromCar(car, false);
+      }
     }
 
     await this.carsRepository.delete({ seller: { id: sellerId } });
@@ -677,8 +688,10 @@ export class CarsService {
     // Delete associated images from disk
     await this.deleteCarImages(car);
 
-    // Decrement tag usage counts
-    await this.tagsService.syncTagsFromCar(car, false);
+    // Decrement tag usage counts (only if approved)
+    if (car.status === CarStatus.AVAILABLE) {
+      await this.tagsService.syncTagsFromCar(car, false);
+    }
 
     await this.carsRepository.remove(car);
   }
@@ -714,6 +727,10 @@ export class CarsService {
 
     car.status = CarStatus.AVAILABLE;
     await this.carsRepository.save(car);
+
+    // Sync tags now that car is approved (increment usageCount)
+    await this.tagsService.syncTagsFromCar(car, true);
+
     await this.clearCache(id);
 
     // Notify user
@@ -741,8 +758,11 @@ export class CarsService {
     // Delete associated images from disk
     await this.deleteCarImages(car);
 
-    // Decrement tag usage counts
-    await this.tagsService.syncTagsFromCar(car, false);
+    // Only decrement tag usage if car was previously approved (AVAILABLE)
+    // Pending cars never had their tags synced, so no need to decrement
+    if (car.status === CarStatus.AVAILABLE) {
+      await this.tagsService.syncTagsFromCar(car, false);
+    }
 
     // Remove from DB
     await this.carsRepository.remove(car);
@@ -1230,8 +1250,7 @@ export class CarsService {
       const res = await qb
         .clone()
         .select(`DISTINCT car.${column}`, 'value')
-        .where(`car.${column} IS NOT NULL`)
-        // Re-apply common filters from qb
+        .andWhere(`car.${column} IS NOT NULL`)
         .getRawMany();
       return {
         column,
@@ -1249,7 +1268,7 @@ export class CarsService {
       const res = await qb
         .clone()
         .select('car.notableFeatures', 'nf')
-        .where('car.notableFeatures IS NOT NULL')
+        .andWhere('car.notableFeatures IS NOT NULL')
         .getRawMany();
 
       const set = new Set<string>();
@@ -1268,7 +1287,7 @@ export class CarsService {
       const res = await qb
         .clone()
         .select('car.mods', 'mods')
-        .where('car.mods IS NOT NULL')
+        .andWhere('car.mods IS NOT NULL')
         .getRawMany();
 
       const options = {
@@ -1434,10 +1453,12 @@ export class CarsService {
     const initiator = verifiedCars[0].seller;
 
     // Delete ALL cars with this tag
-    // Delete images and decrement tags for each car
+    // Delete images and decrement tags for each car (only if approved)
     for (const car of verifiedCars) {
       await this.deleteCarImages(car);
-      await this.tagsService.syncTagsFromCar(car, false);
+      if (car.status === CarStatus.AVAILABLE) {
+        await this.tagsService.syncTagsFromCar(car, false);
+      }
     }
 
     await this.carsRepository.remove(verifiedCars);
@@ -1709,8 +1730,10 @@ export class CarsService {
       if (matches) {
         this.logger.log(`Found match in car ${car.id}`);
 
-        // 1. Decrement OLD tag usage
-        await this.tagsService.syncTagsFromCar(car, false);
+        // 1. Decrement OLD tag usage (only if approved)
+        if (car.status === CarStatus.AVAILABLE) {
+          await this.tagsService.syncTagsFromCar(car, false);
+        }
 
         // 2. Apply Change
         if (category === 'make') car.make = newTag;
@@ -1749,8 +1772,10 @@ export class CarsService {
         await this.carsRepository.save(car);
         updatedCount++;
 
-        // 4. Increment NEW tag usage
-        await this.tagsService.syncTagsFromCar(car, true);
+        // 4. Increment NEW tag usage (only if approved)
+        if (car.status === CarStatus.AVAILABLE) {
+          await this.tagsService.syncTagsFromCar(car, true);
+        }
       }
     }
     this.logger.log(`Updated ${updatedCount} cars with new tag "${newTag}"`);
