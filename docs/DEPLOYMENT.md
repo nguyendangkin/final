@@ -106,47 +106,52 @@ node -e "console.log(require('crypto').randomUUID())"
 
 ### Bước 6: Lấy SSL Certificate
 
+> ⚠️ **Lưu ý quan trọng**: Certbot trong docker-compose.yml có entrypoint tùy chỉnh cho auto-renewal.
+> Khi lấy certificate lần đầu, phải dùng `--entrypoint "certbot"` để override.
+
 ```bash
 # Tạo thư mục cần thiết
 mkdir -p certbot/www certbot/conf
 
-# Dùng config initial (không có SSL)
-cp nginx/conf.d/default.conf.initial nginx/conf.d/default.conf
+# Kiểm tra DNS đã trỏ đúng chưa
+dig +short 4gach.com
+dig +short api.4gach.com
+curl ifconfig.me  # So sánh với IP trên
 
-# Khởi động nginx với HTTP
-docker compose up -d nginx
-
-# Lấy SSL certificate
-docker compose run --rm certbot certonly \
-  --webroot \
-  --webroot-path=/var/www/certbot \
-  --email your-email@example.com \
+# Lấy SSL certificate (standalone mode - không cần nginx chạy trước)
+docker compose run --rm -p 80:80 --entrypoint "certbot" certbot certonly \
+  --standalone \
+  --email nguyenchin0077@gmail.com \
   --agree-tos \
   --no-eff-email \
   -d 4gach.com \
   -d api.4gach.com
 
-# Kiểm tra certificate
-ls certbot/conf/live/4gach.com/
+# Kiểm tra certificate (cần sudo vì certbot chạy dưới quyền root)
+sudo ls -la certbot/conf/live/4gach.com/
 ```
 
-### Bước 7: Chuyển Sang HTTPS Config
+**Giải thích các flag:**
+- `--entrypoint "certbot"`: Override entrypoint mặc định (renew loop)
+- `--standalone`: Certbot tự mở port 80 để verify domain
+- `-p 80:80`: Map port 80 từ container ra host
+
+### Bước 7: Kích Hoạt HTTPS Config
+
+File `nginx/conf.d/default.conf` trong repo đã có config HTTPS đầy đủ. Sau khi có SSL certificate, khôi phục config này:
 
 ```bash
-# Backup initial config
-mv nginx/conf.d/default.conf nginx/conf.d/default.conf.backup
-
-# Restore full SSL config
-cp nginx/conf.d/default.conf.initial.backup nginx/conf.d/default.conf
-# Hoặc tạo lại từ template gốc
-```
-
-**Quan trọng**: File `nginx/conf.d/default.conf` trong repo đã có config HTTPS đầy đủ. Chỉ cần khôi phục nó:
-
-```bash
-# Khôi phục config HTTPS
+# Khôi phục config HTTPS từ git
 git checkout nginx/conf.d/default.conf
+
+# Kiểm tra config
+cat nginx/conf.d/default.conf | head -30
+
+# Restart nginx để áp dụng
+docker compose restart nginx
 ```
+
+> 💡 **Lưu ý**: Nếu không dùng git, bạn có thể copy file `default.conf` từ máy local lên VPS.
 
 ### Bước 8: Build & Start Services
 
@@ -274,14 +279,21 @@ docker system prune -a
 
 ## 🔄 SSL Auto-Renewal
 
-Certbot service tự động renew certificate mỗi 12 giờ. Kiểm tra:
+Certbot service tự động renew certificate mỗi 12 giờ (chạy ngầm trong background).
 
+**Kiểm tra trạng thái:**
 ```bash
-# Check certbot container
+# Check certbot container logs
 docker compose logs certbot
 
-# Manual renew test
-docker compose run --rm certbot renew --dry-run
+# Xem danh sách certificate
+docker compose run --rm --entrypoint "certbot" certbot certificates
+
+# Test renewal (dry-run)
+docker compose run --rm --entrypoint "certbot" certbot renew --dry-run
+
+# Force renewal nếu cần
+docker compose run --rm --entrypoint "certbot" certbot renew --force-renewal
 ```
 
 ---
