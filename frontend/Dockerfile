@@ -22,9 +22,18 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Build arguments for Next.js public environment variables
+# These MUST be set at build time as Next.js bakes them into the client bundle
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_API_HOSTNAME
+ARG NEXT_PUBLIC_BASE_URL
+
 # Set environment for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_HOSTNAME=$NEXT_PUBLIC_API_HOSTNAME
+ENV NEXT_PUBLIC_BASE_URL=$NEXT_PUBLIC_BASE_URL
 
 # Build the application
 RUN npm run build
