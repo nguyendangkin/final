@@ -1,14 +1,21 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-    const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://icheck.app'
 
     return {
-        rules: {
-            userAgent: '*',
-            allow: '/',
-            disallow: ['/admin/', '/login/', '/wallet/'],
-        },
+        rules: [
+            {
+                userAgent: '*',
+                allow: ['/', '/profile/*', '/login'],
+                disallow: [
+                    '/api/',
+                    '/auth/',
+                    '/locations/*',
+                    '/categories/*',
+                ],
+            },
+        ],
         sitemap: `${baseUrl}/sitemap.xml`,
-    };
+    }
 }

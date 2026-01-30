@@ -1,48 +1,20 @@
-import { MetadataRoute } from 'next';
-import { generateCarSlug } from '@/lib/utils';
+import type { MetadataRoute } from 'next'
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000';
-
-    // Fetch cars
-    let cars = [];
-    try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const res = await fetch(`${apiUrl}/cars?limit=1000`, { cache: 'no-store' });
-        if (res.ok) {
-            const data = await res.json();
-            cars = data.data || [];
-        }
-    } catch (e) {
-        console.error('Failed to fetch cars for sitemap', e);
-    }
-
-    const carUrls = cars.map((car: any) => ({
-        url: `${baseUrl}/cars/${generateCarSlug(car)}`,
-        lastModified: car.updatedAt || new Date(),
-        changeFrequency: 'daily' as const,
-        priority: 0.8,
-    }));
+export default function sitemap(): MetadataRoute.Sitemap {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://icheck.app'
 
     return [
         {
             url: baseUrl,
             lastModified: new Date(),
-            changeFrequency: 'daily',
+            changeFrequency: 'weekly',
             priority: 1,
         },
         {
-            url: `${baseUrl}/sell`,
-            lastModified: new Date(),
-            changeFrequency: 'monthly',
-            priority: 0.8,
-        },
-        {
-            url: `${baseUrl}/info`,
+            url: `${baseUrl}/login`,
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.5,
         },
-        ...carUrls,
-    ];
+    ]
 }

@@ -1,54 +1,58 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import compression from 'compression';
-import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
-import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Cookie Parser - Required for HTTP-only cookie authentication
-  app.use(cookieParser());
+  // Enable CORS for frontend
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  });
 
-  // Security Headers
+  // Security headers with specific Content-Security-Policy
+  const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
   app.use(
     helmet({
-      crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow images to be loaded by frontend
       contentSecurityPolicy: {
-        useDefaults: true,
         directives: {
           defaultSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:', 'http:'], // Allow external images
-          scriptSrc: ["'self'", "'unsafe-inline'"], // Needed for some inline scripts if necessary, tighten if possible
-          styleSrc: ["'self'", "'unsafe-inline'"], // Common for CSS-in-JS
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: [
+            "'self'",
+            'data:',
+            'blob:',
+            'https://lh3.googleusercontent.com', // Google avatars
+          ],
+          connectSrc: ["'self'", frontendOrigin],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
         },
+      },
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginOpenerPolicy: { policy: 'same-origin' },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    }),
+  );
+
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
       },
     }),
   );
 
-  // Global Validation Pipe - Critical for security
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Strip properties not in DTO
-      forbidNonWhitelisted: true, // Throw error if extra properties are sent
-      transform: true, // Auto-transform payloads to DTO instances
-    }),
-  );
-
-  // Gzip Compression
-  app.use(compression());
-
-  // Strict CORS
-  app.enableCors({
-    origin: [
-      'http://localhost:3000', // Frontend local
-      process.env.FRONTEND_URL, // Production URL
-    ].filter(Boolean),
-    credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  });
-
-  await app.listen(process.env.PORT ?? 8080);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`🚀 iCheck Backend đang chạy tại http://localhost:${port}`);
 }
-bootstrap();
+void bootstrap();

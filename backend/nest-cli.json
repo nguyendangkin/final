@@ -3,11 +3,6 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "deleteOutDir": true,
-    "assets": [
-      "**/*.entity.ts",
-      "**/*.dto.ts"
-    ],
-    "watchAssets": false
+    "deleteOutDir": true
   }
 }

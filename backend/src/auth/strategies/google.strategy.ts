@@ -1,46 +1,37 @@
+import { Injectable, Inject } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AuthService } from '../auth.service';
+import { Strategy, VerifyCallback, Profile } from 'passport-google-oauth20';
+import type { ConfigType } from '@nestjs/config';
+import googleConfig from '../../config/google.config';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
-    configService: ConfigService,
-    private authService: AuthService,
+    @Inject(googleConfig.KEY)
+    private googleConfiguration: ConfigType<typeof googleConfig>,
   ) {
-    const clientID = configService.get<string>('GOOGLE_CLIENT_ID');
-    const clientSecret = configService.get<string>('GOOGLE_CLIENT_SECRET');
-    const callbackURL = configService.get<string>('CALLBACK_URL');
-
-    if (!clientID || !clientSecret || !callbackURL) {
-      throw new Error('Google OAuth config is missing');
-    }
-
     super({
-      clientID,
-      clientSecret,
-      callbackURL,
+      clientID: googleConfiguration.clientId || '',
+      clientSecret: googleConfiguration.clientSecret || '',
+      callbackURL: googleConfiguration.callbackUrl,
       scope: ['email', 'profile'],
+      passReqToCallback: false,
     });
   }
 
-  async validate(
+  validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
+    profile: Profile,
     done: VerifyCallback,
-  ): Promise<any> {
-    const { name, emails, photos, id } = profile;
-    const user = await this.authService.validateGoogleUser({
-      email: emails[0].value,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value,
+  ): void {
+    const { id, emails, displayName, photos } = profile;
+    const user = {
       googleId: id,
-      accessToken,
-    });
+      email: emails?.[0]?.value || '',
+      displayName: displayName || '',
+      avatar: photos?.[0]?.value,
+    };
     done(null, user);
   }
 }

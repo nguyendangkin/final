@@ -1,52 +1,33 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Injectable, Inject, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import type { ConfigType } from '@nestjs/config';
+import jwtConfig from '../../config/jwt.config';
 import { UsersService } from '../../users/users.service';
-import { Request } from 'express';
 
-// Cookie name must match the one used in auth.controller.ts
-const COOKIE_NAME = 'jwt_token';
-
-/**
- * Custom extractor that checks both HTTP-only cookie and Authorization header.
- * Priority: Cookie first (more secure), then fallback to Bearer token for API clients.
- */
-const cookieOrHeaderExtractor = (req: Request): string | null => {
-  // First, try to extract from HTTP-only cookie (preferred for browser clients)
-  if (req.cookies && req.cookies[COOKIE_NAME]) {
-    return req.cookies[COOKIE_NAME];
-  }
-
-  // Fallback to Authorization header for API clients (mobile apps, etc.)
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-
-  return null;
-};
+interface JwtPayload {
+  sub: string;
+  email: string;
+}
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
-    configService: ConfigService,
+    @Inject(jwtConfig.KEY)
+    private jwtConfiguration: ConfigType<typeof jwtConfig>,
     private usersService: UsersService,
   ) {
-    const secret = configService.get<string>('JWT_SECRET');
-    if (!secret) throw new Error('JWT_SECRET is not defined');
-
     super({
-      jwtFromRequest: cookieOrHeaderExtractor,
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: secret,
+      secretOrKey: jwtConfiguration.secret,
     });
   }
 
-  async validate(payload: any) {
-    const user = await this.usersService.findOne(payload.sub);
+  async validate(payload: JwtPayload) {
+    const user = await this.usersService.findById(payload.sub);
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException();
     }
     return user;
   }

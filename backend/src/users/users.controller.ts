@@ -1,78 +1,36 @@
 import {
   Controller,
   Get,
-  Req,
   UseGuards,
   Param,
-  ParseUUIDPipe,
   NotFoundException,
-  Patch,
-  Query,
+  BadRequestException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { AdminGuard } from '../auth/admin.guard';
 import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
-  @Get('me')
-  @UseGuards(AuthGuard('jwt'))
-  async getProfile(@Req() req) {
-    // req.user is populated by JwtStrategy
-    // We might want to fetch fresh data from DB to get latest balance
-    const user = await this.usersService.findOne(req.user.id);
+  @Get(':id/public')
+  async getPublic(@Param('id') id: string) {
+    if (!UUID_REGEX.test(id)) {
+      throw new BadRequestException('ID không hợp lệ');
+    }
+    const user = await this.usersService.findPublicById(id);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng');
+    }
     return user;
   }
 
-  @Get('search/email')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
-  async searchByEmail(@Req() req, @Query('q') query: string) {
-    if (!query || query.trim().length === 0) {
-      return [];
-    }
-    return this.usersService.searchByEmail(query.trim());
-  }
-
-  @Get()
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
-  async findAll(
-    @Req() req,
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-  ) {
-    return this.usersService.findAll(page, limit);
-  }
-
-  @Patch(':id/ban')
-  @UseGuards(AuthGuard('jwt'), AdminGuard)
-  async toggleBan(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
-    return this.usersService.toggleBan(id);
-  }
-
-  @Get(':id/profile')
-  async getSellerProfile(@Param('id', ParseUUIDPipe) id: string) {
-    const user = await this.usersService.findOne(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Get stats only, avoiding heavy car loading
-    const stats = await this.usersService.getSellerStats(id);
-
-    return {
-      id: user.id,
-      name: user.name,
-      // email: user.email, // Hidden for privacy
-      avatar: user.avatar,
-      createdAt: user.createdAt,
-      isSellingBanned: user.isSellingBanned,
-      stats: {
-        selling: stats.selling,
-        sold: stats.sold,
-      },
-      // We do NOT return carsForSale anymore. Frontend will fetch via /cars?sellerId=...
-    };
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  async findOne(@Param('id') id: string) {
+    return this.usersService.findById(id);
   }
 }
