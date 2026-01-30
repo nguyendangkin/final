@@ -1,135 +1,75 @@
-import { Injectable, Inject, forwardRef, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { User } from './entities/user.entity';
 
-// Note: CarsService has a circular dependency with UsersService.
-// UsersService needs CarsService for deleteAllBySeller (when banning user).
-// CarsService needs UsersService for admin checks (via forwardRef in CarsModule).
-// Both use forwardRef(() => ...) to resolve this at runtime.
-// Alternative: Extract shared logic to a separate service if this grows.
-import { CarsService } from '../cars/cars.service';
-import { NotificationsService } from '../notifications/notifications.service';
-import { NotificationType } from '../notifications/entities/notification.entity';
+interface GoogleProfile {
+  googleId: string;
+  email: string;
+  displayName: string;
+  avatar?: string;
+}
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    public usersRepository: Repository<User>,
-    @Inject(forwardRef(() => CarsService))
-    private carsService: CarsService,
-    private notificationsService: NotificationsService,
+    private readonly userRepository: Repository<User>,
   ) { }
 
+  async findByGoogleId(googleId: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { googleId } });
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { id } });
+  }
+
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.userRepository.findOne({ where: { email } });
   }
 
-  async create(userData: Partial<User>): Promise<User> {
-    const newUser = this.usersRepository.create(userData);
-    return this.usersRepository.save(newUser);
-  }
-
-  async findOne(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { id } });
-  }
-
-  async searchByEmail(email: string): Promise<User[]> {
-    return this.usersRepository
-      .createQueryBuilder('user')
-      .select([
-        'user.id',
-        'user.email',
-        'user.name',
-        'user.avatar',
-        'user.isAdmin',
-        'user.isSellingBanned',
-        'user.createdAt',
-      ])
-      .where('LOWER(user.email) LIKE LOWER(:email)', { email: `%${email}%` })
-      .orderBy('user.createdAt', 'DESC')
-      .take(20)
-      .getMany();
-  }
-
-  async findOneWithCars(id: string): Promise<User | null> {
-    return this.usersRepository.findOne({
+  async findPublicById(id: string): Promise<{
+    id: string;
+    displayName: string;
+    avatar: string | null;
+    createdAt: Date;
+  } | null> {
+    const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['carsForSale'],
+      select: ['id', 'displayName', 'avatar', 'createdAt'],
     });
+    return user;
   }
 
-  async findAll(
-    page: number = 1,
-    limit: number = 10,
-  ): Promise<{
-    data: User[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> {
-    const [data, total] = await this.usersRepository.findAndCount({
-      select: ['id', 'email', 'name', 'avatar', 'isAdmin', 'isSellingBanned', 'createdAt'],
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
+  async createFromGoogle(profile: GoogleProfile): Promise<User> {
+    const user = this.userRepository.create({
+      googleId: profile.googleId,
+      email: profile.email,
+      displayName: profile.displayName,
+      avatar: profile.avatar,
     });
-    return {
-      data,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-    };
+    return this.userRepository.save(user);
   }
 
-  async toggleBan(id: string): Promise<User> {
-    const user = await this.findOne(id);
+  async findOrCreateFromGoogle(profile: GoogleProfile): Promise<User> {
+    let user = await this.findByGoogleId(profile.googleId);
     if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    user.isSellingBanned = !user.isSellingBanned;
-
-    // If banning, delete all cars
-    if (user.isSellingBanned) {
-      await this.carsService.deleteAllBySeller(id);
-      await this.notificationsService.createNotification(
-        id,
-        NotificationType.ACCOUNT_BAN,
-        'Tài khoản bị cấm bán',
-        'Tài khoản của bạn đã bị cấm đăng bán xe do vi phạm chính sách của chúng tôi. Tất cả bài đăng hiện tại đã bị xóa.',
-      );
+      user = await this.createFromGoogle(profile);
     } else {
-      await this.notificationsService.createNotification(
-        id,
-        NotificationType.ACCOUNT_UNBAN,
-        'Tài khoản được bỏ cấm',
-        'Tài khoản của bạn đã được khôi phục quyền đăng bán xe.',
-      );
+      // Update avatar and displayName in case they changed on Google
+      user.avatar = profile.avatar ?? user.avatar;
+      user.displayName = profile.displayName || user.displayName;
+      await this.userRepository.save(user);
     }
-
-    return this.usersRepository.save(user);
+    return user;
   }
 
-  async banUser(id: string): Promise<void> {
-    const user = await this.findOne(id);
-    if (user && !user.isSellingBanned) {
-      user.isSellingBanned = true;
-      await this.usersRepository.save(user);
-      await this.carsService.deleteAllBySeller(id);
-      await this.notificationsService.createNotification(
-        id,
-        NotificationType.ACCOUNT_BAN,
-        'Tài khoản bị cấm bán',
-        'Tài khoản của bạn đã bị cấm đăng bán xe do vi phạm chính sách của chúng tôi. Tất cả bài đăng hiện tại đã bị xóa.',
-      );
-    }
-  }
-
-  async getSellerStats(id: string) {
-    return this.carsService.getSellerStats(id);
+  async updateRefreshToken(
+    userId: string,
+    refreshToken: string | null,
+  ): Promise<void> {
+    await this.userRepository.update(userId, { refreshToken });
   }
 }
+

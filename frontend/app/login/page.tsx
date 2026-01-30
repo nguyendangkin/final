@@ -1,90 +1,38 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { Map } from 'lucide-react';
+import { authApi } from '@/lib/api';
 
-function LoginPageContent() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const redirectTo = searchParams.get('redirect') || '/';
-    const loginStatus = searchParams.get('login');
-    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-
-    // Check if already logged in via /auth/me endpoint (cookie-based)
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-                const res = await fetch(`${apiUrl}/auth/me`, {
-                    credentials: 'include', // Important: include cookies
-                });
-
-                if (res.ok) {
-                    // User is authenticated, redirect
-                    const storedRedirect = sessionStorage.getItem('login_redirect') || redirectTo;
-                    sessionStorage.removeItem('login_redirect');
-                    router.push(storedRedirect);
-                    return;
-                }
-            } catch (error) {
-                // Not authenticated, stay on login page
-            }
-            setIsCheckingAuth(false);
-        };
-
-        // If we just came back from OAuth with success, check auth
-        if (loginStatus === 'success') {
-            checkAuth();
-        } else {
-            checkAuth();
-        }
-    }, [router, redirectTo, loginStatus]);
-
+export default function LoginPage() {
     const handleGoogleLogin = () => {
-        // Store the redirect URL to use after login
-        sessionStorage.setItem('login_redirect', redirectTo);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        window.location.href = `${apiUrl}/auth/google`;
+        window.location.href = authApi.getGoogleLoginUrl();
     };
 
-    if (isCheckingAuth) {
-        return (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <div className="text-gray-500">Checking authentication...</div>
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <div className="min-h-screen bg-gradient-to-br from-teal-50 to-emerald-50 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
-                {/* Logo / Brand */}
-                <div className="text-center mb-10">
-                    <h1 className="text-4xl font-black italic uppercase tracking-tighter text-black">
-                        4GACH
-                    </h1>
-                    <p className="text-gray-500 mt-2">
-                        Sàn giao dịch xe JDM hàng đầu Việt Nam
-                    </p>
+                {/* Logo */}
+                <div className="mb-6 sm:mb-8 text-center">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg">
+                        <Map className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">iCheck</h1>
+                    <p className="text-sm sm:text-base text-gray-500 mt-1 sm:mt-2">Sổ tay bản đồ cá nhân của bạn</p>
                 </div>
 
                 {/* Login Card */}
-                <div className="bg-white border border-gray-200 p-8 shadow-xl">
-                    <h2 className="text-2xl font-bold text-center mb-6 text-black">
-                        Đăng nhập
+                <div className="bg-white rounded-2xl shadow-xl p-5 sm:p-8">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 text-center mb-2">
+                        Chào mừng bạn!
                     </h2>
-
-                    <p className="text-gray-500 text-center mb-8">
-                        Đăng nhập để đăng bán xe và quản lý tin đăng của bạn
+                    <p className="text-gray-500 text-center text-xs sm:text-sm mb-5 sm:mb-6">
+                        Đăng nhập để bắt đầu lưu trữ những địa điểm yêu thích
                     </p>
 
-                    {/* Google Login Button */}
                     <button
                         onClick={handleGoogleLogin}
-                        className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-400 hover:bg-gray-50 transition-all font-semibold text-gray-700"
+                        className="w-full flex items-center justify-center gap-2 sm:gap-3 bg-white border border-gray-200 text-gray-700 font-medium py-2.5 sm:py-3 px-4 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm text-sm sm:text-base"
                     >
-                        {/* Google Icon */}
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
                             <path
                                 fill="#4285F4"
@@ -105,36 +53,15 @@ function LoginPageContent() {
                         </svg>
                         Đăng nhập với Google
                     </button>
-
-                    {/* Divider */}
-                    <div className="my-8 flex items-center gap-4">
-                        <div className="flex-1 h-px bg-gray-200"></div>
-                        <span className="text-gray-400 text-sm">hoặc</span>
-                        <div className="flex-1 h-px bg-gray-200"></div>
-                    </div>
-
-                    {/* Back to Home */}
-                    <button
-                        onClick={() => router.push('/')}
-                        className="w-full px-6 py-3 text-gray-500 hover:text-black transition-colors font-medium"
-                    >
-                        ← Quay lại trang chủ
-                    </button>
                 </div>
 
-                {/* Footer text */}
-                <p className="text-center text-gray-400 text-sm mt-8">
-                    Bằng việc đăng nhập, bạn đồng ý với Điều khoản sử dụng của 4GACH
+                {/* Footer */}
+                <p className="mt-6 sm:mt-8 text-xs sm:text-sm text-gray-400 text-center">
+                    &ldquo;Google Maps là bản đồ của mọi người, còn đây là bản đồ của riêng bạn&rdquo;
                 </p>
             </div>
         </div>
     );
 }
 
-export default function LoginPage() {
-    return (
-        <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center text-black">Loading...</div>}>
-            <LoginPageContent />
-        </Suspense>
-    );
-}
+

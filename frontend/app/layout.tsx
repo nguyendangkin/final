@@ -1,53 +1,66 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Header from "@/components/Header";
+import { AuthProvider, MapPersistenceProvider, PWAInstallProvider } from "@/components/providers";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-  display: "swap",
-});
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://icheck.app';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#14b8a6',
+};
 
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: {
-    default: "4Gach - Sàn Mua Bán Xe JDM & Thể Thao Tại Việt Nam",
-    template: "%s | 4Gach - JDM Market",
+    default: "iCheck - Sổ tay Bản đồ Cá nhân",
+    template: "%s | iCheck",
   },
-  description: "4Gach là nền tảng chuyên biệt số 1 Việt Nam để mua bán các dòng xe JDM và xe thể thao Nhật Bản (Toyota, Nissan, Honda, Mazda, Mitsubishi, Subaru). Kết nối đam mê, giao dịch uy tín.",
-  keywords: ["JDM", "xe JDM", "mua bán xe JDM", "xe thể thao Nhật", "chợ xe JDM", "Nissan GTR", "Toyota Supra", "Honda Civic Type R", "Mazda RX7", "Subaru WRX STI", "Mitsubishi Evo", "xe độ", "xe cũ"],
-  authors: [{ name: "4Gach Team" }],
-  creator: "4Gach Team",
-  publisher: "4Gach Team",
+  description: "Google Maps là bản đồ của mọi người, còn đây là bản đồ của riêng bạn. Lưu trữ, ghi chú và quản lý những địa điểm yêu thích của bạn.",
+  keywords: ["bản đồ cá nhân", "ghi chú địa điểm", "địa điểm yêu thích", "personal map", "location notes", "iCheck"],
+  authors: [{ name: "iCheck Team" }],
+  creator: "iCheck",
+  publisher: "iCheck",
+  formatDetection: {
+    email: false,
+    telephone: false,
+  },
   openGraph: {
-    title: "4Gach - Sàn Mua Bán Xe JDM Đỉnh Cao",
-    description: "Nơi mua bán xe JDM và xe thể thao Nhật Bản uy tín nhất Việt Nam. Tham gia cộng đồng ngay hôm nay.",
-    url: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000",
-    siteName: "4Gach JDM Market",
-    locale: "vi_VN",
     type: "website",
+    locale: "vi_VN",
+    url: baseUrl,
+    siteName: "iCheck",
+    title: "iCheck - Sổ tay Bản đồ Cá nhân",
+    description: "Google Maps là bản đồ của mọi người, còn đây là bản đồ của riêng bạn.",
     images: [
       {
-        url: "/og-image.jpg", // Make sure to serve a default OG image if possible, or user needs to add one
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "4Gach JDM Market",
+        alt: "iCheck - Sổ tay Bản đồ Cá nhân",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "4Gach - Sàn Mua Bán Xe JDM Đỉnh Cao",
-    description: "Mua bán xe JDM uy tín tại Việt Nam.",
-    creator: "@4gach_jdm",
+    title: "iCheck - Sổ tay Bản đồ Cá nhân",
+    description: "Google Maps là bản đồ của mọi người, còn đây là bản đồ của riêng bạn.",
+    images: ["/opengraph-image"],
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000"),
-  alternates: {
-    canonical: "/",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
-import { Toaster } from 'react-hot-toast';
 
 export default function RootLayout({
   children,
@@ -55,60 +68,40 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body
-        className={`${inter.variable} font-sans antialiased`}
-      >
-        <Header />
-        {children}
+    <html lang="vi" data-scroll-behavior="smooth">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#14b8a6" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="iCheck" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <script
-          type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'WebSite',
-              name: '4Gach JDM',
-              url: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
-              potentialAction: {
-                '@type': 'SearchAction',
-                target: `${process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000'}/search?q={search_term_string}`,
-                'query-input': 'required name=search_term_string'
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
               }
-            })
+            `,
           }}
         />
-        <Toaster
-          position="top-center"
-          reverseOrder={false}
-          toastOptions={{
-            className: 'rounded-none font-bold border border-gray-200 shadow-lg',
-            style: {
-              borderRadius: '0px',
-              padding: '16px',
-              color: '#000',
-              background: '#fff',
-            },
-            success: {
-              iconTheme: {
-                primary: '#000',
-                secondary: '#fff',
-              },
-              style: {
-                borderLeft: '4px solid #10B981',
-              },
-            },
-            error: {
-              iconTheme: {
-                primary: '#EF4444',
-                secondary: '#fff',
-              },
-              style: {
-                borderLeft: '4px solid #EF4444',
-              },
-            },
-          }}
-        />
+      </head>
+      <body className="font-sans antialiased bg-gray-50 text-gray-900">
+        <AuthProvider>
+          <PWAInstallProvider>
+            <MapPersistenceProvider>
+              {children}
+            </MapPersistenceProvider>
+          </PWAInstallProvider>
+        </AuthProvider>
       </body>
     </html>
   );
 }
+

@@ -1,35 +1,54 @@
-# Base stage
-FROM node:20-alpine AS base
+# ==============================================
+# Build Stage
+# ==============================================
+FROM node:20-alpine AS builder
 
-# Dependencies stage
-FROM base AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
 RUN npm ci
 
-# Builder stage
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
+
+# Build the application
 RUN npm run build
 
-# Production Runner stage
-FROM base AS runner
+# ==============================================
+# Production Stage
+# ==============================================
+FROM node:20-alpine AS production
+
 WORKDIR /app
-ENV NODE_ENV=production
 
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+# Copy package files
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
 
-# Create uploads and temp directories with correct permissions
-# temp/ is for temporary uploads (auto-cleaned by cron job)
-# uploads/ is for permanent storage (mounted as volume)
-RUN mkdir -p /app/uploads /app/temp && chown -R node:node /app/uploads /app/temp
+# Create uploads directory with proper permissions
+RUN mkdir -p uploads && chown -R nestjs:nodejs uploads
 
-EXPOSE 8080
+# Switch to non-root user
+USER nestjs
 
-USER node
+# Expose port
+EXPOSE 3001
 
-CMD ["node", "dist/main"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+# Start the application
+CMD ["npm", "run", "start:prod"]

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build output
+.next
+out
+
+# Development
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test
+coverage
+cypress
+playwright
+*.test.ts
+*.spec.ts
+
+# Docs
+*.md
+!README.md
+
+# Misc
+.DS_Store
+Thumbs.db

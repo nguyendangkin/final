@@ -1,28 +1,34 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployment
   output: 'standalone',
+
   images: {
     remotePatterns: [
       {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
-        port: '8080',
+        port: '3001',
+        pathname: '/uploads/**',
       },
       {
-        protocol: 'http',
-        hostname: '127.0.0.1',
-        port: '8080',
-      },
-      {
+        // Production API server - update this when deploying
         protocol: 'https',
-        hostname: '**', // TODO: Security - Restrict this to specific domains in production
-      }
+        hostname: process.env.NEXT_PUBLIC_API_HOSTNAME || 'api.icheck.app',
+        pathname: '/uploads/**',
+      },
     ],
-  },
-  async rewrites() {
-    return [];
+    // Bypass Next.js Image Optimization for localhost (private IP issue)
+    // In production with real domain, optimization will work normally
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 };
 
 export default nextConfig;
+

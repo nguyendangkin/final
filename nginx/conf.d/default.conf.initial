@@ -1,0 +1,21 @@
+# ==============================================
+# Nginx Initial Config (Before SSL)
+# Use this FIRST to get Let's Encrypt certificates
+# ==============================================
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name 4gach.com api.4gach.com;
+
+    # Certbot challenge location
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Temporary: Allow HTTP access during setup
+    location / {
+        return 200 'iCheck is being configured...';
+        add_header Content-Type text/plain;
+    }
+}
